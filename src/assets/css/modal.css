@@ -1,0 +1,89 @@
+.login-container {
+    background: #fff;
+}
+.social-login-wrapper a {
+    text-decoration: none;
+}
+
+.el-icon {
+    display: inline-flex;
+    background: green;
+    width: 32px;
+    height: 32px;
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+    margin: 0 10px;
+    border-radius: 50%;
+}
+
+.in-active {
+    color: rgb(128, 128, 128) !important;
+    font-weight: bold;
+}
+
+.active {
+    color: rgba(3, 0, 0, 0.93) !important;
+    font-weight: bold;
+}
+
+.login-form {
+    margin-top: 50px;
+}
+
+.login-tip {
+    color: #333;
+    font-size: 0.875rem;
+}
+
+
+.wechat-login {
+    overflow: hidden;
+    text-align: center;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.wechat-login .el-image {
+    width: 70%;
+    margin-bottom: 30px;
+}
+
+.wechat-login .wechat-loading {
+    min-height: 238px;
+    margin: 20px auto 30px auto;
+    width: 70%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: aliceblue;
+    cursor: pointer;
+}
+
+@media screen and (min-width: 760px) {
+
+    .login-container {
+        padding: 1rem;
+        border-radius: 4px;
+        min-height: 500px;
+        overflow: hidden;
+    }
+
+}
+
+@media screen and (max-width: 759px) {
+
+    .login-container {
+        padding: 1rem;
+        border-radius: 4px;
+        /*height: 100vh;*/
+        width: 100vw;
+        overflow: hidden;
+    }
+
+    .wechat-login .wechat-loading {
+        min-height: 194px;
+        cursor: pointer;
+    }
+}

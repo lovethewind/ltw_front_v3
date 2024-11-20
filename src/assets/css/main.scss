@@ -1,0 +1,339 @@
+@import "variables";
+
+@keyframes Gradient {
+  0% {
+    background-position: 0 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
+
+body {
+  padding: 0 !important;;
+  margin: 0 !important;;
+  overflow-x: hidden;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+  font-size: 14px !important;
+  --bs-link-color-rgb: #4c4948
+}
+
+ul {
+  padding: 0;
+  list-style: none;
+}
+
+* {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Lato, Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif !important;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: rgba(73, 177, 245, 0.2);
+  border-radius: 2em;
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 2em;
+  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, .3);
+  background-image: -webkit-gradient(
+                  linear,
+                  left top,
+                  left bottom,
+                  color-stop(0.31, rgb(60, 186, 146)),
+                  color-stop(0.62, rgb(253, 187, 45)),
+                  color-stop(0.93, rgb(45, 215, 253)));
+}
+
+::-webkit-scrollbar-corner {
+  background-color: transparent;
+}
+
+a, button, img {
+  cursor: pointer;
+}
+
+a {
+  text-decoration: none !important;
+  color: #4c4948;
+
+  &:hover {
+    color: $a-hover-color !important;
+  }
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.a-link:hover {
+  color: $a-hover-color !important;
+  cursor: pointer;
+}
+
+.sticky-element {
+  position: sticky; /* 主要的 sticky 定位 */
+  top: 60px; /* 当元素滚动到页面顶端时悬浮 */
+}
+
+.sticky-top-60 {
+  position: sticky;
+  top: 60px;
+  z-index: 1;
+}
+
+.sticky-top-70 {
+  position: sticky;
+  top: 70px;
+  z-index: 1;
+}
+
+.ellipsis {
+  white-space: nowrap; /* 强制文本在一行内显示 */
+  overflow: hidden; /* 隐藏超出部分 */
+  text-overflow: ellipsis; /* 超出部分显示省略号 */
+}
+
+.ellipsis-3l {
+  display: -webkit-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  word-break: break-word;
+}
+
+.ellipsis-2l {
+  display: -webkit-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  word-break: break-word;
+}
+
+.ellipsis-1l {
+  display: -webkit-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  word-break: break-word;
+}
+
+.el-tag-a {
+  color: #fff !important;
+  position: relative;
+  display: inline-block;
+  margin: 10px 15px 0 0;
+  padding: 5px 7px;
+  font-size: 13px;
+  line-height: 14px;
+  border-radius: 0 5px 5px 0;
+  -webkit-text-size-adjust: none;
+  transition: all 0.1s ease-in-out 0s;
+  -moz-transition: all 0.1s ease-in-out 0s;
+  -webkit-transition: all 0.1s ease-in-out 0s;
+
+  &:before {
+    position: absolute;
+    top: 0;
+    left: -8px;
+    width: 0;
+    height: 0;
+    border-top: 12px solid transparent;
+    border-right: 8px solid var(--tag-color); /* 元素style要设置这个变量的属性 */
+    border-bottom: 12px solid transparent;
+    content: "";
+  }
+
+  &:after {
+    position: absolute;
+    top: 10px;
+    left: -2px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #fff;
+    content: "";
+  }
+
+  &:hover {
+    opacity: 0.8;
+    color: white !important;
+
+    &::before {
+      opacity: 0.8;
+    }
+
+  }
+}
+
+
+.reply-fixed {
+  position: fixed;
+  bottom: 0;
+  z-index: 1000;
+  margin: 0 !important;
+}
+
+.i-icon {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 5px;
+}
+
+.el-tabs__content {
+  max-width: 75%;
+}
+
+.w-e-toolbar {
+  border-radius: 5px;
+}
+
+.w-e-text-container {
+  border-radius: 5px;
+}
+
+.highlight-keyword {
+  background-color: orange;
+  border-radius: 3px;
+}
+
+.notification-div {
+  cursor: pointer;
+
+  .like-comment,
+  .share-content,
+  .share-content a,
+  .origin-article,
+  .origin-article a {
+    font-size: 12px;
+    color: gray;
+  }
+
+  .article {
+    background: #dd9d28;
+  }
+
+  .share {
+    background: #5da35d;
+  }
+
+  .picture {
+    background: #5d5da3;
+  }
+
+  .system {
+    background: #61bdbd;
+  }
+
+  .tag-a {
+    font-size: 12px;
+    color: #fff !important;
+    padding: 2px;
+    border-radius: 2px;
+    margin-right: 2px;
+  }
+
+  .notice-content {
+    border-radius: 5px;
+    padding: 2px;
+    font-weight: 500;
+  }
+
+  .user-content {
+    margin-bottom: 5px;
+    display: flex;
+
+    a {
+      display: inline-flex;
+      align-items: center;
+    }
+
+    img {
+      width: 24px;
+      height: 24px;
+      border-radius: 5px;
+      margin-right: 5px;
+    }
+  }
+
+  .picture-content {
+    img {
+      width: 100%;
+      height: 100%;
+    }
+  }
+
+  .origin-comment {
+    background: #eee;
+    border-radius: 5px;
+    font-size: 12px;
+    padding: 2px;
+  }
+}
+
+.like-active, .like-active-icon {
+  cursor: pointer;
+  color: #ef4e4e !important;
+}
+
+
+html.dark {
+  --w-e-textarea-bg-color: #{$dark-main-color};
+  --w-e-textarea-color: #fff;
+  --w-e-toolbar-bg-color: #{$dark-main-color};
+  --w-e-toolbar-color: #fff;
+  --w-e-toolbar-active-bg-color: #555353;
+  --w-e-toolbar-active-color: #fff;
+  --w-e-modal-button-bg-color: #{$dark-main-color};
+  --w-e-textarea-slight-bg-color: #{$dark-main-color};
+  --w-e-textarea-slight-color: #{$dark-main-color};
+
+  a {
+    color: #E5EAF3 !important;
+
+    &.active, &:hover {
+      color: $a-hover-color !important;
+    }
+  }
+
+  .reply-input-wrapper {
+    background: $dark-main-color !important;
+  }
+
+  .md-editor-toolbar-wrapper {
+    top: 60px;
+    background: $dark-main-color;
+  }
+
+  .ͼo, .md-editor-resize-operate {
+    --md-bk-color: #{$dark-main-color};
+  }
+
+  .md-editor-preview-wrapper {
+    background: $dark-main-color;
+  }
+
+  .w-e-menu-tooltip-v5:before {
+    --w-e-toolbar-bg-color: #fff;
+    --w-e-toolbar-active-color: #555353;
+  }
+
+  .w-e-text-container {
+    pre > code {
+      text-shadow: none;
+    }
+  }
+}

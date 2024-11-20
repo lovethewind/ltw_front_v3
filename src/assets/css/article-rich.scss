@@ -1,0 +1,27 @@
+@import "variables";
+
+.rich-body {
+  table {
+    border-collapse: collapse;
+
+    td, th {
+      border: 1px solid #ccc;
+      min-width: 50px;
+      height: 20px;
+    }
+
+    th {
+      background-color: #f1f1f1;
+    }
+  }
+}
+
+html.dark {
+  .rich-body {
+    table {
+      th {
+        background-color: $dark-hover-color;
+      }
+    }
+  }
+}

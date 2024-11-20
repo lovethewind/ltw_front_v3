@@ -1,0 +1,16 @@
+.tui-chat {
+  .tui-message-list {
+    .message-more {
+      color: #999;
+      cursor: pointer;
+    }
+  }
+
+  .image-dialog {
+    background: rgba(0, 0, 0, 0.3);
+
+    header {
+      background: rgba(0, 0, 0, 0.49);
+    }
+  }
+}

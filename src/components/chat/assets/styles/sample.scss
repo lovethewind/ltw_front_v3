@@ -1,0 +1,104 @@
+/* stylelint-disable */
+@import "@/assets/css/variables";
+
+.TUIKit {
+  display: flex;
+  width: 100%;
+  height: 90vh;
+  overflow: hidden;
+  text-align: left;
+  border: 1px solid #e8e8e9;
+  border-radius: 5px;
+
+  .TUIKit-navbar {
+    background: #e8e8e9;
+    overflow: hidden;
+
+    .TUIKit-navbar-item {
+      padding: 10px;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .TUIKit-navbar-item-active {
+      color: #61bdbd;
+    }
+  }
+
+  .TUIKit-main-container {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+
+    .TUIKit-main {
+      width: 100%;
+      display: flex;
+
+      .TUIKit-main-aside {
+        width: 285px;
+        //flex: 0 0 24%;
+        border-right: 1px solid #f4f5f9;
+      }
+
+      .TUIKit-main-main {
+        width: calc(100% - 285px);
+        flex: 1;
+        display: flex;
+
+        .chat {
+          flex: 1;
+        }
+
+        .chat-aside {
+          position: absolute;
+          top: 50px;
+          right: 0;
+          box-sizing: border-box;
+          max-width: 360px;
+          max-height: calc(100% - 50px);
+          border-radius: 8px 0 0 8px;
+          z-index: 9999;
+        }
+      }
+    }
+
+    .callkit-container {
+      position: fixed;
+      left: calc(50% - 25rem);
+      top: calc(50% - 18rem);
+      width: 50rem;
+      height: 36rem;
+    }
+
+    .callkit-container.miniMized {
+      left: auto;
+      right: 10px;
+      top: 70px;
+      background: transparent;
+    }
+  }
+}
+
+html.dark {
+  .TUIKit {
+    border-color: $dark-main-color;
+
+    &-navbar {
+      background: $dark-main-color;
+      border-right: 1px solid $dark-border-color;
+    }
+
+    &-main-container {
+      .TUIKit-main {
+        .TUIKit-main-aside {
+          background: $dark-main-color;
+          border-right: 1px solid $dark-border-color;
+        }
+        &-main {
+          background: $dark-main-color;
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,31 @@
+.el-header {
+  --el-header-padding: 0;
+}
+
+.el-main {
+  --el-main-padding: 0;
+  overflow: unset;
+}
+
+.el-footer {
+  --el-footer-padding: 0;
+}
+
+.el-card, .el-card__body {
+  --el-card-padding: 10px;
+}
+
+.el-notification__group {
+  width: 100%;
+}
+
+.green.el-popper.is-light {
+  /* Set padding to ensure the height is 32px */
+  padding: 6px 12px;
+  background: linear-gradient(90deg, rgb(159, 229, 151), rgb(204, 229, 129)) !important;
+}
+
+.green.el-popper.is-light .el-popper__arrow::before {
+  background: linear-gradient(45deg, #b2e68d, #bce689) !important;;
+  right: 0;
+}

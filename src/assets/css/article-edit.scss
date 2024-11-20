@@ -1,0 +1,108 @@
+@import "variables";
+
+.article-edit {
+  position: relative;
+  max-width: 980px;
+  margin: 10px auto;
+}
+
+
+.article-form {
+  padding: 30px;
+}
+
+.article-edit-footer {
+  padding: 20px 10px 0 10px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1;
+  border-radius: 8px;
+  background: #fff;
+  color: #4c4948;
+  box-shadow: 0 4px 8px 6px rgb(7 17 27 / 6%);
+  transition: all 0.3s;
+}
+
+.article-md-editor {
+  min-height: 90vh;
+  border: 0;
+  overflow: unset;
+}
+
+.article-rich-editor {
+  //min-height: 72vh;
+}
+
+:deep(.is-left) {
+  max-height: 250px;
+}
+
+.avatar-uploader {
+  width: 40%;
+}
+
+.editor-tip {
+  color: red;
+  font-size: 14px;
+  margin-right: 20px
+}
+
+.cover-preview {
+  border-radius: 4px;
+}
+
+.attach-upload {
+  :deep(.el-upload) {
+    width: 100%;
+  }
+
+  :deep(.el-upload-dragger) {
+    width: 98%;
+  }
+}
+
+.attachment-uploading {
+  position: fixed;
+  top: 105px;
+  right: 10px;
+  width: 500px;
+  padding: 10px;
+  background: #fff;
+  z-index: 1;
+  border-radius: 5px;
+  box-shadow: 0 4px 8px 6px rgb(7 17 27 / 6%);
+}
+
+.attachment-list {
+  overflow: auto;
+  width: 100%;
+
+  a.color-red {
+    display: flex;
+    align-items: center;
+    justify-content: end;
+  }
+}
+
+html.dark {
+
+  .attachment-uploading {
+    background: $dark-main-color;
+  }
+
+  .article-edit-footer {
+    background: $dark-main-color;
+
+    span {
+      color: #fff;
+    }
+  }
+}
+
+@media screen and (max-width: 759px) {
+  .article-form {
+    padding: 0 10px;
+  }
+}

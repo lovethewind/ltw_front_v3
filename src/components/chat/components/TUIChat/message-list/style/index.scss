@@ -1,0 +1,8 @@
+@import "../../../../assets/styles/common";
+@import "color";
+@import "web";
+
+:not(not) {
+  box-sizing: border-box;
+  min-width: 0;
+}

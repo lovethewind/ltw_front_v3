@@ -1,0 +1,39 @@
+.tui-contact {
+  width: 60%;
+  margin: 30px auto;
+  padding: 20px;
+
+  &-info {
+
+    .user-detail-div {
+      font-size: 14px;
+
+      .el-row {
+        padding-bottom: 10px;
+
+        .el-col {
+          display: flex;
+          align-items: center;
+
+          svg {
+            margin-right: 5px;
+          }
+        }
+      }
+    }
+  }
+
+  &-operate {
+    display: flex;
+    justify-content: center;
+    margin-top: 30px;
+
+    &-text {
+      margin-right: 20px;
+    }
+
+    &-button {
+      margin-right: 20px;
+    }
+  }
+}

@@ -1,0 +1,316 @@
+.banner {
+  height: 350px;
+  animation: header-effect 1s;
+
+  &:before {
+    content: "";
+    position: absolute;
+    top: 60px;
+    left: 0;
+    right: 0;
+    height: 350px;
+    background-color: rgba(0, 0, 0, 0.5);
+    filter: brightness(0.8);
+  }
+}
+
+.info-title {
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+
+.info-wrapper {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#pick-avatar {
+  outline: none;
+}
+
+.binding {
+  display: flex;
+  align-items: center;
+}
+
+.user-summary {
+  position: absolute;
+  top: 12rem;
+  padding: 0 0.5rem;
+  width: 100%;
+  font-size: 2.5rem;
+  text-align: center;
+  color: #eee;
+  font-weight: 500;
+  animation: title-scale 1s;
+}
+
+.user-nickname {
+  position: absolute;
+  top: 16rem;
+  padding-left: 50vh;
+  width: 100%;
+  font-size: 1.5rem;
+  text-align: center;
+  color: #eee;
+  animation: title-scale 1s;
+}
+
+.read-info {
+  position: absolute;
+  top: 80px;
+  width: 100%;
+  font-size: 16px;
+  text-align: right;
+  padding-right: 10px;
+  color: #eee;
+}
+
+.col-all-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tabs-container {
+  max-width: 80vw;
+  margin: 10px auto;
+  padding: 10px;
+}
+
+.user-article-div {
+  margin: 10px 0;
+  border-bottom: 1px sandybrown dashed;
+
+  .el-row {
+    margin: 5px 0;
+    display: flex;
+    align-items: center;
+  }
+}
+
+.on-hover {
+  transform: scale(1.1);
+}
+
+.count-span {
+  margin-right: 10px;
+  text-align: center;
+  display: inline-flex;
+  align-items: center;
+}
+
+.article-title {
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.article-cover-col {
+  overflow: hidden;
+  border-radius: 5px
+}
+
+.article-item:hover .article-cover {
+  transform: scale(1.1);
+}
+
+.article-cover {
+  transition: all 0.6s;
+  display: flex;
+  align-items: center;
+  height: 8.5rem;
+  overflow: hidden;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.article-content {
+  font-size: 14px;
+  height: 4.5rem;
+  line-height: 1.5rem;
+  overflow: hidden;
+  white-space: normal;
+  text-overflow: ellipsis;
+}
+
+.article-status {
+  font-size: 12px;
+  color: rgb(201, 165, 22);
+}
+
+.article-origin {
+  font-size: 12px;
+  color: rgb(62, 157, 15);
+  margin-right: 5px;
+}
+
+.bottom-bar {
+  font-size: 14px;
+
+  .el-col {
+    display: flex;
+    align-items: center;
+
+    a, li a {
+      display: inline-flex;
+      align-items: center;
+    }
+  }
+
+  svg {
+    margin-right: 3px;
+  }
+}
+
+.search-bar {
+  margin: 10px 0;
+
+  .el-col {
+    padding: 0 5px;
+  }
+
+}
+
+.user-detail-div {
+  font-size: 14px;
+
+  .el-row {
+    padding-bottom: 10px;
+
+    .el-col {
+      display: flex;
+      align-items: center;
+
+      svg {
+        margin-right: 5px;
+      }
+    }
+  }
+}
+
+.active {
+  color: rgba(255, 145, 0, 0.99);
+}
+
+.change-bind-container {
+  padding: 1rem;
+  border-radius: 4px;
+}
+
+.change-pwd-form {
+  width: 50%;
+  margin: 0 auto;
+  padding-top: 20px;
+}
+
+.user-settings-form {
+  margin: 0 auto;
+  padding-top: 20px;
+
+  .setting-title {
+    font-size: 16px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #eee;
+    font-weight: bold;
+    margin: 10px 0;
+  }
+}
+
+.valid-code-wrapper {
+  //display: flex;
+  //align-items: center;
+  //justify-content: center;
+}
+
+.wechat-login {
+  overflow: hidden;
+  text-align: center;
+
+  .el-image {
+    width: 70%;
+    margin-bottom: 30px;
+  }
+
+  .wechat-loading {
+    height: 255px;
+    margin: 20px auto;
+    width: 255px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: aliceblue;
+    cursor: pointer;
+  }
+}
+
+.info-card {
+  min-height: auto;
+  font-size: 14px;
+}
+
+@media screen and (max-width: 768px) {
+  .wechat-login {
+    width: 100%;
+
+    .el-image {
+      width: 100%;
+    }
+
+    .wechat-loading {
+      width: 100%;
+      height: 100%;
+      min-height: 292px;
+      cursor: pointer;
+    }
+
+  }
+}
+
+@media (min-width: 760px) {
+  .user-container {
+    animation: main 1s;
+    max-width: 970px;
+    padding: 10px;
+    margin: 5px 0;
+  }
+
+}
+
+@media (max-width: 759px) {
+  .user-summary {
+    top: 8rem;
+    font-size: 20px;
+    font-weight: 500;
+  }
+  .user-nickname {
+    top: 11rem;
+    font-size: 13px;
+    padding-left: 0;
+  }
+  .read-info {
+    top: 13rem;
+    font-size: 12px;
+  }
+  .user-container {
+    animation: main 1s;
+    margin: 5px 0;
+    padding: 10px;
+  }
+  .tabs-container {
+    max-width: 1280px;
+    margin: 180px auto 10px auto;
+    padding: 10px;
+  }
+  .search-bar {
+    font-size: 12px;
+    margin: 10px 0;
+  }
+  :deep(.el-tabs__header) {
+    background: white;
+    padding: 0 10px;
+    margin: 0 0 10px 0;
+  }
+}

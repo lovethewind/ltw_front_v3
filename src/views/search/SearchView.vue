@@ -177,7 +177,7 @@ const baseSearchDict = {
   currentPage: 1,
   pageSize: 10,
   keyword: '',
-  type: 2
+  orderType: 2
 }
 
 const router = useRouter()
@@ -281,7 +281,7 @@ function fetchDailyHotWords() {
 }
 
 function orderTypeChange(val) {
-  searchDict.value.type = val
+  searchDict.value.orderType = val
   searchKeywordResult()
 }
 

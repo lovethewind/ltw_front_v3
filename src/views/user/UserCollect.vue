@@ -52,7 +52,7 @@
               </el-row>
               <el-row class="bottom-bar">
                 <el-col :xs="24" :sm="8">
-                  <Icon icon="mingcute:user-4-line" />
+                  <el-avatar :src="article.user.avatar" size="small" class="me-1" />
                   <router-link :to="'/user/' + article.userId" class="a-link">{{ article.user.nickname }}</router-link>
                 </el-col>
                 <el-col :xs="24" :sm="8">
@@ -90,6 +90,7 @@ import { deleteHTMLTag, removeEmptyValues } from '@/utils/common'
 import { minute } from '@/utils/date'
 import { ActionTypeEnum, ObjectTypeEnum } from '@/enums'
 import { Icon } from '@iconify/vue'
+import { IArticle } from '@/interface'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -111,7 +112,7 @@ const searchOrderList = ref([
 
 const searchDates = ref<any>(null)
 const loading = ref(false)
-const collectList = ref<any>([])
+const collectList = ref<IArticle[]>([])
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
@@ -142,7 +143,7 @@ function infiniteHandler() {
   func(currentPage.value, pageSize.value, {
     userId: viewUser.value?.id,
     objType: ObjectTypeEnum.ARTICLE,
-    actionType: ActionTypeEnum.COLLECT,
+    actionType: ActionTypeEnum.COLLECT
   }, queryParams).then(res => {
     if (res.data.records.length) {
       currentPage.value++

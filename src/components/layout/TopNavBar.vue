@@ -157,7 +157,7 @@
                           个人中心
                         </el-col>
                         <el-col :span="24" @click="logout">
-                          <Icon icon="material-symbols:logout" class="font-18" color="blue" />
+                          <Icon icon="material-symbols:logout" class="font-18" color="#0d6efd" />
                           退出
                         </el-col>
                       </el-row>

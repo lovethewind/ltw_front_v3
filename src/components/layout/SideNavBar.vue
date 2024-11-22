@@ -84,7 +84,7 @@
         </div>
         <div class="menus-item">
           <a @click="logout">
-            <el-icon size="14" color="blue">mdi-logout-variant</el-icon>
+            <el-icon size="14" color="#0d6efd">mdi-logout-variant</el-icon>
             退出</a>
         </div>
       </div>

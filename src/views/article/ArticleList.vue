@@ -39,7 +39,7 @@
                     <!-- 作者 -->
                     <router-link :to="'/user/' + item.userId" class="article-nickname"
                                  :title="item.user.nickname">
-                      <Icon icon="bx:user" class="font-20" />
+                      <el-avatar :src="item.user.avatar" size="small" class="me-1" />
                       <el-tooltip :content="item.user.nickname" effect="light">
                         {{ item.user.nickname }}
                       </el-tooltip>
@@ -109,6 +109,7 @@ import { covertNumberDisplay, genRandomColor, getObjKeyCount } from '@/utils/com
 import { minute } from '@/utils/date'
 import { Icon } from '@iconify/vue'
 import { OrderTypeEnum } from '@/enums'
+import { IArticle } from '@/interface'
 
 const route = useRoute()
 const router = useRouter()
@@ -116,7 +117,7 @@ const commonStore = useCommonStore()
 
 const currentPage = ref(1)
 const pageSize = ref(6)
-const articleList = ref<any>([])
+const articleList = ref<IArticle[]>([])
 const total = ref(0)
 const title = ref('')
 const nameObj = ref<any>({})
@@ -246,10 +247,6 @@ function orderTypeChange(val: OrderTypeEnum) {
 .article-item-cover {
   height: 220px;
   overflow: hidden;
-}
-
-.article-item-card a:hover {
-  color: #8e8cd8;
 }
 
 .tag-wrapper {

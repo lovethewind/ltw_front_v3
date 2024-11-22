@@ -84,11 +84,6 @@ const count = computed(() => {
     border: 0.2rem solid #ff7242;
   }
 
-  a:hover {
-    transition: all 0.3s;
-    color: #8e8cd8;
-  }
-
   a:not(:hover) {
     transition: all 0.3s;
   }

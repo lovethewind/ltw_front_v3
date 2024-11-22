@@ -302,10 +302,10 @@ html.dark {
   --w-e-textarea-slight-color: #{$dark-main-color};
 
   a {
-    color: #E5EAF3 !important;
+    color: #E5EAF3;
 
     &.active, &:hover {
-      color: $a-hover-color !important;
+      color: $a-hover-color;
     }
   }
 

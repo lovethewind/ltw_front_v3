@@ -163,11 +163,11 @@ function scrollToTop() {
 }
 
 .setting-container:hover {
-  background-color: #ff7242;
+  background-color: $a-hover-color;
 }
 
-.setting-container:hover span {
-  color: white !important;
+.setting-container:hover svg {
+  color: #fff !important;
 }
 
 .rotate-container span {

@@ -57,11 +57,13 @@ const cover = computed(() => {
 })
 
 function addMessage(item) {
-  ElMessage({
-    message: '正在提交, 请稍后...',
-    type: 'success',
-    plain: true
-  })
+  if (!user.value) {
+    ElMessage({
+      message: '正在提交, 请稍后...',
+      type: 'success',
+      plain: true
+    })
+  }
   const { replyUserId, parentId, firstLevelId, index, replyUser } = currentReplyComment.value
   const message = {
     nickname: item.touristComment.nickname,

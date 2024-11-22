@@ -118,10 +118,7 @@
 .article-wrapper {
   font-size: 14px;
   height: 100%;
-
-  a:hover {
-    color: #8e8cd8;
-  }
+  padding: 1.25rem;
 }
 
 .article-info {
@@ -398,10 +395,6 @@
   .home-container {
     width: 100%;
     margin: calc(50vh - 66px) auto 0 auto;
-  }
-
-  .article-wrapper {
-    padding: 36px 14px;
   }
 
   .article-info {

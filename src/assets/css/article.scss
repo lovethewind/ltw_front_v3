@@ -121,10 +121,6 @@ $breakpoints: (
   }
 }
 
-.article-wrapper {
-  padding: 1.25rem;
-}
-
 .article-info {
   font-size: 14px;
   line-height: 1.9;
@@ -250,6 +246,7 @@ div {
   line-height: 2;
   padding: 0.625rem 0.5rem;
   border: 1px solid #eee;
+  border-radius: 5px;
 
   .name {
     color: #49b1f5;
@@ -487,10 +484,6 @@ hr {
   a {
     transition: all 0.2s;
     font-size: 95%;
-
-    &:hover {
-      color: #2ba1d1;
-    }
   }
 }
 
@@ -759,6 +752,16 @@ hr {
 html.dark {
   .article-content {
     color: #E5EAF3;
+  }
+
+  .article-attachment {
+    background: $dark-main-color;
+
+    .article-attachment-item {
+      &:hover {
+        background: $dark-hover-color;
+      }
+    }
   }
 
   .left-div {

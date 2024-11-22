@@ -129,7 +129,7 @@
                 class="article-attachment-item"
               >
                 <el-col :span="18">
-                  <Icon icon="mage:file-3" class="font-16" color="blue" />
+                  <Icon icon="mage:file-3" class="font-16" color="green" />
                   <span class="article-attachment-name">{{ item.name }}</span>
                 </el-col>
                 <el-col :span="6" class="justify-content-end">
@@ -275,7 +275,7 @@
           <!-- 本文作者信息 -->
           <el-card v-if="currentArticleUser" class="right-container">
             <div class="right-title">
-              <Icon icon="bx:user" class="font-18" color="blue" />
+              <Icon icon="bx:user" class="font-18" color="#0d6efd" />
               <span>作者信息</span>
             </div>
             <div class="mt-2">

@@ -162,7 +162,7 @@
           </div>
           <div class="hot-news-div mt-1">
             <div v-for="(item, index) in webHotList" :key="'webHotList' + index">
-              <span class="font-weight-bold">{{ item.index }}.</span><a :href="item.url" target="_blank">{{ item.title
+              <span class="font-weight-bold">{{ item.index }}.</span><a @click="toWeb(item.url)" target="_blank">{{ item.title
               }}</a>
             </div>
           </div>
@@ -211,10 +211,10 @@ import EasyTyper from 'easy-typer-js'
 import OrderBar from '@/components/base/OrderBar.vue'
 import articleApi from '@/api/article'
 import { useCommonStore } from '@/stores/common'
-import { covertNumberDisplay, deleteHTMLTag, genRandomColor, randomSortList, isMobile } from '@/utils/common'
+import { covertNumberDisplay, deleteHTMLTag, genRandomColor, randomSortList, isMobile, toWeb } from '@/utils/common'
 import { date, formatTimeToSecond } from '@/utils/date'
 import { Icon } from '@iconify/vue'
-import { IArticle } from '@/interface'
+import type { IArticle } from '@/interface'
 
 const router = useRouter()
 const commonStore = useCommonStore()

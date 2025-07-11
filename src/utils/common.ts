@@ -4,6 +4,7 @@ import hljs from 'highlight.js'
 import { useUserStore } from '@/stores/user'
 import { useModalStore } from '@/stores/modal'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { h } from 'vue'
 
 /**
  * 生成uuid
@@ -341,7 +342,13 @@ export function isMobile() {
 }
 
 export function toWeb(val: string) {
-  ElMessageBox.confirm(`确定要跳转至该网站(${val})吗？请注意辨识网站内容是否安全`, '提示', {}).then(() => {
+  ElMessageBox.confirm(
+    h('span', [
+      '确定要跳转至该网站(',
+      h('span', { style: { color: 'red',  whiteSpace: 'pre-wrap', wordBreak: 'break-all'  } }, val),
+      ')吗？请注意辨识网站内容是否安全'
+    ]),
+    '提示', {}).then(() => {
     window.open(val)
   })
 }

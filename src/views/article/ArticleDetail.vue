@@ -171,7 +171,7 @@
             <div v-if="!article.isOriginal">
               <span class="name"><Icon icon="ic:outline-link" color="red" class="font-16" /> 原文链接：</span>
               <span>
-                <a :href="article.originalUrl" target="_blank">{{ article.originalUrl }} </a>
+                <a @click="toWeb(article.originalUrl)" target="_blank">{{ article.originalUrl }} </a>
                 <Icon icon="material-symbols:content-copy-outline" class="a-link font-16"
                       @click="copy(article.originalUrl)" />
                 </span>
@@ -505,7 +505,7 @@ import {
   downloadFile,
   genRandomColor,
   highlightCode,
-  markdownToHtml,
+  markdownToHtml, toWeb,
   transformSize
 } from '@/utils/common'
 import { checkIsLogin, covertNumberDisplay, copy } from '@/utils/common'

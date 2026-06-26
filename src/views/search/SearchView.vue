@@ -55,7 +55,7 @@
           <div class="article-cover float-start">
             <el-image
               class="on-hover cover-img"
-              :src="item.cover"
+              :src="item.coverThumb || item.cover"
               @click="router.push('/article/' + item.id)"
             />
           </div>
@@ -169,7 +169,6 @@ import LoadMore from '@/components/base/LoadMore.vue'
 import { Icon } from '@iconify/vue'
 import { date } from '@/utils/date'
 import { covertNumberDisplay, deleteHTMLTag, genRandomColor, isMobile } from '@/utils/common'
-import { ISearchArticle } from '@/interface'
 import { SearchTypeEnum } from '@/enums'
 import { genderMap } from '@/utils/constant'
 
@@ -183,15 +182,15 @@ const baseSearchDict = {
 const router = useRouter()
 const commonStore = useCommonStore()
 
-const searchKeywordResultDebounce = debounce(600, (value) => searchKeywordResult(value))
+const searchKeywordResultDebounce = debounce(600, () => searchKeywordResult())
 const colors = ref<any>({}) // 存储颜色
-const searchDataList = ref<ISearchArticle[]>([])
-const hotWordsList = ref([])
+const searchDataList = ref<any[]>([])
+const hotWordsList = ref<any[]>([])
 const total = ref(0)
 const lastSearchWords = ref('')
 const spentTime = ref(0)
 const searchDict = ref(Object.assign({}, baseSearchDict))
-const pageCache = ref({})
+const pageCache = ref<any>({})
 const searchType = ref(SearchTypeEnum.ARTICLE)
 const searchOrderList = ref([
   {
@@ -245,7 +244,7 @@ function infiniteHandler() {
   if (!searchDict.value.keyword.trim()) {
     return
   }
-  pageCache[searchDict.value.currentPage] = true
+  pageCache.value[searchDict.value.currentPage] = true
   const startTime = new Date().getTime()
   let func
   if (searchType.value === SearchTypeEnum.ARTICLE) {
@@ -263,7 +262,7 @@ function infiniteHandler() {
     }
   }).finally(() => {
     lastSearchWords.value = searchDict.value.keyword
-    spentTime.value = ((new Date().getTime() - startTime) / 100).toFixed(2)
+    spentTime.value = Number(((new Date().getTime() - startTime) / 100).toFixed(2))
   })
 }
 
@@ -280,7 +279,7 @@ function fetchDailyHotWords() {
   })
 }
 
-function orderTypeChange(val) {
+function orderTypeChange(val: any) {
   searchDict.value.orderType = val
   searchKeywordResult()
 }
@@ -293,7 +292,7 @@ function searchKeywordResult() {
   infiniteHandler()
 }
 
-function clickHotWord(val) {
+function clickHotWord(val: any) {
   searchDict.value.keyword = val.trim()
   searchKeywordResult()
 }

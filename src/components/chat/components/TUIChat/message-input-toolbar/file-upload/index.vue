@@ -25,7 +25,6 @@ import ToolbarItemContainer from '../toolbar-item-container/index.vue'
 import { useChatStore } from '@/stores/chat'
 import { useUserStore } from '@/stores/user'
 import ossApi from '@/api/oss-api'
-import { IChatSendMessage } from '@/interface/ws'
 import { uuid } from '@/utils/common'
 import { ChatMessageTypeEnum, MessageSendStatusEnum } from '@/enums/ws'
 import { getNow } from '@/utils/date'
@@ -38,7 +37,7 @@ const chatStore = useChatStore()
 const userStore = useUserStore()
 const eventServer = EventServer.getInstance()
 
-const inputRef = ref<HTMLElement>()
+const inputRef = ref<HTMLInputElement>()
 
 const currentConversation = computed(() => {
   return chatStore.currentConversation
@@ -59,7 +58,7 @@ function sendFileInWeb(e: any) {
   e.target.value = ''
 }
 
-const onProgress = (message: IChatSendMessage) => (progressEvent: ProgressEvent) => {
+const onProgress = (message: any) => (progressEvent: any) => {
   const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total)
   eventServer.emit(EventName.UPDATE_TEMP_MESSAGE, { tempId: message.tempId, progress: progress })
 }
@@ -69,13 +68,13 @@ function sendFileMessage(file: File) {
     dirType: UploadFileTypeEnum.ATTACH,
     fileName: file.name
   }).then(res => {
-    const message: IChatSendMessage = {
+    const message: any = {
       tempId: uuid(),
-      userId: user.value.id,
-      contactId: currentConversation.value?.contactId,
+      userId: user.value?.id || '',
+      contactId: currentConversation.value?.contactId || '',
       messageType: ChatMessageTypeEnum.FILE,
-      contactType: currentConversation.value?.contactType,
-      conversationId: currentConversation.value?.conversationId,
+      contactType: currentConversation.value?.contactType as any,
+      conversationId: currentConversation.value?.conversationId || '',
       content: '',
       attach: [{
         url: URL.createObjectURL(file),
@@ -89,7 +88,9 @@ function sendFileMessage(file: File) {
     }
     eventServer.emit(EventName.INSERT_TEMP_MESSAGE, message)
     uploadFile(res.data, file, onProgress(message)).then(url => {
-      message.attach[0].url = url
+      if (message.attach?.[0]) {
+        message.attach[0].url = url
+      }
       eventServer.emit(EventName.SEND_CHAT_MESSAGE, message)
     })
   })

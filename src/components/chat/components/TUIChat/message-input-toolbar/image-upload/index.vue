@@ -22,7 +22,6 @@
 <script lang="ts" setup>
 import { computed, ref } from 'vue'
 import ToolbarItemContainer from '../toolbar-item-container/index.vue'
-import { IChatSendMessage } from '@/interface/ws'
 import { EventServer } from '@/event-server'
 import { EventName } from '@/event-server/event-name'
 import { useUserStore } from '@/stores/user'
@@ -38,7 +37,7 @@ const userStore = useUserStore()
 const chatStore = useChatStore()
 
 const eventServer = EventServer.getInstance()
-const inputRef = ref<HTMLElement>(null)
+const inputRef = ref<HTMLInputElement | null>(null)
 const IMAGE_TOOLBAR_SHOW_MAP = {
   web_album: {
     icon: 'tabler:photo',
@@ -68,7 +67,7 @@ function sendImageInWeb(e: any) {
   e.target.value = ''
 }
 
-const onProgress = (message: IChatSendMessage) => (progressEvent: ProgressEvent) => {
+const onProgress = (message: any) => (progressEvent: any) => {
   const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total)
   eventServer.emit(EventName.UPDATE_TEMP_MESSAGE, { tempId: message.tempId, progress: progress })
 }
@@ -81,13 +80,13 @@ function sendImageMessage(file: File) {
     dirType: UploadFileTypeEnum.IMAGE,
     fileName: file.name
   }).then(res => {
-    const message: IChatSendMessage = {
+    const message: any = {
       tempId: uuid(),
-      userId: user.value.id,
-      contactId: currentConversation.value?.contactId,
+      userId: user.value?.id || '',
+      contactId: currentConversation.value?.contactId || '',
       messageType: ChatMessageTypeEnum.IMAGE,
-      contactType: currentConversation.value?.contactType,
-      conversationId: currentConversation.value?.conversationId,
+      contactType: currentConversation.value?.contactType as any,
+      conversationId: currentConversation.value?.conversationId || '',
       content: '',
       attach: [{
         url: URL.createObjectURL(file),
@@ -101,7 +100,9 @@ function sendImageMessage(file: File) {
     }
     eventServer.emit(EventName.INSERT_TEMP_MESSAGE, message)
     uploadFile(res.data, file, onProgress(message)).then(url => {
-      message.attach[0].url = url
+      if (message.attach?.[0]) {
+        message.attach[0].url = url
+      }
       eventServer.emit(EventName.SEND_CHAT_MESSAGE, message)
     })
   })

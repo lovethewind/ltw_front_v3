@@ -52,7 +52,7 @@
             </span>
           </el-col>
           <el-col :span="8">
-            <el-button v-if="!searchResult.isFriend && user.id !== searchResult.id && !searchResult.isBlocked"
+            <el-button v-if="!searchResult.isFriend && user?.id !== searchResult.id && !searchResult.isBlocked"
                        type="primary" size="small" @click="addFriend">添加好友
             </el-button>
           </el-col>
@@ -64,7 +64,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Icon } from '@iconify/vue'
-import { IUserDetail } from '@/interface'
+import type { IUserDetail } from '@/interface'
 import { genderMap } from '@/utils/constant'
 import userApi from '@/api/user'
 import chatApi from '@/api/chat'
@@ -105,7 +105,7 @@ function search() {
 
 function addFriend() {
   ElMessageBox.prompt('请输入申请信息', '添加好友', {
-    inputValue: '我是' + user.value.nickname
+    inputValue: '我是' + (user.value?.nickname || '')
   }).then(({ value }) => {
     chatApi.postContactApply({
       contactId: searchResult.value?.id,

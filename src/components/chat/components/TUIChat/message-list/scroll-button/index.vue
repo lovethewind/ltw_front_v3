@@ -39,8 +39,9 @@ async function judgeScrollOverOneScreen(e: Event) {
   if (e.target) {
     try {
       const { height } = getBoundingClientRect(`${(e.target as HTMLElement)?.id}` || 'messageList') || {}
-      const scrollHeight = (e.target as HTMLElement)?.scrollHeight || (e.detail as HTMLElement)?.scrollHeight
-      const scrollTop = (e.target as HTMLElement)?.scrollTop || (e.detail as HTMLElement)?.scrollTop || 0
+      const detail = (e as any).detail as HTMLElement | undefined
+      const scrollHeight = (e.target as HTMLElement)?.scrollHeight || detail?.scrollHeight || 0
+      const scrollTop = (e.target as HTMLElement)?.scrollTop || detail?.scrollTop || 0
       // while scroll over one screen show this scroll button.
       if (scrollHeight - scrollTop > 2 * height) {
         isScrollButtonVisible.value = true

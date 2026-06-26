@@ -9,7 +9,7 @@ import { getToken } from '@/utils/auth'
 import { ElMessageBox, ElNotification } from 'element-plus'
 import { EventName } from '@/event-server/event-name'
 import { EventServer } from '@/event-server'
-import { IChatSendMessage, IConversation, IMessage, ReceiveMessage } from '@/interface/ws'
+import type { IChatSendMessage, IConversation, ReceiveMessage } from '@/interface/ws'
 import { ApplyStatusEnum, MessageSendStatusEnum, MessageShowTypeEnum, MessageTypeEnum } from '@/enums/ws'
 import { dealChatMessageContent, dealNoticeMessageContent } from '@/components/ws/util'
 import { useModalStore } from '@/stores/modal'
@@ -60,7 +60,7 @@ function onError(e: Event) {
 }
 
 function onMessage(e: MessageEvent) {
-  const message: IMessage<ReceiveMessage> = JSON.parse(e.data)
+  const message: any = JSON.parse(e.data) as ReceiveMessage
   if (message.messageType == MessageTypeEnum.SYSTEM_IN_TIME) {
     if (message.showType === MessageShowTypeEnum.NOTIFICATION) {
       ElNotification({
@@ -82,7 +82,7 @@ function onMessage(e: MessageEvent) {
     if (!modalStore.chatFlag // 聊天弹窗未打开
       || message.message.conversationId !== chatStore.currentConversation?.conversationId // 不是当前会话
       || ((message.message.conversationId === chatStore.currentConversation?.conversationId && chatStore.currentNavbar === 'contact')) // 是当前会话但在通讯录页面
-      && message.message.userId !== user.value.id // 不是我发出的消息
+      && message.message.userId !== user.value?.id // 不是我发出的消息
       && message.message.status !== MessageSendStatusEnum.FAIL  // 不是发送失败
     ) {
       ElNotification({
@@ -143,7 +143,7 @@ function sendChatMessage(message: IChatSendMessage) {
     message.status = MessageSendStatusEnum.FAIL
     return
   }
-  const sendMessage: IMessage<IChatSendMessage> = {
+  const sendMessage: any = {
     messageType: MessageTypeEnum.CHAT_MESSAGE,
     message: message
   }
@@ -151,7 +151,7 @@ function sendChatMessage(message: IChatSendMessage) {
 }
 
 function changeCurrentConversation(conversation: IConversation) {
-  const sendMessage: IMessage<IConversation> = {
+  const sendMessage: any = {
     messageType: MessageTypeEnum.CHANGE_CURRENT_CONVERSATION,
     message: conversation
   }

@@ -22,14 +22,13 @@ import { computed, ref } from 'vue'
 import MessageInputEditor from './message-input-editor.vue'
 import MessageInputButton from './message-input-button.vue'
 import { EventServer } from '@/event-server'
-import { IChatSendMessage } from '@/interface/ws'
 import { EventName } from '@/event-server/event-name'
 import { ChatMessageTypeEnum, MessageSendStatusEnum } from '@/enums/ws'
 import { useUserStore } from '@/stores/user'
 import { useChatStore } from '@/stores/chat'
 import { uuid } from '@/utils/common'
 import { getNow } from '@/utils/date'
-import { IEmojiChar } from '@/interface'
+import type { IEmojiChar } from '@/interface'
 
 const props = defineProps({
   placeholder: {
@@ -77,12 +76,12 @@ const currentConversation = computed(() => {
 async function sendMessage() {
   const editorContent = editor.value?.getEditorContent()
   if (!editorContent) return
-  const message: IChatSendMessage = {
+  const message: any = {
     tempId: uuid(),
-    userId: user.value.id,
-    contactId: currentConversation.value?.contactId,
-    contactType: currentConversation.value?.contactType,
-    conversationId: currentConversation.value?.conversationId,
+    userId: user.value?.id || '',
+    contactId: currentConversation.value?.contactId || '',
+    contactType: currentConversation.value?.contactType as any,
+    conversationId: currentConversation.value?.conversationId || '',
     messageType: ChatMessageTypeEnum.TEXT,
     content: editorContent,
     attach: [],

@@ -29,7 +29,7 @@ export function uuid(simple = true) {
  * @param b
  * @returns {boolean}
  */
-export function isEqual(a: T, b: T) {
+export function isEqual(a: any, b: any) {
   return lodash.isEqual(a, b)
 }
 
@@ -39,8 +39,8 @@ export function isEqual(a: T, b: T) {
  * @param row
  * @returns 新formData
  */
-export function removeSameValues(formData: object, row: object) {
-  const newFormData = {}
+export function removeSameValues(formData: any, row: any) {
+  const newFormData: any = {}
   Object.keys(row).forEach(key => {
     if (key === 'id') {
       newFormData[key] = formData[key]
@@ -55,8 +55,8 @@ export function removeSameValues(formData: object, row: object) {
  * 移除对象中的空值
  * @param obj
  */
-export function removeEmptyValues(obj: object) {
-  const newObj = {}
+export function removeEmptyValues(obj: any) {
+  const newObj: any = {}
   Object.keys(obj).forEach(key => {
     if (obj[key] !== undefined && obj[key] !== '' && obj[key] !== null) {
       newObj[key] = obj[key]
@@ -83,6 +83,69 @@ export function getBase64(file: File, callback: CallableFunction) {
   const reader = new FileReader()
   reader.readAsDataURL(file)
   reader.onload = () => callback(reader.result)
+}
+
+/**
+ * 生成缩略图文件名，保留原始文件名主体并使用 WebP 后缀。
+ *
+ * :param fileName: 原始文件名。
+ * :return: 缩略图文件名。
+ */
+export function getThumbFileName(fileName: string): string {
+  const index = fileName.lastIndexOf('.')
+  const name = index > -1 ? fileName.slice(0, index) : fileName
+  return `${name}_thumb.webp`
+}
+
+/**
+ * 在浏览器端压缩图片，优先生成适合列表展示的 WebP 缩略图。
+ *
+ * :param file: 原始图片文件。
+ * :param maxWidth: 缩略图最大宽度。
+ * :param quality: WebP 压缩质量。
+ * :return: 压缩后的缩略图文件，压缩失败时返回原文件。
+ */
+export function compressImageFile(file: File, maxWidth = 640, quality = 0.82): Promise<File> {
+  if (!file.type.startsWith('image/')) {
+    return Promise.resolve(file)
+  }
+
+  return new Promise(resolve => {
+    const image = new Image()
+    const objectUrl = URL.createObjectURL(file)
+
+    image.onload = () => {
+      const scale = Math.min(1, maxWidth / image.width)
+      const width = Math.max(1, Math.round(image.width * scale))
+      const height = Math.max(1, Math.round(image.height * scale))
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+
+      const context = canvas.getContext('2d')
+      if (!context) {
+        URL.revokeObjectURL(objectUrl)
+        resolve(file)
+        return
+      }
+
+      context.drawImage(image, 0, 0, width, height)
+      canvas.toBlob(blob => {
+        URL.revokeObjectURL(objectUrl)
+        if (!blob) {
+          resolve(file)
+          return
+        }
+        resolve(new File([blob], getThumbFileName(file.name), { type: 'image/webp' }))
+      }, 'image/webp', quality)
+    }
+
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl)
+      resolve(file)
+    }
+    image.src = objectUrl
+  })
 }
 
 /**
@@ -137,11 +200,35 @@ export function covertNumberDisplay(count: number) {
  * @param content
  * @returns {*}
  */
-export function deleteHTMLTag(content) {
+export function deleteHTMLTag(content: string) {
   return content
     .replace(/<\/?[^>]*>/g, '')
     .replace(/[|]*\n/, '')
     .replace(/&nbsp;/gi, '')
+}
+
+/**
+ * 清洗首页文章摘要，移除 Markdown、HTML 和多余空白。
+ *
+ * :param content: 原始文章内容。
+ * :return: 适合列表展示的纯文本摘要。
+ */
+export function sanitizeArticleSummary(content: string): string {
+  const decodedContent = (content || '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+
+  return deleteHTMLTag(decodedContent)
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/!\[([^\]]*)]\([^)]+\)/g, '$1')
+    .replace(/\[([^\]]+)]\([^)]+\)/g, '$1')
+    .replace(/^[\s>]*#{1,6}\s*/gm, '')
+    .replace(/^[\s>*+-]+/gm, '')
+    .replace(/\s+/g, ' ')
+    .trim()
 }
 
 /**
@@ -164,7 +251,7 @@ export function highlightCode(el: HTMLElement | null) {
     }
     if (!lang || lang === 'auto') {
       const autoHighlightResult = hljs.highlightAuto(block.innerText)
-      lang = autoHighlightResult.language
+      lang = autoHighlightResult.language || ''
     }
     block.setAttribute('class', 'language-' + lang)
     // 判断是不是已经是highlight.js的样式了
@@ -208,7 +295,7 @@ export function highlightCode(el: HTMLElement | null) {
   })
 }
 
-export function markdownToHtml(data: string): string {
+export function markdownToHtml(data: string): string | Promise<string> {
   return marked.parse(data)
 }
 
@@ -223,12 +310,12 @@ export function genRandomColor(hslLength = 1) {
    * @param L 亮度
    * @returns Array RGB色值
    */
-  function hslToRgb(H, S, L) {
+  function hslToRgb(H: number, S: number, L: number) {
     let R, G, B
     if (+S === 0) {
       R = G = B = L // 饱和度为0 为灰色
     } else {
-      const hue2Rgb = function(p, q, t) {
+      const hue2Rgb = function (p: number, q: number, t: number) {
         if (t < 0) t += 1
         if (t > 1) t -= 1
         if (t < 1 / 6) return p + (q - p) * 6 * t
@@ -277,9 +364,9 @@ export function genRandomColor(hslLength = 1) {
     return HSL
   }
 
-  const res = []
+  const res: string[] = []
   getHslArray().map(item => {
-    res.push(hslToRgb(...item))
+    res.push(hslToRgb(item[0], item[1], item[2]))
   })
   return res
 }
@@ -369,7 +456,7 @@ export function copy(val: string) {
  * @param size 大小(MB)
  * @param type 类型描述
  */
-export function checkFileSize(file: File, size: number, type?: string = '图片') {
+export function checkFileSize(file: File, size: number, type: string = '图片') {
   // 验证文件类型和大小
   const isLt = file.size / 1024 / 1024 < size
   if (!isLt) {

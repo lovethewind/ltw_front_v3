@@ -1,6 +1,6 @@
-import { IChatMessage, IMessage } from '@/interface/ws'
+import type { IChatMessage, IMessage } from '@/interface/ws'
 import { ChatMessageTypeEnum } from '@/enums/ws'
-import { INotice } from '@/interface'
+import type { INotice } from '@/interface'
 import { NoticeTypeEnum, ObjectTypeEnum } from '@/enums'
 
 export function dealChatMessageContent(message: IChatMessage) {
@@ -57,13 +57,20 @@ export function dealNoticeMessageContent(message: IMessage<INotice>) {
   return content
 }
 
-function getNoticeTypeContent(message: IMessage<INotice>, type: string) {
+/**
+ * 根据通知对象类型生成通知摘要内容。
+ *
+ * :param message: 通知消息对象。
+ * :param type: 内容类型。
+ * :return: 通知摘要 HTML。
+ */
+function getNoticeTypeContent(message: IMessage<INotice>, type: string): string {
   if (type === 'article') {
     return `<div class="origin-article"><a class="tag-a article">文章</a><a href="/article/${message.message.detail.objId}" target="_blank">${message.message.detail.objContent}</a></div>`
   } else if (type === 'picture') {
     return `<div class="picture-content"><a class="tag-a picture">图片</a><img src="${message.message.detail.objContent}" alt="" /><div>`
   } else if (type === 'share') {
-    return `<div class="share-content"><a class="tag-a share">分享</a><a href="/share" target="_blank">${message.message.detail.objContent}</a><div>`
+    return `<div class="share-content"><a class="tag-a share">分享</a><span>${message.message.detail.objContent}</span><div>`
   } else if (type === 'user') {
     return `<div class="user-content"><a href="/user/${message.message.detail.fromUser.id}" target="_blank"><img src="${message.message.detail.fromUser.avatar}" alt="" /> ${message.message.detail.fromUser.nickname}</a></div>`
   } else if (type === 'content') {

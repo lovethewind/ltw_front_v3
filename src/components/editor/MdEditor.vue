@@ -2,7 +2,7 @@
   <MdEditor
     ref="editorRef"
     v-model="contentValue"
-    :toolbars-exclude="toolbarExclude"
+    :toolbars-exclude="toolbarExclude as any"
     :footers="[]"
     :show-toolbar-name="true"
     :tab-width="4"
@@ -71,10 +71,10 @@ withDefaults(defineProps<Props>(), {
 })
 
 const commonStore = useCommonStore()
-const editorRef = shallowRef<InstanceType<typeof MdEditor>>(null)
+const editorRef = shallowRef<any>(null)
 const contentValue = ref('')
 const theme = computed(() => {
-  return commonStore.theme
+  return commonStore.theme as any
 })
 
 function contentChange(data: string) {
@@ -122,11 +122,17 @@ defineExpose({
   position: sticky;
   top: 61px;
   width: 100%;
-  background: #fff;
-  z-index: 2;
+  background: rgb(255 255 255 / 96%);
+  z-index: 5;
+  border-top: 1px solid #eef2f6;
+  border-bottom: 1px solid #eef2f6;
+  backdrop-filter: blur(12px);
 
   .md-editor-toolbar {
-    justify-content: space-around;
+    justify-content: center;
+    gap: 4px;
+    width: min(1160px, calc(100vw - 48px));
+    margin: 0 auto;
 
     .md-editor-dropdown {
       position: fixed;
@@ -144,10 +150,65 @@ defineExpose({
 }
 
 .md-editor-content {
-  width: 980px;
-  margin: 5px auto 0 auto;
-  border: 1px solid #ccc;
-  border-radius: 5px;
+  width: min(1160px, calc(100vw - 48px));
+  margin: 10px auto 0 auto;
+  border: 1px solid #e4e7ed;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 16px 36px rgb(15 23 42 / 6%);
+}
+
+.md-editor-input-wrapper,
+.md-editor-preview-wrapper {
+  scrollbar-color: #b8c5d6 transparent;
+}
+
+.md-editor-dark {
+  .md-editor-toolbar-wrapper {
+    background: rgb(31 41 55 / 96%);
+    border-color: rgb(255 255 255 / 10%);
+  }
+
+  .md-editor-content {
+    border-color: rgb(255 255 255 / 12%);
+    background: #111827;
+    box-shadow: none;
+  }
+}
+
+@media screen and (max-width: 759px) {
+  .md-editor-toolbar-wrapper {
+    .md-editor-toolbar {
+      justify-content: flex-start;
+      width: calc(100vw - 24px);
+      overflow-x: auto;
+    }
+  }
+
+  .md-editor-content {
+    width: calc(100vw - 24px);
+  }
+}
+
+body.article-editing-page {
+  .md-editor-toolbar-wrapper {
+    .md-editor-toolbar {
+      width: 100%;
+      max-width: none;
+      padding: 0 12px;
+      justify-content: center;
+      overflow-x: hidden;
+    }
+  }
+
+  .md-editor-content {
+    width: 100%;
+    height: calc(100vh - 246px);
+    min-height: 620px;
+    max-width: none;
+    margin: 10px 0 0;
+  }
 }
 </style>
 

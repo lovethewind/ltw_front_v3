@@ -56,7 +56,7 @@ import { computed, ref } from 'vue'
 import userApi from '@/api/user'
 import commonApi from '@/api/common'
 import { useModalStore } from '@/stores/modal'
-import { ElMessage, FormInstance } from 'element-plus'
+import { ElMessage, type FormInstance } from 'element-plus'
 import { Icon } from '@iconify/vue'
 import { VerifyCodeTypeEnum } from '@/enums'
 
@@ -108,13 +108,14 @@ const validateRePassword = (rule: any, value: any, callback: any) => {
 
 const baseInfo = {
   account: '',
+  username: '',
   code: '',
   password: '',
   rePassword: ''
 }
 
 const forgetFormRef = ref<FormInstance>()
-const postForm = ref(baseInfo)
+const postForm = ref<any>(baseInfo)
 const codeMsg = ref('发送')
 const timer = ref<any>(null)
 const time = ref(60)
@@ -156,10 +157,11 @@ function sendCode() {
   countDown()
   const EmailReg = /^[A-Za-z0-9_\-.]+[a-zA-Z0-9]@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/
   let func
-  const sendData = {
+  const sendData: any = {
     codeType: VerifyCodeTypeEnum.FIND_PASSWORD
   }
-  let tipMsg
+  let tipMsg = ''
+  postForm.value.account = postForm.value.username || postForm.value.account
   if (EmailReg.test(postForm.value.account)) {
     func = commonApi.getEmailCode
     sendData.email = postForm.value.account

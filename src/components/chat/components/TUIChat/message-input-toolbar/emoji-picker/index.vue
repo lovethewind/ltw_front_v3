@@ -13,7 +13,7 @@ import ToolbarItemContainer from '../toolbar-item-container/index.vue'
 import { useUserStore } from '@/stores/user'
 import { useChatStore } from '@/stores/chat'
 import EmojiView from '@/components/base/EmojiView.vue'
-import { IEmojiChar, IEmojiCollect } from '@/interface'
+import type { IEmojiChar, IEmojiCollect } from '@/interface'
 
 interface IEmits {
   (e: 'sendMessage'): void;

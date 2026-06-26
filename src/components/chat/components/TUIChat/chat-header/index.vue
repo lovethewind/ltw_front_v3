@@ -99,7 +99,6 @@ import { useUserStore } from '@/stores/user'
 import userApi from '@/api/user'
 import chatApi from '@/api/chat'
 import actionApi from '@/api/action'
-import { IUserDetail } from '@/interface'
 import { genderMap } from '@/utils/constant'
 import { formatRegisterTime } from '@/utils/date'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -108,7 +107,7 @@ import { ActionTypeEnum, ObjectTypeEnum } from '@/enums'
 
 const chatStore = useChatStore()
 const userStore = useUserStore()
-const userDetail = ref<IUserDetail>()
+const userDetail = ref<any>({})
 
 const currentConversation = computed(() => {
   return chatStore.currentConversation
@@ -128,7 +127,7 @@ function getUserDetail() {
 function addFriend() {
   if (currentConversation.value?.userProfile) {
     ElMessageBox.prompt('请输入申请信息', '添加好友', {
-      inputValue: '我是' + user.value.nickname
+      inputValue: '我是' + (user.value?.nickname || '')
     }).then(({ value }) => {
       chatApi.postContactApply({
         contactId: userDetail.value?.id,

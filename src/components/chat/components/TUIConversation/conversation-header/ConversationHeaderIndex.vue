@@ -1,5 +1,5 @@
 <template>
-  <div :ref="convHeaderRef" class="tui-conversation-header">
+  <div ref="convHeaderRef" class="tui-conversation-header">
     <ul v-if="menuList.length > 0" class="list">
       <li v-for="(item, index) in menuList" :key="index" class="list-item">
         <main class="tui-conversation-header-item" @click.stop="handleMenu(item)">
@@ -19,12 +19,13 @@ import { toWait } from '@/utils/common'
 
 interface IMenuItem {
   /** 唯一标示 */
-  name: string;
+  name?: string;
+  text: string;
   /** svg 图标 HTML */
   icon?: string;
 
   /** 自定义按钮点击时触发的事件 */
-  click?(event: Event): void;
+  click?: (event?: Event) => void;
 }
 
 const convHeaderRef = ref<HTMLElement | undefined>()
@@ -41,7 +42,7 @@ onMounted(() => {
 })
 
 function handleMenu(item: IMenuItem) {
-  item.click()
+  item.click?.()
 }
 
 </script>

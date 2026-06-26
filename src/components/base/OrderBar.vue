@@ -1,5 +1,5 @@
 <template>
-  <el-card v-if="props.useCard">
+  <el-card v-if="props.useCard" class="order-bar-card">
     <div class="order-type-div">
       <Icon v-if="props.showIcon" :icon="icon" class="icon-class" />
       <span v-for="(item, index) in props.barList" :key="item.type">
@@ -57,7 +57,13 @@ const props = defineProps({
 
 const active = ref(props.barList[0].type)
 
-function itemClick(val: number) {
+/**
+ * 切换排序类型并通知父组件。
+ *
+ * :param val: 当前选中的排序类型。
+ * :return: 无返回值。
+ */
+function itemClick(val: number): void {
   emit('item-click', val)
   active.value = val
 }
@@ -65,22 +71,38 @@ function itemClick(val: number) {
 </script>
 
 <style scoped>
+.order-bar-card {
+  border-radius: 6px;
+}
+
+.order-bar-card :deep(.el-card__body) {
+  padding: 0;
+}
+
 .order-type-div {
   display: flex;
   align-items: center;
-  padding: 1rem;
+  height: 44px;
+  padding: 0 0.875rem;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.order-type-div a {
+  color: var(--el-text-color-regular);
 }
 
 @media screen and (max-width: 759px) {
   .order-type-div {
     margin: 10px 0;
     display: flex;
-    padding: 1rem 1rem
+    height: 42px;
+    padding: 0 0.875rem;
   }
 }
 
 .active {
-  color: rgba(255, 145, 0, 0.99) !important;
+  color: #2f80ed !important;
 }
 
 .icon-class {

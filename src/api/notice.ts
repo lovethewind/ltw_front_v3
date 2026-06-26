@@ -12,7 +12,7 @@ export default {
     })
   },
 
-  getNoticeList(noticeType, page, limit) {
+  getNoticeList(noticeType: NoticeTypeEnum, page: number, limit: number) {
     return request({
       url: `${apiName}/list/${noticeType}/${page}/${limit}`,
       method: 'get'

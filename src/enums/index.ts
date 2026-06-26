@@ -156,6 +156,7 @@ export enum UploadFileTypeEnum {
   AVATAR = 'avatar',
   BACKGROUND = 'background',
   COVER = 'cover',
+  THUMB = 'thumb',
   EMOJI = 'emoji',
   IMAGE = 'image',
   AUDIO = 'audio',

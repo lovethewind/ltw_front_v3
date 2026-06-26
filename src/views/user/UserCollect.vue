@@ -38,7 +38,7 @@
           <el-row justify="center" align="middle">
             <el-col :xs="24" :sm="6" class="article-cover-col">
               <div class="article-cover"
-                   :style="'background: url(' + article.cover + ') center center / cover no-repeat'"
+                   :style="'background: url(' + (article.coverThumb || article.cover) + ') center center / cover no-repeat'"
                    @click="toArticleDetail(article)" />
             </el-col>
             <el-col :xs="24" :sm="18" class="ps-4">
@@ -90,7 +90,6 @@ import { deleteHTMLTag, removeEmptyValues } from '@/utils/common'
 import { minute } from '@/utils/date'
 import { ActionTypeEnum, ObjectTypeEnum } from '@/enums'
 import { Icon } from '@iconify/vue'
-import { IArticle } from '@/interface'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -112,7 +111,7 @@ const searchOrderList = ref([
 
 const searchDates = ref<any>(null)
 const loading = ref(false)
-const collectList = ref<IArticle[]>([])
+const collectList = ref<any[]>([])
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
@@ -155,12 +154,12 @@ function infiniteHandler() {
   })
 }
 
-function orderTypeChange(val) {
+function orderTypeChange(val: any) {
   queryDict.value.orderType = val
   resetAndFetchArticleList()
 }
 
-function toArticleDetail(article) {
+function toArticleDetail(article: any) {
   router.push('/article/' + article.id)
 }
 

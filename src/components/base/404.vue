@@ -18,7 +18,7 @@
   </div>
 </template>
 
-<script setup type="ts">
+<script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -27,8 +27,13 @@ const message = computed(() => '这个页面不存在地球上...')
 
 const router = useRouter()
 
-function forwardAnyWhere() {
-  const randomUrlList = ['/category', 'tag', '/', 'share', '/picture', '/message-board', '/link', '/website']
+/**
+ * 随机跳转到仍保留的公开页面。
+ *
+ * :return: 无返回值。
+ */
+function forwardAnyWhere(): void {
+  const randomUrlList = ['/', '/picture', '/message-board', '/link', '/website']
   const randomUrl = randomUrlList[Math.floor(Math.random() * randomUrlList.length)]
   router.push(randomUrl)
 }

@@ -17,14 +17,14 @@
           class="pt-2 d-flex comment-item"
         >
           <!-- 头像 -->
-          <el-avatar size="default" class="comment-avatar" @click="router.push('/user/' + item.user.id)">
+          <el-avatar size="default" class="comment-avatar" @click="openUserPage(item.user.id)">
             <img :src="item.user.avatar" alt="">
           </el-avatar>
           <div class="comment-meta">
             <!-- 用户名 -->
             <div class="comment-user">
               <span>
-                <a :href="'/user/' + item.user.id" target="_blank" class="comment-nickname a-link">
+                <a :href="'/user/' + item.user.id" target="_blank" rel="noopener noreferrer" class="comment-nickname a-link">
                   {{ item.user.nickname }}
                 </a>
               </span>
@@ -66,14 +66,14 @@
               class="d-flex children-comment"
             >
               <!-- 头像 -->
-              <el-avatar size="small" class="comment-avatar" @click="$router.push('/user/' + item.user.id)">
+              <el-avatar size="small" class="comment-avatar" @click="openUserPage(childItem.user.id)">
                 <img :src="childItem.user.avatar" alt="">
               </el-avatar>
               <div class="reply-meta">
                 <!-- 用户名 -->
                 <div class="comment-user">
                 <span>
-                  <a :href="'/user/' + childItem.user.id" target="_blank"
+                  <a :href="'/user/' + childItem.user.id" target="_blank" rel="noopener noreferrer"
                      class="comment-nickname a-link">{{ childItem.user.nickname }}</a>
                 </span>
                   <span v-if="childItem.userId === objUserId" class="blogger-tag">博主</span>
@@ -114,7 +114,7 @@
                   <!-- 回复用户信息 -->
                   <div v-if="childItem.replyUser && childItem.parentId !== childItem.firstLevelId"
                        class="reply-user-info">
-                    @<a :href="'/user/' + childItem.replyUser.id" target="_blank"
+                    @<a :href="'/user/' + childItem.replyUser.id" target="_blank" rel="noopener noreferrer"
                         class="a-link">{{ childItem.replyUser.nickname }}</a>
                   </div>
                   <span v-dompurify-html="childItem.content.replace(/\n/g, '<br/>')" />
@@ -152,7 +152,6 @@
 
 <script setup lang="ts">
 import { ref, onMounted, toRefs, watch } from 'vue'
-import { useRouter } from 'vue-router'
 import commentApi from '@/api/comment'
 import actionApi from '@/api/action'
 import { checkIsLogin } from '@/utils/common'
@@ -162,7 +161,6 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Icon } from '@iconify/vue'
 import LoadMore from '@/components/base/LoadMore.vue'
 
-const router = useRouter()
 const emit = defineEmits(['reply-comment'])
 
 const commentList = ref<any>([])
@@ -184,6 +182,16 @@ const props = defineProps<{
   componentIndex?: number  // 组件索引, 用于区分多个评论组件
   manualShowComment?: boolean  // 手动查看评论
 }>()
+
+/**
+ * 在新标签页打开用户主页。
+ *
+ * :param userId: 用户 ID。
+ * :return: 无返回值。
+ */
+function openUserPage(userId: string): void {
+  window.open('/user/' + userId, '_blank', 'noopener,noreferrer')
+}
 
 const {
   objId,

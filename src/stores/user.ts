@@ -2,7 +2,7 @@ import userApi from '@/api/user'
 import { getToken, removeToken, setToken } from '@/utils/auth'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { IUserSelfInfo } from '@/interface'
+import type { IUserSelfInfo } from '@/interface'
 import { EventServer } from '@/event-server'
 import { EventName } from '@/event-server/event-name'
 
@@ -11,7 +11,7 @@ const eventServer = EventServer.getInstance()
 
 export const useUserStore = defineStore('user', () => {
   const token = ref(getToken())
-  const user = ref<IUserSelfInfo>(null)
+  const user = ref<IUserSelfInfo | null>(null)
   const network = ref(true)
   const ssoHost = ref(import.meta.env.VUE_APP_DOMAIN_SSO_URL)
 
@@ -31,28 +31,28 @@ export const useUserStore = defineStore('user', () => {
     removeToken()
   }
 
-  function addUserArticleLike(articleId) {
-    user.value.articleLikeSet.push(articleId)
+  function addUserArticleLike(articleId: string) {
+    user.value?.articleLikeSet.push(articleId)
   }
 
-  function reduceUserArticleLike(articleId) {
-    user.value.articleLikeSet.splice(user.value.articleLikeSet.indexOf(articleId), 1)
+  function reduceUserArticleLike(articleId: string) {
+    user.value?.articleLikeSet.splice(user.value.articleLikeSet.indexOf(articleId), 1)
   }
 
-  function addUserArticleCollect(articleId) {
-    user.value.articleCollectSet.push(articleId)
+  function addUserArticleCollect(articleId: string) {
+    user.value?.articleCollectSet.push(articleId)
   }
 
-  function reduceUserArticleCollect(articleId) {
-    user.value.articleCollectSet.splice(user.value.articleCollectSet.indexOf(articleId), 1)
+  function reduceUserArticleCollect(articleId: string) {
+    user.value?.articleCollectSet.splice(user.value.articleCollectSet.indexOf(articleId), 1)
   }
 
-  function setNetwork(val) {
+  function setNetwork(val: boolean) {
     network.value = val
   }
 
-  function login(userInfo) {
-    return new Promise((resolve, reject) => {
+  function login(userInfo: any) {
+    return new Promise<void>((resolve, reject) => {
       userApi.login(userInfo).then(response => {
         const { data } = response
         setUserToken(data.token)
@@ -64,7 +64,7 @@ export const useUserStore = defineStore('user', () => {
   }
 
   function logout() {
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve) => {
       removeUserToken()
       resetState()
       resolve()
@@ -79,7 +79,7 @@ export const useUserStore = defineStore('user', () => {
           return reject('Verification failed, please Login again.')
         }
         user.value = data
-        if (user.value.userRestriction.userForbidden) {
+        if (user.value?.userRestriction.userForbidden) {
           logout().then()
           return reject('该账号已被封禁，暂时无法使用')
         }

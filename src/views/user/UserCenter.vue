@@ -122,7 +122,7 @@ const menuListAll = [
 
 const viewUser = ref<any>(null)
 const currentRow = ref<any>(null)
-const currentActiveMenu = ref({
+const currentActiveMenu = ref<any>({
   index: UserSettingMenuTypeEnum.BASE_INFO,
   name: '基本信息',
   icon: 'mi:user',
@@ -148,12 +148,12 @@ const menuList = computed(() => {
 
 watch(user, (val) => {
   if (!val && currentActiveMenu.value.needLogin) {
-    currentActiveMenu.value = menuListAll.find(menu => menu.index === UserSettingMenuTypeEnum.BASE_INFO)
+    currentActiveMenu.value = menuListAll.find(menu => menu.index === UserSettingMenuTypeEnum.BASE_INFO) || menuListAll[0]
   }
 })
 
 onMounted(() => {
-  const viewUserId = route.params.userId || user.value?.id
+  const viewUserId = (route.params.userId as string | undefined) || user.value?.id || ''
   userApi.getUserById(viewUserId).then(res => {
     viewUser.value = res.data
     tempCover.value = viewUser.value.background
@@ -195,14 +195,14 @@ async function changBackgroundImage() {
     await userStore.getInfo()
     viewUser.value = Object.assign({}, user.value)
     currentRow.value = Object.assign({}, user.value)
-    tempCover.value = user.value.background
+    tempCover.value = user.value?.background
     newBackgroundImage.value = null
   }).finally(() => {
     changDisabled.value = false
   })
 }
 
-function beforeBackgroundUpload(file) {
+function beforeBackgroundUpload(file: File) {
   // 验证文件类型和大小
   const isLt20M = file.size / 1024 / 1024 < 20
   if (!isLt20M) {
@@ -214,7 +214,7 @@ function beforeBackgroundUpload(file) {
     return false
   }
   oldBackground.value = viewUser.value.background
-  getBase64(file, url => {
+  getBase64(file, (url: string) => {
     nextTick(() => {
       newBackgroundImage.value = url
       viewUser.value.background = file

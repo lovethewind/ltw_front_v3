@@ -4,7 +4,7 @@ const apiName = '/config'
 
 export default {
 
-  getConfigByKey(key) {
+  getConfigByKey(key: string) {
     return request({
       url: `${apiName}/common/detail/${key}`,
       method: 'get'

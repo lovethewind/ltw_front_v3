@@ -46,7 +46,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, toRefs } from 'vue'
-import { IConversation } from '@/interface/ws'
+import type { IConversation } from '@/interface/ws'
 import { ContactTypeEnum } from '@/enums/ws'
 import chatApi from '@/api/chat'
 import { ElMessageBox } from 'element-plus'

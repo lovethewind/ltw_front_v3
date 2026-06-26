@@ -27,7 +27,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { ElMessage, FormInstance } from 'element-plus'
+import { ElMessage, type FormInstance } from 'element-plus'
 import commonApi from '@/api/common.js'
 import { useModalStore } from '@/stores/modal'
 
@@ -63,7 +63,7 @@ const feedbackFlag = computed(() => {
 })
 
 function closeModal() {
-  postForm.value.type = 1
+  postForm.value.feedbackType = 1
   postForm.value.email = null
   postForm.value.title = null
   postForm.value.content = null

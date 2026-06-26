@@ -1,4 +1,4 @@
-import { NavigationGuardNext, RouteLocationNormalized } from 'vue-router'
+import type { NavigationGuardNext, RouteLocationNormalized } from 'vue-router'
 import NProgress from 'nprogress' // 水平进度条提示: 在跳转路由时使用
 import { ElMessage } from 'element-plus'
 import { getToken } from '@/utils/auth'
@@ -12,7 +12,7 @@ const needLoginList = ['userNotice'] // redirect needLoginList
 export async function routeGuard(to: RouteLocationNormalized, from: RouteLocationNormalized, next: NavigationGuardNext) {
   const userStore = useUserStore()
   NProgress.start()
-  document.title = getPageTitle(to.meta.title)
+  document.title = getPageTitle(to.meta.title as string)
   const hasToken = getToken()
   if (hasToken) {
     if (to.path === '/login') {
@@ -33,14 +33,14 @@ export async function routeGuard(to: RouteLocationNormalized, from: RouteLocatio
       // remove token and go to login page to re-login
       await userStore.logout()
       ElMessage({
-        message: error || 'Has Error',
+        message: error instanceof Error ? error.message : String(error || 'Has Error'),
         type: 'error',
         plain: true
       })
       next(`/404`)
     }
   } else { /* has no token*/
-    if (needLoginList.indexOf(to.name) === -1) {
+    if (needLoginList.indexOf(String(to.name || '')) === -1) {
       // in the free needLoginList need, go directly
       next()
     } else {

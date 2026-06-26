@@ -48,7 +48,7 @@ import actionApi from '@/api/action'
 import { checkIsLogin } from '@/utils/common'
 import { ElMessage } from 'element-plus'
 import { ActionTypeEnum, ObjectTypeEnum } from '@/enums'
-import { IUserDetail } from '@/interface'
+import type { IUserDetail } from '@/interface'
 
 const userStore = useUserStore()
 
@@ -90,7 +90,7 @@ onMounted(() => {
 function infiniteHandler() {
   loading.value = true
   const func = viewUser.value.id === user.value?.id ? actionApi.getUserActionList : actionApi.getActionList
-  const sendData = {
+  const sendData: any = {
     actionType: ActionTypeEnum.FOLLOW,
     objType: ObjectTypeEnum.USER
   }
@@ -99,7 +99,7 @@ function infiniteHandler() {
   } else { // 粉丝
     sendData.objId = viewUser.value?.id
   }
-  func(currentPage.value, pageSize.value, sendData).then(res => {
+  func(currentPage.value, pageSize.value, sendData, {}).then(res => {
     if (res.data.records.length) {
       currentPage.value++
       followerList.value.push(...res.data.records)
@@ -110,7 +110,7 @@ function infiniteHandler() {
   })
 }
 
-function followUser(user) {
+function followUser(user: any) {
   if (!checkIsLogin()) return
   actionApi.addOrUpdate({
     objId: user.id,
@@ -134,7 +134,7 @@ function followUser(user) {
   })
 }
 
-function orderTypeChange(val) {
+function orderTypeChange(val: any) {
   showType.value = val
   currentPage.value = 1
   followerList.value = []

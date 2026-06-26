@@ -40,7 +40,7 @@
 import { ref } from 'vue'
 import { EmojiList } from '@/utils/emoji'
 import { Icon } from '@iconify/vue'
-import { IEmojiChar, IEmojiCollect } from '@/interface'
+import type { IEmojiChar, IEmojiCollect } from '@/interface'
 
 const emit = defineEmits(['addEmoji'])
 
@@ -49,7 +49,7 @@ enum EmojiTab {
   COLLECT = 2
 }
 
-const currentEmojiList = ref(EmojiList)
+const currentEmojiList = ref<any[]>(EmojiList)
 const currentTabItem = ref(EmojiTab.BASIC)
 const tabList = ref([{
   type: EmojiTab.BASIC,
@@ -68,7 +68,7 @@ function toggleEmojiTab(tab: EmojiTab) {
   }
 }
 
-function addEmoji(val: IEmojiChar & IEmojiCollect) {
+function addEmoji(val: IEmojiChar | IEmojiCollect | any) {
   emit('addEmoji', val)
 }
 </script>

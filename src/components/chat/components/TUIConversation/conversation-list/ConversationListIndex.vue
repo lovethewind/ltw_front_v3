@@ -45,12 +45,12 @@
                 class="middle-box-at"
               >{{ conversation.getGroupAtInfo() }}</span>
               <div v-else class="middle-box-content">
-                {{ dealChatMessageContent(conversation.lastMessage) }}
+                {{ dealChatMessageContent(conversation.lastMessage || {} as any) }}
               </div>
             </div>
           </div>
           <div class="content-footer">
-            <span class="time">{{ formatDateToMinute(conversation.lastMessage?.createTime) }}</span>
+            <span class="time">{{ formatDateToMinute(conversation.lastMessage?.createTime || '') }}</span>
             <div>
               <Icon v-if="conversation.isPinned" icon="lucide:pin" />
               <Icon v-if="conversation.isMuted" icon="ep:mute-notification" />
@@ -63,8 +63,8 @@
 </template>
 
 <script lang="ts" setup>
-import { IChatMessage, IConversation } from '@/interface/ws'
-import { computed, onMounted, onUnmounted, Ref, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import type { Ref } from 'vue'
 import ActionsMenu from '../actions-menu/index.vue'
 import { Icon } from '@iconify/vue'
 import { useChatStore } from '@/stores/chat'
@@ -80,9 +80,9 @@ const chatStore = useChatStore()
 const userStore = useUserStore()
 const eventServer = EventServer.getInstance()
 
-const selectConversation = ref<IConversation>()
+const selectConversation = ref<any>()
 const isShowOverlay = ref<boolean>(false)
-const conversationList = ref<IConversation[]>([])
+const conversationList = ref<any[]>([])
 const conversationListInnerDomRef = ref<HTMLElement | undefined>()
 const actionsMenuPosition = ref<{
   top: number;
@@ -107,8 +107,8 @@ const user = computed(() => {
   return userStore.user
 })
 
-watch(addConversationUserId, (val: string) => {
-  val && addConversationUser(val)
+watch(addConversationUserId as any, (val: any) => {
+  val && addConversationUser(String(val))
 })
 
 onMounted(() => {
@@ -126,7 +126,7 @@ function closeConversationActionMenu() {
   isShowOverlay.value = false
 }
 
-function enterConversationChat(conversation: IConversation) {
+function enterConversationChat(conversation: any) {
   if (conversation.unreadCount > 0) {
     chatApi.updateConversation({
       conversationId: conversation.conversationId,
@@ -144,7 +144,7 @@ function enterConversationChat(conversation: IConversation) {
 }
 
 function getConversationList() {
-  chatApi.getConversationPageList(currentPage.value, pageSize.value).then(res => {
+  chatApi.getConversationPageList(currentPage.value, pageSize.value, {}).then(res => {
     conversationList.value = [...conversationList.value, ...res.data.records]
     total.value = res.data.total
     if (res.data.records.length) {
@@ -156,7 +156,7 @@ function getConversationList() {
   })
 }
 
-function receiveMessage(message: IChatMessage) {
+function receiveMessage(message: any) {
   const conversation = conversationList.value.find(item => item.conversationId === message.conversationId)
   if (conversation) {
     conversation.lastMessage = message
@@ -166,7 +166,7 @@ function receiveMessage(message: IChatMessage) {
     sortConversationList()
     return
   }
-  const contactId = message.userId === user.value.id ? message.contactId : message.userId
+  const contactId = message.userId === user.value?.id ? message.contactId : message.userId
   chatApi.getConversationDetail({
     contactId: contactId,
     contactType: message.contactType
@@ -182,7 +182,7 @@ function addConversationUser(userId: string) {
     contactType: ContactTypeEnum.USER
   }).then(res => {
     const conversation = res.data
-    chatStore.setAddConversationUserId(undefined)
+    chatStore.setAddConversationUserId('')
     const existConversation = conversationList.value.find(item => item.conversationId === conversation.conversationId)
     if (existConversation) {
       enterConversationChat(existConversation)
@@ -195,22 +195,22 @@ function addConversationUser(userId: string) {
 }
 
 function sortConversationList() {
-  conversationList.value.sort((a, b) => {
+  conversationList.value.sort((a: any, b: any) => {
     // 先按置顶排序
     if (a.isPinned !== b.isPinned) {
-      return b.isPinned - a.isPinned
+      return Number(b.isPinned) - Number(a.isPinned)
     }
-    return b.lastMessage?.createTime?.localeCompare(a.lastMessage?.createTime) || 0
+    return String(b.lastMessage?.createTime || '').localeCompare(String(a.lastMessage?.createTime || ''))
   })
 }
 
-function showConversationActionMenu(event: MouseEvent, conversation: IConversation, index: number, isContextMenuEvent?: boolean) {
+function showConversationActionMenu(event: MouseEvent, conversation: any, index: number, isContextMenuEvent?: boolean) {
   isShowOverlay.value = false
   if (isContextMenuEvent) {
     event.preventDefault()
   }
   selectConversation.value = conversation
-  getActionsMenuPosition(event, index)
+  getActionsMenuPosition(event)
   isShowOverlay.value = true
 }
 
@@ -226,11 +226,11 @@ function getActionsMenuPosition(event: MouseEvent) {
   }
 }
 
-function clearConversation(conversation: Ref<IConversation>) {
+function clearConversation(conversation: Ref<any>) {
   conversationList.value.splice(conversationList.value.indexOf(conversation.value), 1)
   isShowOverlay.value = false
-  chatStore.setCurrentConversation(undefined)
-  chatStore.setCurrentConversation(undefined)
+  chatStore.setCurrentConversation({} as any)
+  chatStore.setCurrentConversation({} as any)
 }
 
 // Expose to the parent component and close actionsMenu when a sliding event is detected

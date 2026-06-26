@@ -15,7 +15,7 @@
 
 <script lang="ts" setup>
 import { onMounted, onUnmounted, toRefs } from 'vue'
-import { IChatMessage, IChatUpdateMessage } from '@/interface/ws'
+import type { IChatMessage, IChatUpdateMessage } from '@/interface/ws'
 import { MessageSendStatusEnum } from '@/enums/ws'
 import { EventServer } from '@/event-server'
 import { EventName } from '@/event-server/event-name'

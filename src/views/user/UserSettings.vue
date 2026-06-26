@@ -31,11 +31,11 @@ import { UserSettingsCategoryEnum } from '@/enums'
 
 const userStore = useUserStore()
 
-const defaultSettingsForm = {}
+const defaultSettingsForm: any = {}
 userSettingsList.map(item => {
   defaultSettingsForm[item.key] = item.default
 })
-const settingsForm = ref(Object.assign({}, defaultSettingsForm))
+const settingsForm = ref<any>(Object.assign({}, defaultSettingsForm))
 const updateBtnDisabled = ref(false)
 
 const user = computed(() => {
@@ -49,7 +49,7 @@ const noticeSettingsList = computed(() => {
 })
 
 onMounted(() => {
-  settingsForm.value = Object.assign(settingsForm.value, user.value.userSettings)
+  settingsForm.value = Object.assign(settingsForm.value, (user.value as any)?.userSettings || {})
 })
 
 function update() {

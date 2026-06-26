@@ -132,7 +132,7 @@
       </template>
       <el-row>
         <el-col v-for="item in pictureList" :key="item.id" :span="4" class="picture-list-item">
-          <img :src="item.url" alt="" class="picture-list-item-img" @click="openPreviewPicture(item)">
+          <img :src="item.thumbUrl || item.url" alt="" class="picture-list-item-img" @click="openPreviewPicture(item)">
         </el-col>
       </el-row>
       <el-empty v-if="pictureList.length === 0" />
@@ -229,79 +229,86 @@
       </template>
     </el-dialog>
     <!-- 图片预览 -->
-    <el-dialog title="图片详情" v-model="previewPictureDialogVisible" destroy-on-close
-               width="95%" top="5vh">
-      <el-row>
-        <el-col :span="16">
-          <el-row align="middle">
-            <el-col :span="24">
-              <div class="display-image-div">
-                <img ref="displayImageRef" :src="previewPictureItem.url" alt="" class="display-image">
-              </div>
-            </el-col>
-          </el-row>
-          <el-row align="middle" class="picture-preview-detail">
-            <el-col :sm="6" :xs="12">
-              <a :href="'user/' + previewPictureItem.userId" target="_blank" class="ellipsis">
-                <el-avatar :src="previewPictureItem.user.avatar" size="small" />
-                {{ previewPictureItem.user.nickname }}
-              </a>
-            </el-col>
-            <el-col :sm="4" :xs="12">
+    <el-dialog v-model="previewPictureDialogVisible" destroy-on-close
+               class="picture-preview-dialog" width="95%" top="20px">
+      <div class="picture-preview-layout">
+        <section class="picture-preview-stage">
+          <div class="display-image-div">
+            <img ref="displayImageRef" :src="previewPictureItem.url" alt="" class="display-image">
+          </div>
+        </section>
+        <aside class="picture-preview-sidebar">
+          <div class="picture-preview-author">
+            <a :href="'user/' + previewPictureItem.userId" target="_blank" class="ellipsis">
+              <el-avatar :src="previewPictureItem.user.avatar" size="small" />
+              <span>{{ previewPictureItem.user.nickname }}</span>
+            </a>
+            <span class="picture-preview-time">
               <Icon icon="mingcute:time-line" />
               {{ minute(previewPictureItem.createTime) }}
-            </el-col>
-            <el-col :sm="3" :xs="12">
+            </span>
+          </div>
+          <div class="picture-preview-meta">
+            <span>
               <Icon icon="clarity:picture-line" />
               {{ previewPictureItem.width }}x{{ previewPictureItem.height }}
-            </el-col>
-            <el-col :sm="11" :xs="24" :class="['picture-op-button-col', isMobile() ? '' : 'text-right']">
-              <el-button :type="previewPictureItem.hasLike ? 'primary' : ''" size="small"
-                         @click="thumbPicture(previewPictureItem.id)">
-                <Icon icon="tabler:thumb-up" />
-                赞({{ previewPictureItem.likeCount || 0 }})
-              </el-button>
-              <el-button type="success" size="small" @click="downloadPicture()">
-                <Icon icon="mage:download" />
-                下载({{ transformSize(previewPictureItem.size) }})
-              </el-button>
-              <el-button v-if="user && previewPictureItem.userId === user.id" type="primary" size="small"
-                         @click="openEditPicture">
-                <Icon icon="lucide:edit" />
-                修改图片描述
-              </el-button>
-              <el-button v-if="user && previewPictureItem.userId === user.id" type="danger" size="small"
-                         @click="deletePicture(previewPictureItem.id)">
-                <Icon icon="material-symbols:delete-outline" />
-                删除
-              </el-button>
-            </el-col>
-          </el-row>
-          <el-row class="mt-2 text-break">
+            </span>
+            <span>
+              <Icon icon="mage:download" />
+              {{ transformSize(previewPictureItem.size) }}
+            </span>
+          </div>
+          <div v-if="previewPictureItem.description" class="picture-preview-description text-break">
             {{ previewPictureItem.description }}
-          </el-row>
-        </el-col>
-        <el-col :span="8" class="ps-2">
-          <reply-view
-            ref="replyRef"
-            :show-header="false"
-            :check-login="true"
-            :is-fixed="false"
-            @reply="replyPicture"
-            @cancel="cancelReply"
-          />
-          <comment-view
-            ref="commentRef"
-            :obj-id="previewPictureItem.id"
-            :login-user-id="user?.id"
-            :obj-type="ObjectTypeEnum.PICTURE"
-            :check-login="true"
-            :obj-user-id="previewPictureItem.userId"
-            :max-height="420"
-            @reply-comment="replyComment"
-          />
-        </el-col>
-      </el-row>
+          </div>
+          <div class="picture-preview-actions">
+            <el-button :type="previewPictureItem.hasLike ? 'primary' : ''" size="small"
+                       @click="thumbPicture(previewPictureItem.id)">
+              <Icon icon="tabler:thumb-up" />
+              赞({{ previewPictureItem.likeCount || 0 }})
+            </el-button>
+            <el-button type="success" size="small" @click="downloadPicture()">
+              <Icon icon="mage:download" />
+              下载
+            </el-button>
+            <el-button v-if="user && previewPictureItem.userId === user.id" type="primary" size="small"
+                       @click="openEditPicture">
+              <Icon icon="lucide:edit" />
+              编辑
+            </el-button>
+            <el-button v-if="user && previewPictureItem.userId === user.id" type="danger" size="small"
+                       @click="deletePicture(previewPictureItem.id)">
+              <Icon icon="material-symbols:delete-outline" />
+              删除
+            </el-button>
+          </div>
+          <div class="picture-preview-comments">
+            <div ref="emptyReplyRef" class="empty-reply-div" v-show="replyShouldFixed">
+              正在评论中
+            </div>
+            <div class="picture-preview-reply">
+              <reply-view
+                ref="replyRef"
+                :show-header="false"
+                :check-login="true"
+                :is-fixed="replyShouldFixed"
+                @reply="replyPicture"
+                @cancel="cancelReply"
+                :class="replyShouldFixed ? 'reply-fixed': ''"
+              />
+            </div>
+            <comment-view
+              ref="commentRef"
+              :obj-id="previewPictureItem.id"
+              :login-user-id="user?.id"
+              :obj-type="ObjectTypeEnum.PICTURE"
+              :check-login="true"
+              :obj-user-id="previewPictureItem.userId"
+              @reply-comment="replyComment"
+            />
+          </div>
+        </aside>
+      </div>
     </el-dialog>
   </div>
 </template>
@@ -315,7 +322,15 @@ import { useUserStore } from '@/stores/user'
 import pictureApi from '@/api/picture'
 import actionApi from '@/api/action'
 import ossApi from '@/api/oss-api'
-import { checkIsLogin, getBase64, isMobile, removeSameValues, transformSize } from '@/utils/common'
+import {
+  checkIsLogin,
+  compressImageFile,
+  getBase64,
+  getThumbFileName,
+  isMobile,
+  removeSameValues,
+  transformSize
+} from '@/utils/common'
 import { uploadFile } from '@/utils/oss-upload'
 import { minute } from '@/utils/date'
 import { ActionTypeEnum, AlbumCategoryTypeEnum, AlbumTypeEnum, ObjectTypeEnum, UploadFileTypeEnum } from '@/enums'
@@ -335,10 +350,12 @@ const defaultPictureAlbumForm = {
 
 const addPictureFormRef = ref<FormInstance | null>(null)
 const addPictureAlbumFormRef = ref<FormInstance | null>(null)
-const displayImageRef = ref<FormInstance | null>(null)
+const displayImageRef = ref<HTMLElement | null>(null)
+const emptyReplyRef = ref<HTMLElement | null>(null)
 const replyRef = ref<InstanceType<typeof ReplyView> | null>(null)
 const commentRef = ref<InstanceType<typeof CommentView> | null>(null)
 const currentReplyComment = ref<any>({})
+const replyShouldFixed = ref(false)
 const addPictureAlbumDialogVisible = ref(false)
 const addPictureDialogVisible = ref(false)
 const previewPictureDialogVisible = ref(false)
@@ -368,7 +385,7 @@ const userPictureQueryParams = ref({
 })
 const pictureAlbumAddDisabled = ref(false)
 const pictureAlbumPreviewCover = ref('')
-const pictureAlbumForm = ref(Object.assign({}, defaultPictureAlbumForm))
+const pictureAlbumForm = ref<any>(Object.assign({}, defaultPictureAlbumForm))
 const pictureAlbumRules = ref({
   name: [
     { min: 1, max: 20, message: '长度在 1 到 20 个字符', trigger: 'blur' }
@@ -377,11 +394,12 @@ const pictureAlbumRules = ref({
     { min: 2, max: 200, message: '长度在 1 到 200 个字符', trigger: 'blur' }
   ]
 })
-const pictureFormPreviewUrl = ref('')
-const pictureForm = ref({
+const pictureFormPreviewUrl = ref<string | null>('')
+const pictureForm = ref<any>({
   isEdit: false,
   albumId: '',
   url: null,
+  thumbUrl: null,
   size: 0,
   description: '',
   width: 0,
@@ -413,7 +431,7 @@ onMounted(() => {
 
 
 function getPictureAlbumPageList() {
-  pictureApi.getPictureAlbumPageList(pictureAlbumQueryParams.value.pageNum, pictureAlbumQueryParams.value.pageSize).then(res => {
+  pictureApi.getPictureAlbumPageList(pictureAlbumQueryParams.value.pageNum, pictureAlbumQueryParams.value.pageSize, {}).then(res => {
     pictureAlbumList.value = res.data.records
     albumCount.value = res.data.total
   })
@@ -428,13 +446,16 @@ function changePictureAlbum(item: any) {
 function getUserPictureAlbumPageList() {
   pictureApi.getUserPictureAlbumPageList(
     userPictureAlbumQueryParams.value.pageNum,
-    userPictureAlbumQueryParams.value.pageSize).then(res => {
+    userPictureAlbumQueryParams.value.pageSize,
+    user.value?.id || '',
+    {}
+  ).then(res => {
     pictureAlbumList.value = res.data.records
     albumCount.value = res.data.total
   })
 }
 
-function changeUserPictureAlbum(item) {
+function changeUserPictureAlbum(item: any) {
   userCurrentActive.value = item
   pictureForm.value.albumId = item ? item.id : null
   getUserAlbumPicturePageList()
@@ -534,7 +555,7 @@ function deletePictureAlbum() {
   })
 }
 
-function beforePictureAlbumCoverUpload(file) {
+function beforePictureAlbumCoverUpload(file: File) {
   // 验证文件类型和大小
   const isLt10M = file.size / 1024 / 1024 < 10
   if (!isLt10M) {
@@ -545,13 +566,29 @@ function beforePictureAlbumCoverUpload(file) {
     })
     return false
   }
-  getBase64(file, url => {
+  getBase64(file, (url: string) => {
     nextTick(() => {
       pictureAlbumPreviewCover.value = url
       pictureAlbumForm.value.cover = file
     })
   })
   return false
+}
+
+/**
+ * 上传压缩后的图册封面。
+ *
+ * :param data: 待提交的图册表单数据。
+ * :param coverFile: 图册封面文件。
+ * :return: 无返回值。
+ */
+async function uploadAlbumCover(data: any, coverFile: File): Promise<void> {
+  const thumbFile = await compressImageFile(coverFile)
+  const coverRes = await ossApi.getUploadSignatureUrl({
+    dirType: UploadFileTypeEnum.COVER,
+    fileName: getThumbFileName(coverFile.name)
+  })
+  data.cover = await uploadFile(coverRes.data, thumbFile)
 }
 
 function saveOrUpdatePictureAlbum() {
@@ -564,7 +601,7 @@ function saveOrUpdatePictureAlbum() {
 }
 
 function addPictureAlbum() {
-  addPictureAlbumFormRef.value?.validate(async (valid) => {
+  addPictureAlbumFormRef.value?.validate((async (valid: boolean) => {
     if (!valid) {
       pictureAlbumAddDisabled.value = false
       return false
@@ -576,12 +613,17 @@ function addPictureAlbum() {
     })
     const saveData = Object.assign({}, pictureAlbumForm.value)
     if (pictureAlbumForm.value.cover && typeof pictureAlbumForm.value.cover === 'object') {
-      // 上传图片
-      const res = await ossApi.getUploadSignatureUrl({
-        dirType: UploadFileTypeEnum.COVER,
-        fileName: pictureAlbumForm.value.cover.name
-      })
-      saveData.cover = await uploadFile(res.data, pictureAlbumForm.value.cover)
+      try {
+        await uploadAlbumCover(saveData, pictureAlbumForm.value.cover)
+      } catch (error) {
+        pictureAlbumAddDisabled.value = false
+        ElMessage({
+          message: '图库封面上传失败，请稍后重试',
+          type: 'error',
+          plain: true
+        })
+        return
+      }
     }
     pictureApi.savePictureAlbum(saveData).then(() => {
       ElMessage({
@@ -594,7 +636,7 @@ function addPictureAlbum() {
     }).finally(() => {
       pictureAlbumAddDisabled.value = false
     })
-  })
+  }) as any)
 }
 
 function getUserOrPictureAlbumPageList() {
@@ -606,12 +648,12 @@ function changeUserOrPictureAlbum() {
 }
 
 function updatePictureAlbum() {
-  addPictureAlbumFormRef.value?.validate(async (valid) => { // 验证表单
+  addPictureAlbumFormRef.value?.validate((async (valid: boolean) => { // 验证表单
     if (!valid) {
       pictureAlbumAddDisabled.value = false
       return false
     }
-    if (pictureAlbumForm.value.type === AlbumTypeEnum.PUBLIC && userCurrentActive.value.type !== pictureAlbumForm.value.type) {
+    if (pictureAlbumForm.value.albumType === AlbumTypeEnum.PUBLIC && userCurrentActive.value.albumType !== pictureAlbumForm.value.albumType) {
       await ElMessageBox.confirm('该图库将会公开, 图库公开后将无法转为私密和自行删除, 是否继续?', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
@@ -625,12 +667,17 @@ function updatePictureAlbum() {
     })
     const saveData = removeSameValues(pictureAlbumForm.value, userCurrentActive.value)
     if (pictureAlbumForm.value.cover && typeof pictureAlbumForm.value.cover === 'object') {
-      // 上传图片
-      const res = await ossApi.getUploadSignatureUrl({
-        dirType: UploadFileTypeEnum.COVER,
-        fileName: pictureAlbumForm.value.cover.name
-      })
-      saveData.cover = await uploadFile(res.data, saveData.cover)
+      try {
+        await uploadAlbumCover(saveData, pictureAlbumForm.value.cover)
+      } catch (error) {
+        pictureAlbumAddDisabled.value = false
+        ElMessage({
+          message: '图库封面上传失败，请稍后重试',
+          type: 'error',
+          plain: true
+        })
+        return
+      }
     }
     pictureApi.updatePictureAlbum(saveData).then(() => {
       ElMessage({
@@ -644,7 +691,7 @@ function updatePictureAlbum() {
     }).finally(() => {
       pictureAlbumAddDisabled.value = false
     })
-  })
+  }) as any)
 }
 
 function cancelAddPictureAlbum() {
@@ -680,7 +727,7 @@ function openEditPicture() {
   addPictureDialogVisible.value = true
 }
 
-function beforePictureUpload(file) {
+function beforePictureUpload(file: File) {
   // 验证文件类型和大小
   const isLt10M = file.size / 1024 / 1024 < 10
   if (!isLt10M) {
@@ -694,7 +741,7 @@ function beforePictureUpload(file) {
   // 获取图片宽高
   const reader = new FileReader()
   reader.onload = e => {
-    const imgData = e.target.result
+    const imgData = e.target?.result as string
     const image = new Image()
     image.onload = () => {
       pictureForm.value.width = image.width
@@ -705,7 +752,7 @@ function beforePictureUpload(file) {
     image.src = imgData
   }
   reader.readAsDataURL(file)
-  getBase64(file, url => {
+  getBase64(file, (url: string) => {
     nextTick(() => {
       pictureFormPreviewUrl.value = url
       pictureForm.value.size = file.size
@@ -713,6 +760,27 @@ function beforePictureUpload(file) {
     })
   })
   return false
+}
+
+/**
+ * 上传图库图片原图和缩略图。
+ *
+ * :param data: 待提交的图片表单数据。
+ * :param imageFile: 原始图片文件。
+ * :return: 无返回值。
+ */
+async function uploadPictureImage(data: any, imageFile: File): Promise<void> {
+  const thumbFile = await compressImageFile(imageFile)
+  const imageRes = await ossApi.getUploadSignatureUrl({
+    dirType: UploadFileTypeEnum.IMAGE,
+    fileName: imageFile.name
+  })
+  const thumbRes = await ossApi.getUploadSignatureUrl({
+    dirType: UploadFileTypeEnum.THUMB,
+    fileName: getThumbFileName(imageFile.name)
+  })
+  data.url = await uploadFile(imageRes.data, imageFile)
+  data.thumbUrl = await uploadFile(thumbRes.data, thumbFile)
 }
 
 function saveOrUpdatePicture() {
@@ -724,7 +792,7 @@ function saveOrUpdatePicture() {
 }
 
 function addPicture() {
-  addPictureFormRef.value.validate(async (valid) => {
+  addPictureFormRef.value?.validate((async (valid: boolean) => {
     if (!valid) {
       return false
     }
@@ -735,12 +803,16 @@ function addPicture() {
     })
     const saveData = Object.assign({}, pictureForm.value)
     if (typeof pictureForm.value.url === 'object') {
-      // 上传图片
-      const res = await ossApi.getUploadSignatureUrl({
-        dirType: UploadFileTypeEnum.IMAGE,
-        fileName: pictureForm.value.url.name
-      })
-      saveData.url = await uploadFile(res.data, pictureForm.value.url)
+      try {
+        await uploadPictureImage(saveData, pictureForm.value.url as File)
+      } catch (error) {
+        ElMessage({
+          message: '图片上传失败，请稍后重试',
+          type: 'error',
+          plain: true
+        })
+        return
+      }
     }
     pictureApi.savePicture(saveData).then(() => {
       ElMessage({
@@ -751,7 +823,7 @@ function addPicture() {
       cancelAddPicture()
       changeUserOrPictureAlbum()
     })
-  })
+  }) as any)
 }
 
 function updatePicture() {
@@ -773,15 +845,18 @@ function updatePicture() {
 function cancelAddPicture() {
   addPictureDialogVisible.value = false
   pictureForm.value.url = null
+  pictureForm.value.thumbUrl = null
   pictureFormPreviewUrl.value = null
 }
 
 function handlePictureRemove() {
   pictureFormPreviewUrl.value = null
   pictureForm.value.url = null
+  pictureForm.value.thumbUrl = null
 }
 
-function openPreviewPicture(item) {
+function openPreviewPicture(item: any) {
+  cancelReply()
   previewPictureDialogVisible.value = true
   previewPictureItem.value = item
 }
@@ -793,7 +868,7 @@ function downloadPicture() {
   a.click()
 }
 
-function thumbPicture() {
+function thumbPicture(_id?: any) {
   actionApi.addOrUpdate({
     actionType: ActionTypeEnum.LIKE,
     objType: ObjectTypeEnum.PICTURE,
@@ -808,7 +883,7 @@ function thumbPicture() {
   })
 }
 
-function deletePicture() {
+function deletePicture(_id?: any) {
   ElMessageBox.confirm('确定删除该图片吗?', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
@@ -858,13 +933,27 @@ function replyPicture(val: any) {
 }
 
 function replyComment(val: any) {
-  if (!replyRef.value) return
+  if (!replyRef.value || !emptyReplyRef.value) return
   currentReplyComment.value = val
-  replyRef.value?.setReplyComment({ replyComment: val })
+  const width = replyRef.value.$el.offsetWidth
+  const height = replyRef.value.$el.offsetHeight
+  replyShouldFixed.value = true
+  replyRef.value.$el.style.width = width + 'px'
+  emptyReplyRef.value.style.height = height + 'px'
+  nextTick(() => {
+    replyRef.value?.setReplyComment({ replyComment: val })
+  })
 }
 
 function cancelReply() {
   currentReplyComment.value = {}
+  replyShouldFixed.value = false
+  if (replyRef.value) {
+    replyRef.value.$el.style.width = ''
+  }
+  if (emptyReplyRef.value) {
+    emptyReplyRef.value.style.height = ''
+  }
 }
 </script>
 

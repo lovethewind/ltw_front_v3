@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
-import { IContactListType, IConversation, IOption } from '@/interface/ws'
+import type { IContactListType, IConversation, IOption } from '@/interface/ws'
 import { ContactListTypeEnum } from '@/enums/ws'
 
 export const useChatStore = defineStore('chat', () => {

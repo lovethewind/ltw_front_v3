@@ -125,7 +125,7 @@ export interface IChatSendMessage {
   progress?: number
 }
 
-export export interface IChatUpdateMessage {
+export interface IChatUpdateMessage {
   tempId: string
   progress?: number
 }

@@ -10,67 +10,21 @@
     <div class="menu-container">
       <div class="menus-item">
         <router-link to="/">
-          <el-icon size="16" color="#ff641e">mdi-home</el-icon>
           首页
         </router-link>
       </div>
       <div class="menus-item">
-        <a>
-          <el-menu
-            bottom
-            offset-y
-            :nudge-bottom="6"
-          >
-            <el-sub-menu>
-              <template v-slot:title>
-                <el-icon color="#ff641e" size="16">mdi-post</el-icon>
-                文章
-              </template>
-            </el-sub-menu>
-
-            <el-sub-menu dense class="cursor">
-              <el-menu-item-group color="primary">
-                <el-menu-item @click="router.push('/category')">
-                  <el-icon color="#ff831e" size="16">mdi-view-grid</el-icon>
-                  分类
-                </el-menu-item>
-                <el-menu-item @click="router.push('/tags')">
-                  <el-icon color="#c140c3" size="16">mdi-tag-multiple</el-icon>
-                  标签
-                </el-menu-item>
-              </el-menu-item-group>
-            </el-sub-menu>
-          </el-menu>
-        </a>
+        <router-link to="/picture" class="menu-btn">图库</router-link>
       </div>
       <div class="menus-item">
-        <router-link to="/picture" class="menu-btn">
-          <el-icon color="#ff408c" size="16">mdi-image</el-icon>
-          图库
-        </router-link>
+        <router-link to="/website" class="menu-btn">网站导航</router-link>
       </div>
       <div class="menus-item">
-        <router-link to="/website" class="menu-btn">
-          <el-icon color="#409eff" size="16">mdi-navigation-variant</el-icon>
-          网站导航
-        </router-link>
-      </div>
-      <div class="menus-item">
-        <router-link to="/share" class="menu-btn">
-          <el-icon color="#68c63a" size="16">mdi-apple</el-icon>
-          分享
-        </router-link>
-      </div>
-      <div class="menus-item">
-        <router-link to="/link" class="menu-btn">
-          <el-icon size="16" color="#627dce">mdi-link-variant</el-icon>
-          友链
-        </router-link>
+        <router-link to="/link" class="menu-btn">友链</router-link>
       </div>
       <div class="menus-item">
         <router-link to="/message-board">
-          <el-icon size="16" color="#3aa3c2">mdi-book-open-outline</el-icon>
-          <span>留言板</span>
+          留言板
         </router-link>
       </div>
       <div v-if="!user" class="menus-item">

@@ -60,7 +60,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { ApplyStatusEnum, ContactListTypeEnum } from '@/enums/ws'
 import { Icon } from '@iconify/vue'
 import chatApi from '@/api/chat'
-import { IFriendApplyItem } from '@/interface/ws'
+import type { IFriendApplyItem } from '@/interface/ws'
 import { useUserStore } from '@/stores/user'
 import { useChatStore } from '@/stores/chat'
 import { EventServer } from '@/event-server'
@@ -71,14 +71,14 @@ const userStore = useUserStore()
 const chatStore = useChatStore()
 const eventServer = EventServer.getInstance()
 
-const friendApplyList = ref<IFriendApplyItem[]>([])
+const friendApplyList = ref<any[]>([])
 const expand = ref(false)
 
 const user = computed(() => {
   return userStore.user
 })
 const total = computed(() => {
-  return friendApplyList.value.filter(item => item.contactId === user.value.id && item.status === ApplyStatusEnum.PENDING).length
+  return friendApplyList.value.filter(item => item.contactId === user.value?.id && item.status === ApplyStatusEnum.PENDING).length
 })
 
 onMounted(() => {
@@ -90,9 +90,9 @@ onUnmounted(() => {
   eventServer.off(EventName.FLUSH_FRIEND_APPLY_LIST, getContactApplyList)
 })
 
-function showApplicationStatus(item: IFriendApplyItem) {
+function showApplicationStatus(item: any): any[] {
   if (item.status === ApplyStatusEnum.PENDING) {
-    if (item.contactId === user.value.id) {
+    if (item.contactId === user.value?.id) {
       return [{
         key: 'friend_apply_agree',
         style: 'button',
@@ -118,20 +118,20 @@ function showApplicationStatus(item: IFriendApplyItem) {
       return [{
         key: 'friend_apply_wait',
         style: 'text',
-        label: '等待' + (item.contactId === user.value.id ? '' : '对方') + '验证'
+        label: '等待' + (item.contactId === user.value?.id ? '' : '对方') + '验证'
       }]
     }
   } else if (item.status === ApplyStatusEnum.AGREE) {
     return [{
       key: 'friend_apply_agreed',
       style: 'text',
-      label: (item.contactId === user.value.id ? '' : '对方') + '已同意'
+      label: (item.contactId === user.value?.id ? '' : '对方') + '已同意'
     }]
   } else {
     return [{
       key: 'friend_apply_refused',
       style: 'text',
-      label: (item.contactId === user.value.id ? '' : '对方') + '已拒绝'
+      label: (item.contactId === user.value?.id ? '' : '对方') + '已拒绝'
     }]
   }
 }
@@ -142,7 +142,7 @@ function getContactApplyList() {
   })
 }
 
-function updateFriendApplyStatus(item: IFriendApplyItem, status: ApplyStatusEnum) {
+function updateFriendApplyStatus(item: any, status: ApplyStatusEnum) {
   chatApi.updateContactApply({
     contactId: item.userId,
     status: status
@@ -159,7 +159,7 @@ function updateFriendApplyStatus(item: IFriendApplyItem, status: ApplyStatusEnum
   })
 }
 
-function showContactDetail(item: IFriendApplyItem) {
+function showContactDetail(item: any) {
   chatStore.setCurrentContactType(ContactListTypeEnum.FriendApplyList)
   chatStore.setCurrentContact(item)
   chatStore.setCurrentContactOperation(showApplicationStatus(item))

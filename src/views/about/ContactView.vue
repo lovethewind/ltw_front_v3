@@ -40,6 +40,6 @@ onMounted(() => {
 
 function getContactContent() {
   // 将markdown替换为html标签
-  contactContent.value = markdownToHtml(contactMe.value)
+  contactContent.value = markdownToHtml(contactMe.value) as string
 }
 </script>

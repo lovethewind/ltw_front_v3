@@ -5,13 +5,13 @@
         <el-avatar v-if="!isSelf"
                    shape="square"
                    class="avatar"
-                   :src="message.userProfile?.avatar || message.groupProfile.avatar" />
-        <el-avatar v-else shape="square" class="avatar" :src="user.avatar" />
+                   :src="message.userProfile?.avatar || message.groupProfile?.avatar" />
+        <el-avatar v-else shape="square" class="avatar" :src="user?.avatar" />
       </el-col>
       <el-col :span="20" :class="isSelf ? 'pe-2': 'ps-2'">
         <el-row>
           <el-col :span="24" class="nickname">
-            <span v-if="isSelf">{{ user.nickname }}</span>
+            <span v-if="isSelf">{{ user?.nickname }}</span>
             <span v-else>{{ message.userProfile?.nickname || message.groupProfile?.name }}</span>
           </el-col>
           <el-col :span="24" class="nickname">
@@ -30,10 +30,10 @@
 <script setup lang="ts">
 import { computed, toRefs } from 'vue'
 import { useUserStore } from '@/stores/user'
-import { IChatMessage } from '@/interface/ws'
+import type { IChatMessage } from '@/interface/ws'
 
 interface IProps {
-  message: IChatMessage
+  message: IChatMessage | any
 }
 
 const props = defineProps<IProps>()
@@ -44,10 +44,10 @@ const user = computed(() => {
   return userStore.user
 })
 const showDirection = computed(() => {
-  return message.value.userId === user.value.id ? 'is-me' : 'is-other'
+  return message.value.userId === user.value?.id ? 'is-me' : 'is-other'
 })
 const isSelf = computed(() => {
-  return message.value.userId === user.value.id
+  return message.value.userId === user.value?.id
 })
 </script>
 

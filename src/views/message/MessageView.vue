@@ -56,7 +56,7 @@ const cover = computed(() => {
   return 'background: url(' + commonStore.pageCoverMap['link'].pageCover + ') center center / cover no-repeat'
 })
 
-function addMessage(item) {
+function addMessage(item: any) {
   if (!user.value) {
     ElMessage({
       message: '正在提交, 请稍后...',

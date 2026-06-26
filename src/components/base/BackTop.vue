@@ -11,11 +11,6 @@
         <Icon icon="token:chat" color="green" />
       </div>
     </el-tooltip>
-    <el-tooltip :content="(showSpecialFlag ? '关闭' : '开启') + '特效'" placement="left" effect="light">
-      <div class="setting-container" @click="opSpecialEffects">
-        <Icon icon="mingcute:maple-leaf-line" :style="{color: showSpecialFlag ? 'pink' : '#909399'}" />
-      </div>
-    </el-tooltip>
     <el-tooltip content="意见反馈" placement="left" effect="light">
       <div class="setting-container" @click="openFeedback">
         <Icon icon="material-symbols:feedback-outline" class="feedback" />
@@ -34,7 +29,6 @@ import { ref, watch, onMounted, onUnmounted, computed } from 'vue'
 import { useCommonStore } from '@/stores/common'
 import { useModalStore } from '@/stores/modal'
 import { useChatStore } from '@/stores/chat'
-import { stopOrStart } from '@/utils/sakura'
 import { Icon } from '@iconify/vue'
 import { checkIsLogin } from '@/utils/common'
 import { EventServer } from '@/event-server'
@@ -45,7 +39,6 @@ const modalStore = useModalStore()
 const chatStore = useChatStore()
 const eventServer = EventServer.getInstance()
 
-const showSpecialFlag = ref(false)
 const isShow = ref('display: none')
 
 const isDark = computed(() => {
@@ -61,10 +54,6 @@ watch(isDark, (newValue: boolean, oldValue: boolean) => {
 onMounted(() => {
   eventServer.on(EventName.START_CHAT_WITH_USER, openChatWindow)
   moveOrAddHtmlClass()
-  showSpecialFlag.value = commonStore.websiteInfo.showSpecial
-  setTimeout(() => {
-    stopOrStart(showSpecialFlag.value)
-  }, 1000)
   window.addEventListener('scroll', scrollToTop)
 })
 
@@ -90,15 +79,9 @@ function openFeedback() {
   modalStore.setFeedbackFlag(true)
 }
 
-function opSpecialEffects() {
-  showSpecialFlag.value = !showSpecialFlag.value
-  commonStore.setShowSpecial(showSpecialFlag.value)
-  stopOrStart(showSpecialFlag.value)
-}
-
 function openChat() {
   if (!checkIsLogin()) return
-  chatStore.setAddConversationUserId(undefined)
+  chatStore.setAddConversationUserId('')
   modalStore.setChatFlag(true)
 }
 
@@ -112,7 +95,7 @@ function openChatWindow(userId: string) {
 // 回到顶部方法
 function backTop() {
   window.scrollTo({
-    behavior: 'smooth',
+    behavior: 'auto',
     top: 0
   })
 }
@@ -170,11 +153,6 @@ function scrollToTop() {
   color: #fff !important;
 }
 
-.rotate-container span {
-  display: flex;
-  animation: turn-around 2s linear infinite;
-}
-
 .sunny {
   color: #f6b810 !important;
 }
@@ -197,30 +175,30 @@ function scrollToTop() {
   }
 }
 
-@keyframes turn-around {
-  0% {
-    transform: rotate(0);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes rightsideOut {
-  0% {
-    display: flex;
-  }
-  100% {
-    display: none;
-  }
-}
-
 html.dark {
   .setting-container {
     background: $dark-main-color;
 
     &:hover {
       background-color: $dark-hover-color;
+    }
+  }
+}
+
+</style>
+
+<style lang="scss">
+body.article-editing-page {
+  .rightside {
+    right: auto;
+    left: 24px;
+  }
+}
+
+@media screen and (max-width: 759px) {
+  body.article-editing-page {
+    .rightside {
+      left: 10px;
     }
   }
 }

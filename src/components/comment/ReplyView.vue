@@ -62,7 +62,7 @@ import { useUserStore } from '@/stores/user'
 import { checkIsLogin } from '@/utils/common'
 import { ElMessage } from 'element-plus'
 import { Icon } from '@iconify/vue'
-import { IEmojiChar, IEmojiCollect } from '@/interface'
+import type { IEmojiChar, IEmojiCollect } from '@/interface'
 
 const emit = defineEmits(['reply', 'cancel'])
 
@@ -75,8 +75,8 @@ const { showHeader, checkLogin, isFixed } = toRefs(props)
 
 const userStore = useUserStore()
 
-const textareaRef = ref<HTMLElement | null>(null)
-const replyCommentForm = ref({
+const textareaRef = ref<HTMLTextAreaElement | null>(null)
+const replyCommentForm = ref<any>({
   content: '',
   touristComment: {
     nickname: null,
@@ -134,6 +134,7 @@ function addEmoji(val: IEmojiChar & IEmojiCollect) {
 
 function insertWordAtCursor(word: string = '\n') {
   const element = textareaRef.value
+  if (!element) return
   const start = element.selectionStart
   const end = element.selectionEnd
   // 插入换行符

@@ -117,7 +117,7 @@ import { ActionTypeEnum, ObjectTypeEnum } from '@/enums'
 import { ElMessage } from 'element-plus'
 import { EventServer } from '@/event-server'
 import { EventName } from '@/event-server/event-name'
-import { IUserDetail } from '@/interface'
+import type { IUserDetail } from '@/interface'
 
 const props = defineProps<{
   viewUser: IUserDetail

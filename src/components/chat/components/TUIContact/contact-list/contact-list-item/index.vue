@@ -45,14 +45,13 @@
 </template>
 <script setup lang="ts">
 import { computed, toRefs } from 'vue'
-import { IContactListType, IOption } from '@/interface/ws'
 import { useUserStore } from '@/stores/user'
 import { ApplyStatusEnum, ContactListTypeEnum } from '@/enums/ws'
 import chatApi from '@/api/chat'
 import { covertTimeHowLongAgo } from '@/utils/date'
 
 interface IProps {
-  item: IContactListType,
+  item: any,
   type: ContactListTypeEnum
 }
 
@@ -65,10 +64,10 @@ const user = computed(() => {
   return userStore.user
 })
 
-const showApplicationStatus: IOption[] = computed(() => {
+const showApplicationStatus = computed<any[]>(() => {
   if (type.value === ContactListTypeEnum.FriendApplyList) {
     if (item.value?.status === ApplyStatusEnum.PENDING) {
-      if (item.value?.contactId === user.value.id) {
+      if (item.value?.contactId === user.value?.id) {
         return [{
           key: 'agree',
           style: 'button',
@@ -109,7 +108,7 @@ const showApplicationStatus: IOption[] = computed(() => {
       }]
     }
   }
-  return false
+  return []
 })
 
 function updateFriendApplyStatus(status: ApplyStatusEnum) {

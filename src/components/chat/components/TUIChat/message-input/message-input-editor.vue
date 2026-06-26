@@ -53,7 +53,7 @@ defineProps({
 })
 
 const chatStore = useChatStore()
-const editorDom = ref<HTMLElement>()
+const editorDom = ref<HTMLTextAreaElement>()
 const currentConversation = computed(() => {
   return chatStore.currentConversation
 })
@@ -99,6 +99,7 @@ function handleKeydown(e: KeyboardEvent) {
 
 function insertWordAtCursor(word: string = '\n') {
   const element = editorDom.value
+  if (!element) return
   const start = element.selectionStart
   const end = element.selectionEnd
   // 插入换行符

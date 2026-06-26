@@ -85,9 +85,7 @@
                         </div>
                         <div v-if="[notice.detail.objType, notice.detail.commentType].includes(ObjectTypeEnum.SHARE)">
                           <el-tag size="small" type="success">分享</el-tag>
-                          <a href="/share" target="_blank">
-                            {{ notice.detail.objContent }}
-                          </a>
+                          <span>{{ notice.detail.objContent }}</span>
                         </div>
                         <div v-if="notice.detail?.commentId" class="font-12">
                           原评论: {{ notice.detail?.commentContent }}
@@ -127,7 +125,7 @@ import noticeApi from '@/api/notice'
 import { Icon } from '@iconify/vue'
 import { NoticeTypeEnum, ObjectTypeEnum } from '@/enums'
 import { NoticeTypeList } from '@/utils/constant'
-import { INotice } from '@/interface'
+import type { INotice } from '@/interface'
 import { covertTimeHowLongAgo } from '@/utils/date'
 import LoadMore from '@/components/base/LoadMore.vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -138,11 +136,11 @@ import { EventName } from '@/event-server/event-name'
 const route = useRoute()
 const userStore = useUserStore()
 
-const currentActiveMenu = ref(NoticeTypeList[0])
+const currentActiveMenu = ref<any>(NoticeTypeList[0])
 const currentPage = ref(1)
 const pageSize = ref(10)
-const noticeDataList = ref<INotice[]>([])
-const noticeUnreadCountMap = ref({})
+const noticeDataList = ref<any[]>([])
+const noticeUnreadCountMap = ref<any>({})
 const total = ref(0)
 const checkList = ref<string[]>([])
 const hasSelectAll = ref(false)
@@ -157,7 +155,7 @@ const noMore = computed(() => {
 
 onMounted(() => {
   const noticeType = route.params.noticeType || NoticeTypeEnum.SYSTEM
-  currentActiveMenu.value = NoticeTypeList.find(item => item.index === noticeType)
+  currentActiveMenu.value = NoticeTypeList.find(item => item.index === noticeType) || NoticeTypeList[0]
   getNoticeUnreadCount()
   getNoticeList()
 })
@@ -180,7 +178,7 @@ function getNoticeList() {
   })
 }
 
-function updateNoticeReadStatus(notice: INotice) {
+function updateNoticeReadStatus(notice: any) {
   if (notice.isRead) {
     return
   }
@@ -273,7 +271,7 @@ function checkAllShow() {
 
 function selectNotice(noticeType: any) {
   if (currentActiveMenu.value.index === noticeType.index) return
-  currentActiveMenu.value = NoticeTypeList.find(item => item.index === noticeType.index)
+  currentActiveMenu.value = NoticeTypeList.find(item => item.index === noticeType.index) || NoticeTypeList[0]
   reset()
 }
 

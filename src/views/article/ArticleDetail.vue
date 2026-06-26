@@ -8,7 +8,7 @@
         <div class="article-info">
           <div class="first-line d-flex align-items-center">
             <Icon icon="bx:user" class="font-14" />
-            <router-link :to="'/user/' + article.userId">{{ article.user.nickname }}</router-link>
+            <router-link :to="'/user/' + article.userId" target="_blank" rel="noopener noreferrer">{{ article.user.nickname }}</router-link>
             <span class="separator">|</span>
             <!-- 发表时间 -->
             <Icon icon="solar:calendar-broken" class="font-14" />
@@ -23,7 +23,7 @@
             <span class="separator">|</span>
             <!-- 文章分类 -->
             <Icon icon="tabler:category" class="font-14" />
-            <router-link :to="'/category/' + article.categoryId" class="a-link color-white">
+            <router-link :to="'/category/' + article.categoryId" class="a-link color-white" target="_blank" rel="noopener noreferrer">
               {{ categoryMap[article.categoryId] ? categoryMap[article.categoryId].name : '' }}
             </router-link>
           </div>
@@ -193,7 +193,9 @@
                 :key="'tagId' + tagId"
                 class="el-tag-a"
                 :style="{background: colors[index], '--tag-color': colors[index]}"
-                @click="router.push('/tag/' + tagId)"
+                :href="'/tag/' + tagId"
+                target="_blank"
+                rel="noopener noreferrer"
               >
                 {{ tagMap[tagId] ? tagMap[tagId].name : '' }}
               </a>
@@ -205,7 +207,7 @@
               <router-link v-if="article.lastArticle" :to="'/article/' + article.lastArticle.id">
                 <img
                   class="post-cover"
-                  :src="article.lastArticle.cover"
+                  :src="article.lastArticle.coverThumb || article.lastArticle.cover"
                   alt="">
                 <div class="post-info">
                   <div class="label">上一篇</div>
@@ -226,7 +228,7 @@
               <router-link v-if="article.nextArticle" :to="'/article/' + article.nextArticle.id">
                 <img
                   class="post-cover"
-                  :src="article.nextArticle.cover"
+                  :src="article.nextArticle.coverThumb || article.nextArticle.cover"
                   alt="">
                 <div class="post-info" style="text-align: right">
                   <div class="label">下一篇</div>
@@ -288,7 +290,9 @@
                     <el-col :span="24">
                       <span class="font-14 fw-bold">
                         <router-link :to="'/user/' + currentArticleUser.id"
-                                     class="a-link">{{ currentArticleUser.nickname }}</router-link>
+                                     class="a-link"
+                                     target="_blank"
+                                     rel="noopener noreferrer">{{ currentArticleUser.nickname }}</router-link>
                         <Icon :icon="genderMap[currentArticleUser.gender].icon"
                               :color="genderMap[currentArticleUser.gender].color" />
                       </span>
@@ -371,12 +375,12 @@
                 :key="'recommendArticle' + item.id"
                 class="article-item"
               >
-                <router-link :to="'/article/' + item.id" class="content-cover">
-                  <img :src="item.cover" alt="">
+                <router-link :to="'/article/' + item.id" class="content-cover" target="_blank" rel="noopener noreferrer">
+                  <img :src="item.coverThumb || item.cover" alt="">
                 </router-link>
                 <div class="content">
                   <div class="content-title ellipsis">
-                    <router-link :to="'/article/' + item.id" :title="item.title">
+                    <router-link :to="'/article/' + item.id" :title="item.title" target="_blank" rel="noopener noreferrer">
                       {{ item.title }}
                     </router-link>
                   </div>
@@ -397,12 +401,12 @@
                 :key="'newestArticle' + item.id"
                 class="article-item"
               >
-                <router-link :to="'/article/' + item.id" class="content-cover">
-                  <img :src="item.cover" alt="">
+                <router-link :to="'/article/' + item.id" class="content-cover" target="_blank" rel="noopener noreferrer">
+                  <img :src="item.coverThumb || item.cover" alt="">
                 </router-link>
                 <div class="content">
                   <div class="content-title ellipsis">
-                    <router-link :to="'/article/' + item.id">
+                    <router-link :to="'/article/' + item.id" target="_blank" rel="noopener noreferrer">
                       {{ item.title }}
                     </router-link>
                   </div>
@@ -511,7 +515,7 @@ import {
 import { checkIsLogin, covertNumberDisplay, copy } from '@/utils/common'
 import { date, formatRegisterTime, minute } from '@/utils/date'
 import { ActionTypeEnum, ObjectTypeEnum } from '@/enums'
-import { IUserDetail, IArticle, IBaseArticle, IReplyComment, IReply } from '@/interface'
+import type { IBaseArticle, IReply } from '@/interface'
 import { EventName } from '@/event-server/event-name'
 import { EventServer } from '@/event-server'
 
@@ -525,13 +529,13 @@ const articleRef = ref<HTMLElement | null>(null)
 const replyRef = ref<InstanceType<typeof ReplyView> | null>(null)
 const commentRef = ref<InstanceType<typeof CommentView> | null>(null)
 const emptyReplyRef = ref<HTMLElement | null>(null)
-const currentReplyComment = ref<IReplyComment>({})
-const articleId = ref<string>(route.params.articleId)
+const currentReplyComment = ref<any>({})
+const articleId = ref<string>(route.params.articleId as string)
 const dialogVisible = ref(false)
 const code = ref<string | null>(null)
 const isCheck = ref(false)
-const article = ref<IArticle>(null)
-const currentArticleUser = ref<IUserDetail>(null)
+const article = ref<any>(null)
+const currentArticleUser = ref<any>(null)
 const wordNum = ref(0)
 const readTime = ref('')
 const articleHref = window.location.href
@@ -670,7 +674,7 @@ function addArticleViewCount() {
 function parseImages() {
   const images = articleRef.value?.querySelectorAll('img')
   // 替换每个img标签为el-image组件
-  images.forEach((img) => {
+  images?.forEach((img) => {
     img.addEventListener('click', () => {
       previewImgUrl.value = img.src
       previewImgVisible.value = true
@@ -799,12 +803,18 @@ function previewImg(img: string) {
   // })
 }
 
-function toUserCenter() {
-  router.push('/user/' + currentArticleUser.value.id)
+/**
+ * 在新标签页打开当前作者主页。
+ *
+ * :return: 无返回值。
+ */
+function toUserCenter(): void {
+  if (!currentArticleUser.value) return
+  window.open('/user/' + currentArticleUser.value.id, '_blank', 'noopener,noreferrer')
 }
 
 function toCommentList() {
-  commentRef.value?.$el.scrollIntoView({ behavior: 'smooth' })
+  commentRef.value?.$el.scrollIntoView({ behavior: 'auto' })
 }
 
 function replyArticle(val: IReply) {

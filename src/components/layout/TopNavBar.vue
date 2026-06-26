@@ -24,7 +24,7 @@
     </div>
     <!--    电脑导航栏-->
     <div class="d-md-inline-flex d-none nav-container align-content-center">
-      <el-row type="flex" justify="center" align="middle" class="vw-100">
+      <el-row type="flex" justify="center" align="middle" class="nav-inner">
         <el-col :xs="8" :sm="7" class="ps-2">
           <div class="float-left blog-title">
             <router-link to="/">
@@ -36,59 +36,21 @@
           <div class="center nav-title">
             <div class="menus-item">
               <router-link class="menu-btn" to="/">
-                <Icon icon="ant-design:home-outlined" class="font-18" color="#ff641e" />
                 首页
               </router-link>
             </div>
             <div class="menus-item">
-              <el-dropdown>
-                <router-link class="menu-btn d-flex align-items-center" to="">
-                  <Icon icon="carbon:book" class="font-18" color="rgb(67 198 139)" />
-                  文章
-                  <Icon icon="oui:arrow-down" color="rgb(67 198 139)" />
-                </router-link>
-                <template #dropdown>
-                  <el-dropdown-menu>
-                    <el-dropdown-item @click="router.push('/category')">
-                      <Icon icon="tabler:category" class="font-18 me-2" color="#ff831e" />
-                      分类
-                    </el-dropdown-item>
-                    <el-dropdown-item @click="router.push('/tag')">
-                      <Icon icon="fluent:tag-multiple-16-regular" class="font-18 me-2" color="#c140c3" />
-                      标签
-                    </el-dropdown-item>
-                  </el-dropdown-menu>
-                </template>
-              </el-dropdown>
+              <router-link to="/picture" class="menu-btn">图库</router-link>
             </div>
             <div class="menus-item">
-              <router-link to="/picture" class="menu-btn">
-                <Icon icon="clarity:picture-line" class="font-18" color="#ff408c" />
-                图库
-              </router-link>
+              <router-link to="/website" class="menu-btn">网站导航</router-link>
             </div>
             <div class="menus-item">
-              <router-link to="/website" class="menu-btn">
-                <Icon icon="solar:earth-linear" class="font-18" color="#409eff" />
-                网站导航
-              </router-link>
-            </div>
-            <div class="menus-item">
-              <router-link to="/share" class="menu-btn">
-                <Icon icon="tabler:apple" class="font-18" color="#68c63a" />
-                分享
-              </router-link>
-            </div>
-            <div class="menus-item">
-              <router-link to="/link" class="menu-btn">
-                <Icon icon="tdesign:link" class="font-18" color="#627dce" />
-                友链
-              </router-link>
+              <router-link to="/link" class="menu-btn">友链</router-link>
             </div>
             <div class="menus-item">
               <router-link to="/message-board" class="menu-btn">
-                <Icon icon="carbon:message-queue" class="font-18" color="#3aa3c2" />
-                <span>留言板</span>
+                留言板
               </router-link>
             </div>
           </div>
@@ -199,7 +161,7 @@ const commonStore = useCommonStore()
 const modalStore = useModalStore()
 
 const navClass = ref('nav-fixed')
-const noticeUnreadCountMap = ref({})
+const noticeUnreadCountMap = ref<any>({})
 const totalUnreadCount = ref(0)
 const eventServer = EventServer.getInstance()
 
@@ -222,7 +184,7 @@ function getNoticeUnreadCount() {
   if (!user.value) return
   noticeApi.getUnreadCount().then(res => {
     noticeUnreadCountMap.value = res.data
-    totalUnreadCount.value = Object.values(noticeUnreadCountMap.value).reduce((a, b) => a + b)
+    totalUnreadCount.value = (Object.values(noticeUnreadCountMap.value) as any[]).reduce((a, b) => Number(a) + Number(b), 0)
   })
 }
 

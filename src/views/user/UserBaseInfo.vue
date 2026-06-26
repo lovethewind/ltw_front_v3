@@ -295,10 +295,17 @@ import { useUserStore } from '@/stores/user'
 import userApi from '@/api/user'
 import ossApi from '@/api/oss-api'
 import commonApi from '@/api/common'
-import { binaryStrToImgUrl, checkFileSize, getBase64, getObjKeyCount, removeSameValues } from '@/utils/common'
+import {
+  binaryStrToImgUrl,
+  checkFileSize,
+  compressImageFile,
+  getBase64,
+  getObjKeyCount,
+  removeSameValues
+} from '@/utils/common'
 import { uploadFile } from '@/utils/oss-upload'
 import { genderMap } from '@/utils/constant'
-import { ElMessage, type FormInstance } from 'element-plus'
+import { ElMessage, type FormInstance, type UploadRawFile } from 'element-plus'
 import {
   WechatScanResultEnum,
   SendChangeCodeTypeEnum,
@@ -306,7 +313,7 @@ import {
   WechatAppletCodeTypeEnum, UploadFileTypeEnum
 } from '@/enums'
 import { Icon } from '@iconify/vue'
-import { IUserDetail } from '@/interface'
+import type { IUserDetail } from '@/interface'
 
 const userStore = useUserStore()
 
@@ -317,7 +324,7 @@ const props = defineProps<{
 }>()
 const { viewUser } = toRefs(props)
 
-const loginUser = ref<IUserDetail>(null)
+const loginUser = ref<any>(null)
 
 const defaultPostForm = {
   email: '',
@@ -398,7 +405,7 @@ const wechatCode = ref('')
 const wechatAppletImg = ref('')
 const codeTimer = ref<any>(null)
 const isExpired = ref(false)
-const postForm = ref(Object.assign({}, defaultPostForm))
+const postForm = ref<any>(Object.assign({}, defaultPostForm))
 const rules = ref({
   email: [
     { required: true, message: '邮箱不能为空', trigger: 'blur' },
@@ -423,7 +430,7 @@ const user = computed(() => {
 onMounted(() => {
   currentRow.value = Object.assign({}, user.value)
   if (viewUser.value.id === user.value?.id) {
-    loginUser.value = Object.assign({}, user.value)
+    loginUser.value = Object.assign({}, user.value) as any
   }
 })
 
@@ -433,7 +440,7 @@ onUnmounted(() => {
 
 async function update() {
   changDisabled.value = true
-  const newData = removeSameValues(loginUser.value, currentRow.value)
+  const newData: any = removeSameValues(loginUser.value, currentRow.value)
   if (getObjKeyCount(newData) <= 1) {
     ElMessage({
       message: '没有更改的用户信息',
@@ -444,12 +451,12 @@ async function update() {
     return
   }
   if (typeof newData.avatar === 'object') {
-    // 上传图片
+    const avatarFile = await compressImageFile(newData.avatar as File, 320)
     const res = await ossApi.getUploadSignatureUrl({
       dirType: UploadFileTypeEnum.AVATAR,
-      fileName: newData.avatar.name
+      fileName: avatarFile.name
     })
-    newData.avatar = await uploadFile(res.data, newData.avatar)
+    newData.avatar = await uploadFile(res.data, avatarFile)
   }
   userApi.update(newData).then(async () => {
     ElMessage({
@@ -467,10 +474,10 @@ async function update() {
   })
 }
 
-function beforeAvatarUpload(file) {
+function beforeAvatarUpload(file: UploadRawFile): false | undefined {
   if (!checkFileSize(file, 5, '头像')) return
   oldAvatar.value = loginUser.value.avatar
-  getBase64(file, url => {
+  getBase64(file, (url: string) => {
     nextTick(() => {
       avatarPreviewUrl.value = url
       loginUser.value.avatar = file
@@ -596,10 +603,11 @@ function cancelEdit() {
   isEdit.value = !isEdit.value
 }
 
-function sendEmailMobileCode(type) {
+function sendEmailMobileCode(type: SendChangeCodeTypeEnum): void {
   // 发送邮件
   countDown()
-  let func, tipMsg
+  let func: ((data: any) => Promise<any>) | null = null
+  let tipMsg = ''
   if (type === SendChangeCodeTypeEnum.CHANGE_BIND_EMAIL) {
     func = commonApi.getUserEmailCode
     tipMsg = '验证码发送成功，请进入邮箱获取验证码'
@@ -607,6 +615,7 @@ function sendEmailMobileCode(type) {
     func = commonApi.getUserMobileCode
     tipMsg = '验证码发送成功，请查看短信获取验证码'
   }
+  if (!func) return
   func({
     codeType: VerifyCodeTypeEnum.CHANGE_BIND
   }).then(() => {
@@ -625,9 +634,9 @@ function sendEmailMobileCode(type) {
   })
 }
 
-function validateOldCode(type) {
+function validateOldCode(type: SendChangeCodeTypeEnum): void {
   inputDisabled.value = true
-  let func
+  let func: (data: any) => Promise<any>
   if (type === SendChangeCodeTypeEnum.CHANGE_BIND_EMAIL) {
     func = commonApi.validUserEmailCode
   } else {
@@ -651,13 +660,13 @@ function validateOldCode(type) {
   })
 }
 
-function sendNewEmailMobileCode(type) {
+function sendNewEmailMobileCode(type: SendNewBindCodeTypeEnum): void {
   if (!postForm.value.email && !postForm.value.mobile) {
     return
   }
-  let func
-  let tipMsg
-  const sendData = {
+  let func: (data: any) => Promise<any>
+  let tipMsg = ''
+  const sendData: any = {
     codeType: VerifyCodeTypeEnum.CHANGE_BIND
   }
   if (type === 1) {
@@ -703,15 +712,15 @@ function countDown() {
   }, 1000)
 }
 
-function saveUserEmailMobile(type) {
+function saveUserEmailMobile(type: SendChangeCodeTypeEnum): void {
   changeBindFormRef.value?.validate(valid => {
     if (valid) {
       btnDisabled.value = true
-      const user = {
+      const user: any = {
         code: postForm.value.code,
         oldCode: postForm.value.oldCode
       }
-      let func
+      let func: (data: any) => Promise<any>
       if (type === SendChangeCodeTypeEnum.CHANGE_BIND_EMAIL) {
         user.email = postForm.value.email
         func = userApi.changeEmailBind

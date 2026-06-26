@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import type { RouterScrollBehavior } from 'vue-router'
 import { afterEach, routeGuard } from '@/permission'
 
 const routers = [
@@ -26,22 +27,13 @@ const routers = [
   //   }
   // },
   {
-    path: '/tag',
-    component: () => import('@/views/category/TagView.vue'),
-    meta: {
-      title: '标签'
-    }
-  },
-  {
-    path: '/category',
-    component: () => import('@/views/category/CategoryView.vue'),
-    meta: {
-      title: '分类'
-    }
-  },
-  {
     path: '/category/:categoryId',
-    component: () => import('@/views/article/ArticleList.vue')
+    redirect: (to: any) => ({
+      path: '/',
+      query: {
+        categoryId: to.params.categoryId
+      }
+    })
   },
   {
     path: '/tag/:tagId',
@@ -77,7 +69,7 @@ const routers = [
   },
   {
     path: '/share',
-    component: () => import('@/views/share/ShareView.vue'),
+    redirect: '/',
     meta: {
       title: '分享'
     }
@@ -132,9 +124,28 @@ const routers = [
 
 ]
 
+/**
+ * 控制路由切换后的滚动位置。
+ *
+ * :param _to: 目标路由。
+ * :param _from: 来源路由。
+ * :param savedPosition: 浏览器前进或后退保存的滚动位置。
+ * :return: 滚动位置配置。
+ */
+const scrollBehavior: RouterScrollBehavior = (_to, _from, savedPosition) => {
+  if (savedPosition) {
+    return savedPosition
+  }
+  return {
+    top: 0,
+    behavior: 'auto'
+  }
+}
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes: routers
+  routes: routers,
+  scrollBehavior
 })
 
 router.beforeEach(routeGuard)

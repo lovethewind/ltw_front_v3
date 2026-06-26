@@ -133,7 +133,7 @@ import userApi from '@/api/user'
 import { binaryStrToImgUrl, isMobile } from '@/utils/common'
 import { useModalStore } from '@/stores/modal'
 import { useUserStore } from '@/stores/user'
-import { ElMessage, FormInstance } from 'element-plus'
+import { ElMessage, type FormInstance } from 'element-plus'
 import { WechatScanResultEnum, VerifyCodeTypeEnum, WechatAppletCodeTypeEnum } from '@/enums'
 import { Icon } from '@iconify/vue'
 

@@ -106,16 +106,14 @@ import { ContactListTypeEnum } from '@/enums/ws'
 import { genderMap } from '@/utils/constant'
 import { covertTimeHowLongAgo } from '@/utils/date'
 import { Icon } from '@iconify/vue'
-import { IUserDetail } from '@/interface'
 import userApi from '@/api/user'
-import { IGroupInfo } from '@/interface/ws'
 
 const chatStore = useChatStore()
-const userDetail = ref<IUserDetail>()
-const groupDetail = ref<IGroupInfo>()
+const userDetail = ref<any>({})
+const groupDetail = ref<any>()
 
 
-const currentContact = computed(() => {
+const currentContact = computed<any>(() => {
   return chatStore.currentContact
 })
 const currentContactType = computed(() => {
@@ -127,11 +125,13 @@ const currentContactOperation = computed(() => {
 
 watch(currentContact, (val) => {
   if (!val) {
-    userDetail.value = undefined
+    userDetail.value = {}
     return
   }
   if (currentContactType.value !== ContactListTypeEnum.GroupList) {
-    userApi.getUserById(currentContact.value.userProfile.id).then(res => {
+    const userId = (currentContact.value as any)?.userProfile?.id
+    if (!userId) return
+    userApi.getUserById(userId).then(res => {
       userDetail.value = res.data
     })
   }

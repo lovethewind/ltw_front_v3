@@ -4,9 +4,9 @@
       <el-form-item label="验证方式">
         <el-select v-model="changePasswordForm.changePasswordVerifyType">
           <el-option label="原密码验证" :value="ValidTypeEnum.ORIGINAL_PASSWORD" />
-          <el-option v-if="user.email" label="邮箱验证" :value="ValidTypeEnum.EMAIL" />
-          <el-option v-if="user.mobile" label="手机验证" :value="ValidTypeEnum.MOBILE" />
-          <el-option v-if="user.wechat" label="微信验证" :value="ValidTypeEnum.WECHAT" />
+          <el-option v-if="user?.email" label="邮箱验证" :value="ValidTypeEnum.EMAIL" />
+          <el-option v-if="user?.mobile" label="手机验证" :value="ValidTypeEnum.MOBILE" />
+          <el-option v-if="user?.wechat" label="微信验证" :value="ValidTypeEnum.WECHAT" />
         </el-select>
       </el-form-item>
       <el-form-item v-if="changePasswordForm.changePasswordVerifyType === ValidTypeEnum.ORIGINAL_PASSWORD"
@@ -116,7 +116,7 @@ watch(() => changePasswordForm.value.changePasswordVerifyType, (val) => {
   changePasswordForm.value.randomCode = null
   clearInterval(codeTimer.value)
   if (val === ValidTypeEnum.WECHAT) {
-    getWechatAppletCode(val)
+    getWechatAppletCode()
   }
 })
 
@@ -124,7 +124,7 @@ onUnmounted(() => {
   codeTimer.value && clearInterval(codeTimer.value)
 })
 
-async function getWechatAppletCode() {
+async function getWechatAppletCode(_type?: WechatAppletCodeTypeEnum) {
   const res = await userApi.getWechatAppletCode(WechatAppletCodeTypeEnum.MODIFY_PASSWORD)
   isExpired.value = false
   changePasswordForm.value.randomCode = res.data.code
@@ -165,11 +165,11 @@ async function getWechatAppletCode() {
   }, 1500)
 }
 
-function sendEmailMobileCode(type) {
+function sendEmailMobileCode(type: SendChangeCodeTypeEnum) {
   // 发送邮件
   countDown()
-  let func
-  let tipMsg
+  let func: ((params: any) => Promise<any>) | undefined
+  let tipMsg = ''
   if (type === SendChangeCodeTypeEnum.CHANGE_PASSWORD_EMAIL) {
     func = commonApi.getUserEmailCode
     tipMsg = '验证码发送成功，请进入邮箱获取验证码'
@@ -177,7 +177,7 @@ function sendEmailMobileCode(type) {
     func = commonApi.getUserMobileCode
     tipMsg = '验证码发送成功，请查看短信获取验证码'
   }
-  func({
+  func?.({
     codeType: VerifyCodeTypeEnum.CHANGE_PASSWORD
   }).then(() => {
     ElMessage({

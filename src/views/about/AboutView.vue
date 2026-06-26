@@ -52,11 +52,11 @@ onMounted(() => {
 
 function getAboutContent() {
   // 将markdown替换为html标签
-  aboutContent.value = markdownToHtml(aboutMe.value)
+  aboutContent.value = markdownToHtml(aboutMe.value) as string
   // 添加图片预览功能
   const images = aboutRef.value?.querySelectorAll('img')
   // 替换每个img标签为el-image组件
-  images.forEach((img) => {
+  images?.forEach((img) => {
     img.addEventListener('click', () => {
       previewImgUrl.value = img.src
       previewImgVisible.value = true

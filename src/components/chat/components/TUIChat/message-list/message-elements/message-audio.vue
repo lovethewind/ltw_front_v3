@@ -5,12 +5,13 @@
   >
     <div class="audio-icon-container">
       <div :class="{ 'mask': true, 'play': isAudioPlaying }" />
-      <Icon
+      <img
         class="icon"
-        width="16px"
-        height="20px"
-        :file="audioIcon"
-      />
+        width="16"
+        height="20"
+        :src="audioIcon"
+        alt=""
+      >
     </div>
     <span
       class="time"
@@ -27,7 +28,6 @@
 
 <script lang="ts" setup>
 import { watchEffect, ref, onMounted, onUnmounted } from 'vue';
-import { Icon } from '@iconify/vue'
 import audioIcon from '../../../../assets/icon/msg-audio.svg';
 
 interface IEmits {

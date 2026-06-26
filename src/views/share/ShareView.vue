@@ -83,7 +83,7 @@
                         </a>
                       </el-col>
                       <el-col :span="24" class="share-list-item-info">
-                        <span><el-tag size="small" type="success" class="me-1">{{ shareTypeMap[item.shareType]
+                        <span><el-tag size="small" type="success" class="me-1">{{ (shareTypeMap as any)[item.shareType]
                           }}</el-tag></span>
                         <span class="me-1 font-12">{{ covertTimeHowLongAgo(item.createTime) }}</span>
                         <!-- ip属地 -->
@@ -158,7 +158,7 @@
               layout="prev, pager, next, jumper"
               :total="count"
               :pager-count="isMobile() ? 5 : 7"
-              v-model:current-page="userShareQueryParams.currentPage"
+              v-model:current-page="userShareQueryParams.pageNum"
               @change="getUserSharePageList()"
             />
             <el-pagination
@@ -167,7 +167,7 @@
               layout="prev, pager, next, jumper"
               :total="count"
               :pager-count="isMobile() ? 5 : 7"
-              v-model:current-page="shareQueryParams.currentPage"
+              v-model:current-page="shareQueryParams.pageNum"
               @change="getSharePageList()"
             />
           </div>
@@ -233,7 +233,7 @@ const defaultShareForm = {
 const tagRegex = /#[^#\s]+/g
 
 const addShareFormRef = ref<FormInstance | null>(null)
-const shareCardRef = ref<HTMLElement | null>(null)
+const shareCardRef = ref<any>(null)
 const replyRef = ref<InstanceType<typeof ReplyView> | null>(null)
 const commentRefs = ref<InstanceType<typeof CommentView>[]>([])
 const isShowMe = ref(false)
@@ -258,7 +258,7 @@ const userShareQueryParams = ref({
 })
 const searchKeyword = ref<string | null>(null)
 const searchContentType = ref<ShareSearchContentTypeEnum>()
-const shareForm = ref(Object.assign({}, defaultShareForm))
+const shareForm = ref<any>(Object.assign({}, defaultShareForm))
 const shareRules = ref({
   content: [
     { required: true, message: '请写点什么吧~', trigger: 'blur' }
@@ -277,7 +277,7 @@ function setCommentRef(el: any, index: number) {
 }
 
 function getSharePageList() {
-  const searchData = {
+  const searchData: any = {
     shareType: currentActive.value
   }
   if (searchContentType.value === ShareSearchContentTypeEnum.CONTENT) {
@@ -294,7 +294,7 @@ function getSharePageList() {
 }
 
 function getUserSharePageList() {
-  const searchData = {
+  const searchData: any = {
     shareType: currentActive.value
   }
   if (searchContentType.value === ShareSearchContentTypeEnum.CONTENT) {
@@ -330,7 +330,7 @@ function openAddShare() {
   addShareDialogVisible.value = true
 }
 
-function openEditShare(item) {
+function openEditShare(item: any) {
   if (!checkIsLogin()) return
   previewShareItem.value = item
   shareForm.value = Object.assign({}, previewShareItem.value)
@@ -348,7 +348,7 @@ function saveOrUpdateShare() {
 }
 
 function addShare() {
-  addShareFormRef.value?.validate(async (valid) => {
+  addShareFormRef.value?.validate((async (valid: boolean) => {
     if (!valid) {
       return false
     }
@@ -376,7 +376,7 @@ function addShare() {
       getUserOrShareList()
       cancelAddShare()
     })
-  })
+  }) as any)
 }
 
 function updateShare() {
@@ -399,7 +399,7 @@ function cancelAddShare() {
   shareForm.value = Object.assign({}, defaultShareForm)
 }
 
-function thumbShare(item) {
+function thumbShare(item: any) {
   if (!checkIsLogin()) return
   actionApi.addOrUpdate({
     objId: item.id,
@@ -415,7 +415,7 @@ function thumbShare(item) {
   })
 }
 
-function deleteShare(item) {
+function deleteShare(item: any) {
   ElMessageBox.confirm('确定删除该分享吗?', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
@@ -434,8 +434,8 @@ function deleteShare(item) {
   })
 }
 
-function tagSearch(name) {
-  searchContentType.value = 2
+function tagSearch(name: string) {
+  searchContentType.value = ShareSearchContentTypeEnum.TAG
   searchKeyword.value = name
   getUserOrShareList()
 }
@@ -444,7 +444,9 @@ function openReplyShare(item: any, index: number) {
   currentReplyShareItem.value = Object.assign({}, item)
   currentReplyIndex.value = index
   const width = shareCardRef.value.$el.offsetWidth
-  replyRef.value.$el.style.width = width + 'px'
+  if (replyRef.value) {
+    replyRef.value.$el.style.width = width + 'px'
+  }
   showReply.value = true
   replyRef.value?.setReplyComment({ replyComment: null })
 }

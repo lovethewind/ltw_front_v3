@@ -3,7 +3,7 @@
     <div class="TUIKit">
       <div class="TUIKit-navbar">
         <div class="d-flex justify-content-center mt-2 mb-4">
-          <el-avatar shape="square" :src="user.avatar" />
+          <el-avatar shape="square" :src="user?.avatar" />
         </div>
         <div v-for="item of navbarList" :key="item.id"
              :class="['TUIKit-navbar-item', currentNavbar === item.id && 'TUIKit-navbar-item-active']"
@@ -45,7 +45,7 @@ import { TUIChat, TUIContact, TUIConversation } from '@/components/chat/componen
 import { Icon } from '@iconify/vue'
 import { EventServer } from '@/event-server'
 import { EventName } from '@/event-server/event-name'
-import { IConversation } from '@/interface/ws'
+import type { IConversation } from '@/interface/ws'
 
 const modalStore = useModalStore()
 const userStore = useUserStore()
@@ -95,11 +95,11 @@ onUnmounted(() => {
 
 function startConversation(conversation: IConversation) {
   currentNavbar.value = 'message'
-  chatStore.setAddConversationUserId(conversation.contactId)
+  chatStore.setAddConversationUserId(conversation.contactId || '')
 }
 
 function handleClose() {
-  chatStore.setAddConversationUserId(undefined)
+  chatStore.setAddConversationUserId('')
 }
 
 </script>

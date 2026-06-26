@@ -17,7 +17,7 @@
         >
           <MessageTimestamp
             :currTime="item.createTime"
-            :prevTime="index > 0 ? messageList[index - 1].createTime : null"
+            :prevTime="index > 0 ? messageList[index - 1].createTime : undefined"
           />
           <div class="message-item">
             <MessageCard :message="item">
@@ -66,7 +66,7 @@ import MessageFile from './message-elements/message-file.vue'
 import MessageStatus from './message-elements/message-status.vue'
 import { getBoundingClientRect, getScrollInfo } from '../../../utils'
 
-import { IChatMessage, IChatSendMessage } from '@/interface/ws'
+import type { IChatMessage, IChatSendMessage } from '@/interface/ws'
 import { ChatMessageTypeEnum, MessageSendStatusEnum } from '@/enums/ws'
 import chatApi from '@/api/chat'
 import { useUserStore } from '@/stores/user'
@@ -87,7 +87,7 @@ const isOfficial = ref(true)
 const eventServer = EventServer.getInstance()
 
 const messageListRef = ref<HTMLElement>()
-const messageList = ref<IChatMessage[]>([])
+const messageList = ref<any[]>([])
 const nextMessageId = ref(null)
 const messageElementListRef = ref<HTMLElement[] | null>()
 const scrollButtonInstanceRef = ref<InstanceType<typeof ScrollButton>>()
@@ -95,7 +95,7 @@ const beforeHistoryGetScrollHeight = ref<number>(0)
 const noMore = ref(false)
 const firstLoaded = ref(false)
 // temp message
-const tempMessageMap = ref<Map<string, IChatSendMessage>>(new Map())
+const tempMessageMap = ref<Map<string, any>>(new Map())
 
 const user = computed(() => {
   return userStore.user
@@ -148,12 +148,12 @@ async function getHistoryMessageList() {
   firstLoaded.value = true
   // After getting the historical messages, keep the scroll bar in the original position
   await nextTick(() => {
-    beforeHistoryGetScrollHeight.value = messageListRef.value?.scrollHeight
+    beforeHistoryGetScrollHeight.value = messageListRef.value?.scrollHeight || 0
   })
 }
 
 function onReceiveMessage(message: IChatMessage) {
-  if (user.value.id === message.userId) {
+  if (user.value?.id === message.userId) {
     // If the message is a temporary message, replace it with the actual message
     const sendMessage = tempMessageMap.value.get(message.tempId)
     if (sendMessage) {
@@ -186,7 +186,7 @@ function resendMessage(message: IChatSendMessage) {
 
 async function loadMoreMessage() {
   if (firstLoaded.value && !noMore.value && messageListRef.value?.scrollTop === 0) {
-    const currentScrollHeight = messageListRef.value?.scrollHeight
+    const currentScrollHeight = messageListRef.value?.scrollHeight || 0
     await getHistoryMessageList()
     await nextTick(() => {
       messageListRef.value?.scrollTo(0, beforeHistoryGetScrollHeight.value - currentScrollHeight)
@@ -196,6 +196,9 @@ async function loadMoreMessage() {
 
 function closeSafeTip() {
   isOfficial.value = false
+}
+
+function closeChatPop() {
 }
 
 function scrollToLatestMessage() {

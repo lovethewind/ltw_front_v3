@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { computed, onMounted, ref } from 'vue'
+import { ref } from 'vue'
 import categoryApi from '@/api/category'
 import tagApi from '@/api/tag'
 import configApi from '@/api/config'
@@ -16,8 +16,8 @@ interface WebSite {
   webUrl: string
   name: string
   isMusicPlayer: boolean
+  isDark?: boolean
   showMusicBar: boolean
-  showSpecial: boolean
   loginTypeList: number[]
   wechatQrCode: string
   showFooter: boolean,
@@ -41,7 +41,7 @@ interface PageCoverMap {
 
 export const useCommonStore = defineStore('common', () => {
   const configLoaded = ref(false)
-  const theme = ref('light')
+  const theme = ref(window.localStorage.getItem('theme') || window.sessionStorage.getItem('theme') || 'light')
   const categoryList = ref<any[]>([])
   const categoryMap = ref<{ [key: string]: any }>({})
   const tagList = ref<any[]>([])
@@ -60,7 +60,6 @@ export const useCommonStore = defineStore('common', () => {
     name: '恋、晨风',
     isMusicPlayer: false,
     showMusicBar: false,
-    showSpecial: false,
     loginTypeList: [1],
     wechatQrCode: 'https://img.lovethewind.com.cn/media/logo/qrcode_for_gh.jpg',
     footerStyle: 'background:linear-gradient(-45deg, #ee7752, #ce3e75, #23a6d5, #23d5ab);animation: Gradient 10s ease infinite;background-size: 400% 400%;',
@@ -116,20 +115,10 @@ export const useCommonStore = defineStore('common', () => {
     }
   })
 
-  const showSpecial = computed(() => {
-    return JSON.parse(window.localStorage.getItem('showSpecial') || 'false')
-  })
-
-  onMounted(() => {
-    const cacheTheme = window.sessionStorage.getItem('theme')
-    if (cacheTheme) {
-      setTheme(cacheTheme)
-    }
-  })
-
   function setTheme(val: string) {
     theme.value = val
-    window.sessionStorage.setItem('theme', val)
+    window.localStorage.setItem('theme', val)
+    window.sessionStorage.removeItem('theme')
   }
 
   function resetState() {
@@ -141,7 +130,6 @@ export const useCommonStore = defineStore('common', () => {
     tagMap.value = {}
     saveLoginUrl.value = null
     websiteInfo.value.isMusicPlayer = false
-    websiteInfo.value.showSpecial = true
     websiteInfo.value.isDark = false
   }
 
@@ -164,11 +152,6 @@ export const useCommonStore = defineStore('common', () => {
 
   function setPageCoverMap(val: Partial<PageCoverMap>) {
     Object.assign(pageCoverMap.value, val)
-  }
-
-  function setShowSpecial(showSpecial: boolean) {
-    window.localStorage.setItem('showSpecial', showSpecial.toString())
-    websiteInfo.value.showSpecial = showSpecial
   }
 
   async function setCommonInfoCache() {
@@ -229,13 +212,10 @@ export const useCommonStore = defineStore('common', () => {
     websiteInfo,
     websiteViewCount,
     pageCoverMap,
-    showSpecial,
     theme,
     resetState,
     setShowFooter,
-    setShowSpecial,
     setCommonInfoCache,
     setTheme
   }
 })
-

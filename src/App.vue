@@ -52,7 +52,7 @@ import { useCommonStore } from '@/stores/common'
 const commonStore = useCommonStore()
 
 const isReady = ref(false)
-const mainRef = ref<HTMLElement>(null)
+const mainRef = ref<HTMLElement | null>(null)
 
 
 onBeforeMount(async () => {

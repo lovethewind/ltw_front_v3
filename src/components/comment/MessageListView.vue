@@ -12,7 +12,7 @@
       >
         <!-- 头像 -->
         <el-avatar size="default" class="comment-avatar"
-                   @click="item.userId === 0 ? '' : router.push('/user/' + item.user.id)">
+                   @click="item.userId === 0 ? '' : openUserPage(item.user.id)">
           <img :src="item.user.avatar" alt="">
         </el-avatar>
         <div class="comment-meta">
@@ -20,7 +20,7 @@
           <div class="comment-user">
             <span>
               <span v-if="item.userId === 0" class="comment-nickname">{{ item.user.nickname }}</span>
-              <a v-else :href="'/user/' + item.user.id" target="_blank" class="comment-nickname a-link">
+              <a v-else :href="'/user/' + item.user.id" target="_blank" rel="noopener noreferrer" class="comment-nickname a-link">
                 {{ item.user.nickname }}
               </a>
               <span v-if="loginUserId && item.userId === loginUserId" class="blogger-tag">我</span>
@@ -51,7 +51,7 @@
             class="d-flex children-comment"
           >
             <!-- 头像 -->
-            <el-avatar size="small" class="comment-avatar" @click="childItem.userId === 0 ? '' : router.push('/user/' + childItem.user.id)">
+            <el-avatar size="small" class="comment-avatar" @click="childItem.userId === 0 ? '' : openUserPage(childItem.user.id)">
               <img :src="childItem.user.avatar" alt="">
             </el-avatar>
             <div class="reply-meta">
@@ -59,7 +59,7 @@
               <div class="comment-user">
                 <span>
                   <span v-if="childItem.userId === 0" class="comment-nickname">{{ childItem.user.nickname }}</span>
-                  <a v-else :href="'/user/' + childItem.user.id" target="_blank"
+                  <a v-else :href="'/user/' + childItem.user.id" target="_blank" rel="noopener noreferrer"
                      class="comment-nickname a-link">{{ childItem.user.nickname }}</a>
                 </span>
                 <span v-if="loginUserId && childItem.userId === loginUserId" class="blogger-tag">我</span>
@@ -88,7 +88,7 @@
                 <div v-if="childItem.replyUser && childItem.parentId !== childItem.firstLevelId"
                      class="reply-user-info">
                   @<span v-if="childItem.replyUserId === 0">{{ childItem.replyUser.nickname }}</span>
-                  <a v-else :href="'/user/' + childItem.replyUser.id" target="_blank"
+                  <a v-else :href="'/user/' + childItem.replyUser.id" target="_blank" rel="noopener noreferrer"
                      class="a-link">{{ childItem.replyUser.nickname }}</a>
                 </div>
                 <span v-dompurify-html="childItem.content" />
@@ -125,19 +125,27 @@
 
 <script setup lang="ts">
 import { ref, onMounted, toRefs } from 'vue'
-import { useRouter } from 'vue-router'
 import messageApi from '@/api/message'
 import { checkIsLogin } from '@/utils/common'
 import { covertTimeHowLongAgo } from '@/utils/date'
 import { Icon } from '@iconify/vue'
 import LoadMore from '@/components/base/LoadMore.vue'
 
-const router = useRouter()
 const emit = defineEmits(['reply-comment'])
 
 const commentList = ref<any>([])
 const currentPage = ref(1)
 const pageSize = ref(10)
+
+/**
+ * 在新标签页打开用户主页。
+ *
+ * :param userId: 用户 ID。
+ * :return: 无返回值。
+ */
+function openUserPage(userId: string): void {
+  window.open('/user/' + userId, '_blank', 'noopener,noreferrer')
+}
 const count = ref(0)  // 总评论数量
 const mainCount = ref(0)  // 一级评论数量
 

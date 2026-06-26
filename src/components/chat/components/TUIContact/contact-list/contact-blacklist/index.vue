@@ -34,7 +34,6 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue'
 import { Icon } from '@iconify/vue'
-import { IBlackListItem } from '@/interface/ws'
 import actionApi from '@/api/action'
 import { ActionTypeEnum } from '@/enums'
 import { ContactListTypeEnum } from '@/enums/ws'
@@ -46,7 +45,7 @@ import { ElMessage } from 'element-plus'
 const chatStore = useChatStore()
 const eventServer = EventServer.getInstance()
 
-const blackList = ref<IBlackListItem[]>([])
+const blackList = ref<any[]>([])
 const total = ref(0)
 const expand = ref(false)
 const currentPage = ref(1)
@@ -64,7 +63,7 @@ onUnmounted(() => {
 function getUserBlacklist() {
   actionApi.getActionList(currentPage.value, pageSize.value, {
     actionType: ActionTypeEnum.BLACKLIST
-  }).then(res => {
+  }, {}).then(res => {
     blackList.value = [...blackList.value, ...res.data.records]
     total.value = res.data.total
     if (res.data.records.length) {
@@ -74,7 +73,7 @@ function getUserBlacklist() {
 }
 
 
-function showApplicationStatus(item) {
+function showApplicationStatus(item: any): any[] {
   return [{
     key: 'blacklist_cancel',
     style: 'button',
@@ -87,7 +86,7 @@ function showApplicationStatus(item) {
   }]
 }
 
-function cancelBlackList(item: IBlackListItem) {
+function cancelBlackList(item: any) {
   actionApi.addOrUpdate({
     objId: item.objId,
     objType: item.objType,
@@ -105,7 +104,7 @@ function cancelBlackList(item: IBlackListItem) {
   })
 }
 
-function showContactDetail(item: IBlackListItem) {
+function showContactDetail(item: any) {
   chatStore.setCurrentContactType(ContactListTypeEnum.BlackList)
   chatStore.setCurrentContact(item)
   chatStore.setCurrentContactOperation(showApplicationStatus(item))

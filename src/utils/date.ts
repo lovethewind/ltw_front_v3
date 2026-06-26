@@ -108,7 +108,7 @@ export function covertTimeHowLongAgo(time: number | string) {
  * @param timeString2
  */
 export function dateStringDiff(timeString1: string, timeString2: string) {
-  const diff = (new Date(timeString1) - new Date(timeString2)) / 1000
+  const diff = (new Date(timeString1).getTime() - new Date(timeString2).getTime()) / 1000
   return Math.abs(diff)
 }
 
@@ -132,7 +132,7 @@ function getDayOfYear(date: Date) {
   // 创建同一年1月1日的日期对象
   const startOfYear = new Date(date.getFullYear(), 0, 1)
   // 计算两个日期之间的毫秒数差
-  const diffInMilliseconds = date - startOfYear
+  const diffInMilliseconds = date.getTime() - startOfYear.getTime()
   // 将毫秒数差转换成天数
   // 加1是因为从1月1日算起
   return Math.floor(diffInMilliseconds / (1000 * 60 * 60 * 24)) + 1

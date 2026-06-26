@@ -4,7 +4,6 @@ import {
   NoticeTypeEnum,
   ObjectTypeEnum
 } from '@/enums'
-import { IBaseUser } from '@/interface'
 
 export interface IBaseUser {
   id: number
@@ -89,6 +88,7 @@ export interface IBaseArticle {
   title: string
   userId: string
   cover: string
+  coverThumb?: string
   createTime: string
 }
 
@@ -100,6 +100,7 @@ export interface ISearchArticle {
   categoryId: string
   tagList: string[]
   cover: string
+  coverThumb?: string
   isOriginal: boolean
   status?: ArticleStatusEnum
   createTime: string
@@ -135,6 +136,7 @@ export interface IArticle {
   categoryId: string
   tagList: string[]
   cover: string
+  coverThumb?: string
   attachList: IAttach[]
   isMarkdown: boolean
   isOriginal: boolean

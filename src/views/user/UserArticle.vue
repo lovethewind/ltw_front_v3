@@ -58,7 +58,7 @@
           <el-row justify="center" align="middle">
             <el-col :xs="24" :sm="6" class="article-cover-col">
               <div class="article-cover"
-                   :style="'background: url(' + article.cover + ') center center / cover no-repeat'"
+                   :style="'background: url(' + (article.coverThumb || article.cover) + ') center center / cover no-repeat'"
                    @click="toArticleDetail(article)" />
             </el-col>
             <el-col :xs="24" :sm="18" class="ps-4">
@@ -99,8 +99,8 @@
                     </el-tag>
                   </span>
                   <span v-if="article.status !== ArticleStatusEnum.PUBLISHED" class="article-status">
-                    <el-tag size="small" :color="articleStatusTypeMap[article.status]">
-                      {{ articleStatusMap[article.status] }}
+                    <el-tag size="small" :color="(articleStatusTypeMap as any)[article.status]">
+                      {{ (articleStatusMap as any)[article.status] }}
                     </el-tag>
                   </span>
                 </el-col>
@@ -199,8 +199,8 @@ const articleList = ref<any>([])
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
-const queryDict = ref({})
-const articleInfo = ref({})
+const queryDict = ref<any>({})
+const articleInfo = ref<any>({})
 
 const user = computed(() => {
   return userStore.user
@@ -243,12 +243,12 @@ function fetchUserArticleInfo(query: object) {
   })
 }
 
-function orderTypeChange(val) {
+function orderTypeChange(val: any) {
   queryDict.value.orderType = val
   resetAndFetchArticleList()
 }
 
-function removeToRecycle(article) {
+function removeToRecycle(article: any) {
   ElMessageBox.confirm('正在删除该文章, 是否继续?', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
@@ -270,7 +270,7 @@ function removeToRecycle(article) {
   })
 }
 
-function recoveryRecycleArticle(article) {
+function recoveryRecycleArticle(article: any) {
   articleApi.moveToDraft({
     ids: [article.id]
   }).then(() => {
@@ -285,7 +285,7 @@ function recoveryRecycleArticle(article) {
   })
 }
 
-function deleteRecycleArticle(article) {
+function deleteRecycleArticle(article: any) {
   ElMessageBox.confirm('您确定要从回收站删除该文章吗，删除后不可恢复?', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
@@ -306,14 +306,14 @@ function deleteRecycleArticle(article) {
   })
 }
 
-function toArticleDetail(article) {
+function toArticleDetail(article: any) {
   if (article.status !== ArticleStatusEnum.PUBLISHED) {
     return
   }
   router.push('/article/' + article.id)
 }
 
-function changeArticleStatus(val) {
+function changeArticleStatus(val?: any) {
   queryDict.value.status = val
   resetAndFetchArticleList()
 }
@@ -325,7 +325,7 @@ function resetAndFetchArticleList() {
   infiniteHandler()
 }
 
-function countAll(obj) {
+function countAll(obj: any) {
   let count = 0
   Object.keys(obj).forEach((key) => {
     count += obj[key]

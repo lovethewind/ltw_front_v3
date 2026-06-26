@@ -20,7 +20,7 @@
 import { toRefs } from 'vue'
 import { MessageSendStatusEnum } from '@/enums/ws'
 import { Icon } from '@iconify/vue'
-import { IChatMessage } from '@/interface/ws'
+import type { IChatMessage } from '@/interface/ws'
 import { EventName } from '@/event-server/event-name'
 import { EventServer } from '@/event-server'
 

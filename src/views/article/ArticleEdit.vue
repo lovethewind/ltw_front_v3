@@ -1,145 +1,186 @@
 <template>
-  <div class="article-editor">
-    <md-editor
-      v-if="postForm.isMarkdown"
-      ref="editorRef"
-      @change="contentChange"
-      class="article-md-editor vw-100" />
-    <rich-editor
-      v-else
-      @change="contentChange"
-      class="article-rich-editor"
-      ref="richEditorRef"
-    />
-  </div>
-  <el-card class="article-edit">
-    <el-form ref="formRef" :model="postForm" :rules="rules" class="article-form"
-             :label-position="isMobile() ? 'top' : 'right'" label-width="100px">
-      <el-form-item label="封面" prop="cover">
-        <el-upload
-          v-if="!CoverPreviewUrl"
-          class="avatar-uploader"
-          action=""
-          accept="image/*"
-          :show-file-list="false"
-          :before-upload="beforeCoverUpload"
-        >
-          <template #trigger>
-            <el-tooltip v-if="postForm.cover" placement="top" effect="light" content="点击更改封面">
-              <el-image class="cover-preview" :src="postForm.cover" />
-            </el-tooltip>
-            <el-button v-else type="primary" size="small">选择封面</el-button>
-          </template>
-        </el-upload>
-        <div v-if="CoverPreviewUrl" class="avatar-uploader">
-          <el-image :src="CoverPreviewUrl" class="cover-preview" />
-          <div><a @click="handleCoverRemove">取消</a></div>
+  <el-form
+    ref="formRef"
+    :model="postForm"
+    :rules="rules"
+    class="article-edit-page"
+    label-position="top"
+  >
+    <div class="article-edit-shell">
+      <main class="article-main-column">
+        <el-form-item prop="title" class="article-title-item">
+          <el-input v-model="postForm.title" :placeholder="tips" class="article-title-input" />
+        </el-form-item>
+
+        <div class="article-editor">
+          <md-editor
+            v-if="postForm.isMarkdown"
+            ref="editorRef"
+            :toolbar-exclude="articleMarkdownToolbarExclude"
+            @change="contentChange"
+            class="article-md-editor"
+          />
+          <rich-editor
+            v-else
+            ref="richEditorRef"
+            @change="contentChange"
+            class="article-rich-editor"
+          />
         </div>
-      </el-form-item>
-      <el-form-item label="分类" prop="categoryId" style="width: 300px">
-        <el-select v-model="postForm.categoryId" filterable>
-          <el-option v-for="item in categoryList" :key="item.id" :value="item.id" :label="item.name" />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="标签列表" prop="tagList">
-        <el-tag
-          v-for="tagId in postForm.tagList"
-          :key="tagId +'_select'"
-          closable
-          size="small"
-          effect="light"
-          type="success"
-          :disable-transitions="false"
-          style="margin-right: 10px"
-          @close="handleCloseTag(tagId)"
-        >
-          {{ tagMap[tagId].name }}
-        </el-tag>
-        <el-popover
-          placement="bottom"
-          width="450"
-          trigger="click"
-        >
-          <el-autocomplete
-            v-model="searchTagKeyword"
-            :fetch-suggestions="searchTag"
-            :trigger-on-focus="false"
-            placeholder="请输入文字搜索"
-            class="mb-2 w-100"
-            @select="handleSelectTag"
+      </main>
+
+      <aside class="article-side-panel">
+        <section class="article-setting-section">
+          <div class="article-setting-title">发布设置</div>
+          <el-form-item label="分类" prop="categoryId" class="article-category-item">
+            <el-select v-model="postForm.categoryId" filterable placeholder="选择分类">
+              <el-option v-for="item in categoryList" :key="item.id" :value="item.id" :label="item.name" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="文章类型" prop="isOriginal" class="article-original-item">
+            <el-switch v-model="postForm.isOriginal" active-text="原创" inactive-text="转载" />
+          </el-form-item>
+          <el-form-item
+            v-if="!postForm.isOriginal"
+            :required="!postForm.isOriginal"
+            label="原文链接"
+            prop="originalUrl"
+            class="article-original-url-item"
           >
-            <template #default="{ item }">
-              <span class="name">{{ item.name }}</span>
-            </template>
-          </el-autocomplete>
-          <el-tabs v-model="tabActiveName" tab-position="left" :stretch="true">
-            <el-tab-pane v-for="(tags, index) in tagList" :key="tags.id" :label="tags.name" :name="'tag_' + index">
+            <el-input v-model="postForm.originalUrl" placeholder="粘贴原文链接" />
+          </el-form-item>
+        </section>
+
+        <section class="article-setting-section">
+          <div class="article-setting-title">封面</div>
+          <el-form-item prop="cover" class="article-cover-item">
+            <el-upload
+              v-if="!CoverPreviewUrl"
+              class="avatar-uploader"
+              action=""
+              accept="image/*"
+              :show-file-list="false"
+              :before-upload="beforeCoverUpload"
+            >
+              <template #trigger>
+                <el-tooltip v-if="postForm.cover" placement="top" effect="light" content="点击更改封面">
+                  <el-image class="cover-preview" :src="postForm.cover" />
+                </el-tooltip>
+                <button v-else class="cover-empty" type="button">
+                  <Icon icon="material-symbols:add-photo-alternate-outline" />
+                  <span>选择封面</span>
+                  <span class="cover-empty-tip">未选择封面后台会自动创建一个封面</span>
+                </button>
+              </template>
+            </el-upload>
+            <div v-if="CoverPreviewUrl" class="avatar-uploader">
+              <el-image :src="CoverPreviewUrl" class="cover-preview" />
+              <a class="cover-remove" @click="handleCoverRemove">取消更换</a>
+            </div>
+          </el-form-item>
+        </section>
+
+        <section class="article-setting-section">
+          <div class="article-setting-title">标签</div>
+          <el-form-item prop="tagList" class="article-tag-item">
+            <div class="article-tag-list">
               <el-tag
-                v-for="tag in tags.children"
-                :key="tag.id"
+                v-for="tagId in postForm.tagList"
+                :key="tagId +'_select'"
+                closable
                 size="small"
-                :disable-transitions="false"
                 effect="light"
-                :type="postForm.tagList.includes(tag.id) ? 'info' : 'success'"
-                :style="{margin: '5px', cursor:(postForm.tagList.includes(tag.id) ? '' : 'pointer')}"
-                @click="handleAddTag(tag)"
+                type="success"
+                :disable-transitions="false"
+                @close="handleCloseTag(tagId)"
               >
-                {{ tag.name }}
-              </el-tag>&nbsp;
-            </el-tab-pane>
-          </el-tabs>
-          <template #reference>
-            <el-button type="primary" size="small">添加标签</el-button>
-            <span class="ms-2">*最多选择5个标签</span>
-          </template>
-        </el-popover>
-      </el-form-item>
-      <el-form-item label="文章类型" prop="isOriginal">
-        <el-switch v-model="postForm.isOriginal" active-text="原创" inactive-text="转载" />
-      </el-form-item>
-      <el-form-item v-if="!postForm.isOriginal" :required="!postForm.isOriginal" label="原文链接" prop="originalUrl">
-        <el-input v-model="postForm.originalUrl" />
-      </el-form-item>
-      <el-form-item label="附件">
-        <el-button type="primary" size="small" @click="isShowAttachment = true">添加附件</el-button>
-        <div class="attachment-list">
-          <el-row v-for="attach in postForm.attachList" :key="attach.uid">
-            <el-col :span="18" class="ellipsis">
-              <a :href="attach.url" target="_blank">{{ attach.name }}({{ transformSize(attach.size) }})</a>
-            </el-col>
-            <el-col :span="6">
-              <a class="color-red" @click="deleteAttach(attach)">
-                <Icon icon="material-symbols:delete-outline" />
-                删除</a>
-            </el-col>
-          </el-row>
-        </div>
-      </el-form-item>
-      <div class="article-edit-footer fixed-bottom" :style="{textAlign: (isMobile() ? 'left' : 'right')}">
-        <div class="w-80 text-end">
-          <el-form-item class="float-start">
-            <span class="font-12">共 {{ count }} 字</span>
+                {{ tagMap[tagId].name }}
+              </el-tag>
+              <el-popover
+                placement="bottom"
+                width="450"
+                trigger="click"
+              >
+                <el-autocomplete
+                  v-model="searchTagKeyword"
+                  :fetch-suggestions="searchTag"
+                  :trigger-on-focus="false"
+                  placeholder="请输入文字搜索"
+                  class="mb-2 w-100"
+                  @select="handleSelectTag"
+                >
+                  <template #default="{ item }">
+                    <span class="name">{{ item.name }}</span>
+                  </template>
+                </el-autocomplete>
+                <el-tabs v-model="tabActiveName" tab-position="left" :stretch="true">
+                  <el-tab-pane v-for="(tags, index) in tagList" :key="tags.id" :label="tags.name" :name="'tag_' + index">
+                    <el-tag
+                      v-for="tag in tags.children"
+                      :key="tag.id"
+                      size="small"
+                      :disable-transitions="false"
+                      effect="light"
+                      :type="postForm.tagList.includes(tag.id) ? 'info' : 'success'"
+                      :style="{margin: '5px', cursor:(postForm.tagList.includes(tag.id) ? '' : 'pointer')}"
+                      @click="handleAddTag(tag)"
+                    >
+                      {{ tag.name }}
+                    </el-tag>&nbsp;
+                  </el-tab-pane>
+                </el-tabs>
+                <template #reference>
+                  <el-button type="primary" plain size="small">添加标签</el-button>
+                </template>
+              </el-popover>
+              <span class="article-tag-tip">最多选择5个标签</span>
+            </div>
           </el-form-item>
-          <el-form-item label="标题" prop="title" class="float-start w-50">
-            <el-input v-model="postForm.title" :placeholder="tips" />
+        </section>
+
+        <section class="article-setting-section">
+          <div class="article-setting-title">附件</div>
+          <el-form-item class="article-attach-item">
+            <el-button type="primary" plain size="small" @click="isShowAttachment = true">添加附件</el-button>
+            <div class="attachment-list">
+              <el-row v-for="attach in postForm.attachList" :key="attach.uid">
+                <el-col :span="18" class="ellipsis">
+                  <a :href="attach.url" target="_blank">{{ attach.name }}({{ transformSize(attach.size) }})</a>
+                </el-col>
+                <el-col :span="6">
+                  <a class="color-red" @click="deleteAttach(attach)">
+                    <Icon icon="material-symbols:delete-outline" />
+                    删除
+                  </a>
+                </el-col>
+              </el-row>
+            </div>
           </el-form-item>
-          <el-form-item class="float-end">
-            <a class="me-2 d-inline-flex align-items-center"
-               @click="changeEditor()">
-              <Icon icon="icon-park-outline:switch" />
-              切换为{{ postForm.isMarkdown ? '富文本编辑器' : 'Markdown编辑器' }}
-            </a>
+        </section>
+
+        <section class="article-setting-section article-publish-section">
+          <div class="article-publish-meta">
+            <span class="article-word-count">共 {{ count }} 字</span>
+            <el-switch
+              v-if="isAddArticle"
+              v-model="postForm.isMarkdown"
+              active-text="使用markdown"
+              class="article-markdown-switch"
+              @change="changeEditor"
+            />
+          </div>
+          <div class="article-footer-actions">
             <el-button type="primary" :size="isMobile() ? 'small' : 'default'" :disabled="submitDisabled"
                        @click="saveOrUpdate(1)">保存草稿
             </el-button>
             <el-button type="success" :size="isMobile() ? 'small' : 'default'" :disabled="submitDisabled"
                        @click="saveOrUpdate(2)">发布
             </el-button>
-          </el-form-item>
-        </div>
-      </div>
-    </el-form>
-  </el-card>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </el-form>
   <!-- 上传附件 -->
   <el-dialog title="上传附件" v-model="isShowAttachment" class="attachment-dialog" :show-close="false">
     <el-upload
@@ -190,7 +231,9 @@ import articleApi from '@/api/article'
 import ossApi from '@/api/oss-api'
 import {
   checkFileSize,
+  compressImageFile,
   getBase64,
+  getThumbFileName,
   getObjKeyCount,
   isEqual,
   isMobile,
@@ -203,7 +246,7 @@ import RichEditor from '@/components/editor/RichEditor.vue'
 import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
 import { ArticleStatusEnum, FileUploadStatusEnum, UploadFileTypeEnum } from '@/enums'
 import { Icon } from '@iconify/vue'
-import { IArticle, IAttach, ITag } from '@/interface'
+import type { ITag } from '@/interface'
 
 const route = useRoute()
 const router = useRouter()
@@ -218,6 +261,7 @@ const baseInfo: { [key: string]: any } = {
   userId: null,
   title: '',
   cover: '',
+  coverThumb: '',
   categoryId: null,
   tagList: [],
   attachList: [],
@@ -237,9 +281,9 @@ const validateOriginalUrl = (rule: any, value: any, callback: any, postData: any
   }
 }
 
-const postForm = ref(Object.assign({}, baseInfo))
+const postForm = ref<any>(Object.assign({}, baseInfo))
 const count = ref<number | undefined>(0)
-const currentRow = ref<IArticle>(null)
+const currentRow = ref<any>(null)
 const CoverPreviewUrl = ref<string | null>(null)
 const oldCover = ref('')
 const tabActiveName = ref('tag_0')
@@ -250,7 +294,22 @@ const tips = ref('🍀 在这里填写标题，想写点什么呢~')
 const cacheTimer = ref<any>(null)
 const isShowAttachment = ref(false)
 const uploadLoading = ref(false)
-const attachList = ref<IAttach[]>([])
+const attachList = ref<any[]>([])
+const articleMarkdownToolbarExclude = [
+  'save',
+  'github',
+  'fullscreen',
+  'pageFullscreen',
+  'htmlPreview',
+  'catalog',
+  'mermaid',
+  'katex',
+  'prettier',
+  'sub',
+  'sup',
+  'task',
+  'table'
+]
 const customColors = ref([
   { color: '#f56c6c', percentage: 20 },
   { color: '#e6a23c', percentage: 40 },
@@ -288,13 +347,17 @@ const tagList = computed(() => {
 const tagMap = computed(() => {
   return commonStore.tagMap
 })
+const isAddArticle = computed(() => {
+  return !route.params.articleId
+})
 
 onMounted(async () => {
   commonStore.setShowFooter(false)
+  document.body.classList.add('article-editing-page')
   window.onbeforeunload = () => {
     return '关闭提示'
   }
-  const articleId = route.params.articleId
+  const articleId = route.params.articleId as string | undefined
   postForm.value.tempId = articleId || 'add_new'
   let cacheArticle: any = window.sessionStorage.getItem('articleContentCache_' + postForm.value.tempId)
   if (cacheArticle) {
@@ -329,6 +392,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   commonStore.setShowFooter(true)
+  document.body.classList.remove('article-editing-page')
   window.onbeforeunload = null
   cacheTimer.value && clearInterval(cacheTimer.value)
 })
@@ -376,15 +440,12 @@ function setContentLength() {
 }
 
 function changeEditor() {
-  ElMessageBox.confirm('切换编辑器可能会导致内容丢失，是否切换？', '提示').then(() => {
-    postForm.value.isMarkdown = !postForm.value.isMarkdown
-    nextTick(() => {
-      if (postForm.value.isMarkdown) {
-        editorRef.value?.setContent(postForm.value.content)
-      } else {
-        richEditorRef.value?.setContent(postForm.value.content)
-      }
-    })
+  nextTick(() => {
+    if (postForm.value.isMarkdown) {
+      editorRef.value?.setContent(postForm.value.content)
+    } else {
+      richEditorRef.value?.setContent(postForm.value.content)
+    }
   })
 }
 
@@ -419,12 +480,17 @@ async function save() {
     plain: true
   })
   if (typeof postForm.value.cover === 'object') {
-    // 上传图片
-    const res = await ossApi.getUploadSignatureUrl({
-      dirType: UploadFileTypeEnum.COVER,
-      fileName: postForm.value.cover.name
-    })
-    postForm.value.cover = await uploadFile(res.data, postForm.value.cover)
+    try {
+      await uploadArticleCover(postForm.value)
+    } catch (error) {
+      submitDisabled.value = false
+      ElMessage({
+        message: '封面上传失败，请稍后重试',
+        type: 'error',
+        plain: true
+      })
+      return
+    }
   }
   articleApi.save(postForm.value)
     .then(response => {
@@ -462,12 +528,16 @@ async function update() {
     plain: true
   })
   if (typeof newData.cover === 'object') {
-    // 上传图片
-    const res = await ossApi.getUploadSignatureUrl({
-      type: UploadFileTypeEnum.COVER,
-      fileName: newData.cover.name
-    })
-    newData.cover = await uploadFile(res.data, newData.cover)
+    try {
+      await uploadArticleCover(newData)
+    } catch (error) {
+      ElMessage({
+        message: '封面上传失败，请稍后重试',
+        type: 'error',
+        plain: true
+      })
+      return
+    }
   }
   articleApi.update(newData)
     .then(() => {
@@ -503,6 +573,27 @@ function beforeCoverUpload(file: File) {
   return false
 }
 
+/**
+ * 上传文章封面原图和缩略图，并把返回地址写回表单数据。
+ *
+ * :param data: 待提交的文章表单数据。
+ * :return: 无返回值。
+ */
+async function uploadArticleCover(data: any): Promise<void> {
+  const coverFile = data.cover as File
+  const thumbFile = await compressImageFile(coverFile)
+  const coverRes = await ossApi.getUploadSignatureUrl({
+    dirType: UploadFileTypeEnum.COVER,
+    fileName: coverFile.name
+  })
+  const thumbRes = await ossApi.getUploadSignatureUrl({
+    dirType: UploadFileTypeEnum.THUMB,
+    fileName: getThumbFileName(coverFile.name)
+  })
+  data.cover = await uploadFile(coverRes.data, coverFile)
+  data.coverThumb = await uploadFile(thumbRes.data, thumbFile)
+}
+
 function handleCoverRemove() {
   CoverPreviewUrl.value = null
   postForm.value.cover = oldCover.value
@@ -528,7 +619,7 @@ function handleCloseTag(tagId: string) {
 }
 
 function searchTag(queryString: string, cb: (data: any) => void) {
-  const results = commonStore.choiceTagList.filter(item => {
+  const results = commonStore.choiceTagList.filter((item: any) => {
     return item.name.toLowerCase().indexOf(queryString.toLowerCase()) > -1
   })
   cb(results)
@@ -548,7 +639,7 @@ function handleSelectTag(item: ITag) {
   postForm.value.tagList.push(item.id)
 }
 
-function beforeAttachmentUpload(file: File) {
+function beforeAttachmentUpload(file: any) {
   if (attachList.value.length >= 5) {
     ElMessage({
       message: '一次性最多上传5个附件',
@@ -563,14 +654,14 @@ function beforeAttachmentUpload(file: File) {
   attachList.value.push({
     uid: uuid(),
     name: file.name,
-    file: file.raw,
+    file: file.raw || file,
     status: FileUploadStatusEnum.READY,
     size: file.size,
     progress: 0
   })
 }
 
-function removeAttachment(attach: IAttach) {
+function removeAttachment(attach: any) {
   attachList.value.splice(attachList.value.indexOf(attach), 1)
 }
 
@@ -579,9 +670,10 @@ function cancelAttachmentUpload() {
   attachList.value = []
 }
 
-const onProgress = (item: IAttach) => (progressEvent: ProgressEvent) => {
-  console.log('progress', item.name, Math.round((progressEvent.loaded * 100) / progressEvent.total))
-  item.progress = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+const onProgress = (item: any) => (progressEvent: any) => {
+  const total = progressEvent.total || 1
+  console.log('progress', item.name, Math.round((progressEvent.loaded * 100) / total))
+  item.progress = Math.round((progressEvent.loaded * 100) / total)
 }
 
 function uploadAttachment() {
@@ -600,7 +692,7 @@ function uploadAttachment() {
     type: 'info',
     plain: true
   })
-  uploadAttachList.forEach((item: IAttach) => {
+  uploadAttachList.forEach((item: any) => {
     item.status = FileUploadStatusEnum.UPLOADING
     ossApi.getUploadSignatureUrl({
       dirType: UploadFileTypeEnum.ATTACH,
@@ -610,7 +702,7 @@ function uploadAttachment() {
         await new Promise(resolve => setTimeout(resolve, 1000))
         // 移除已上传的附件
         item.status = FileUploadStatusEnum.SUCCESS
-        attachList.value = attachList.value.filter((it) => it.uid !== item.uid)
+        attachList.value = attachList.value.filter((it: any) => it.uid !== item.uid)
         postForm.value.attachList.push({
           uid: item.uid,
           name: item.name,
@@ -625,9 +717,9 @@ function uploadAttachment() {
   uploadLoading.value = false
 }
 
-function deleteAttach(attach: IAttach) {
+function deleteAttach(attach: any) {
   ElMessageBox.confirm('确定要删除该附件吗，删除后不可恢复？', '提示').then(() => {
-    postForm.value.attachList = postForm.value.attachList.filter((item) => item.uid !== attach.uid)
+    postForm.value.attachList = postForm.value.attachList.filter((item: any) => item.uid !== attach.uid)
   }).catch(() => {
   })
 }
@@ -651,6 +743,7 @@ function cacheContent() {
   if (!hasContent()) return
   const cacheObj = Object.assign({}, postForm.value)
   delete cacheObj.cover
+  delete cacheObj.coverThumb
   window.sessionStorage.setItem('articleContentCache_' + postForm.value.tempId, JSON.stringify(cacheObj))
 }
 

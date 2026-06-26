@@ -52,12 +52,11 @@
   </div>
 </template>
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { ContactTypeEnum } from '@/enums/ws'
 import { Icon } from '@iconify/vue'
 import chatApi from '@/api/chat'
-import { IBlackListItem, IGroupInfo } from '@/interface/ws'
-import { useUserStore } from '@/stores/user'
+import type { IGroupInfo } from '@/interface/ws'
 import { EventName } from '@/event-server/event-name'
 import { EventServer } from '@/event-server'
 
@@ -69,7 +68,6 @@ interface Option {
   onClick: () => void
 }
 
-const userStore = useUserStore()
 const eventServer = EventServer.getInstance()
 
 const groupList = ref<IGroupInfo[]>([])
@@ -78,20 +76,15 @@ const expand = ref(false)
 const currentPage = ref(1)
 const pageSize = ref(500)
 
-const user = computed(() => {
-  return userStore.user
-})
-const showApplicationStatus: Option[] = computed((item) => {
-  return [{
+const showApplicationStatus: Option[] = [{
     key: 'blacklist_cancel',
     style: 'button',
     type: 'primary',
     label: '取消拉黑',
     onClick: () => {
-      cancelBlackList(item)
+      cancelBlackList()
     }
   }]
-})
 
 onMounted(() => {
   eventServer.on(EventName.FLUSH_GROUP_LIST, getContactGroupList)
@@ -112,7 +105,7 @@ function getContactGroupList() {
   })
 }
 
-function cancelBlackList(item: IBlackListItem) {
+function cancelBlackList() {
 
 }
 

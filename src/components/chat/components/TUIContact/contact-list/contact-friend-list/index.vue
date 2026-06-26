@@ -37,7 +37,6 @@ import { ContactListTypeEnum, ContactTypeEnum } from '@/enums/ws'
 import { Icon } from '@iconify/vue'
 import chatApi from '@/api/chat'
 import actionApi from '@/api/action'
-import { IFriend } from '@/interface/ws'
 import { EventServer } from '@/event-server'
 import { EventName } from '@/event-server/event-name'
 import { useChatStore } from '@/stores/chat'
@@ -46,13 +45,13 @@ import { ActionTypeEnum, ObjectTypeEnum } from '@/enums'
 
 const chatStore = useChatStore()
 const eventServer = EventServer.getInstance()
-const friendList = ref<IFriend[]>([])
+const friendList = ref<any[]>([])
 const total = ref(0)
 const expand = ref(true)
 const currentPage = ref(1)
 const pageSize = ref(500)
 
-function showApplicationStatus(item) {
+function showApplicationStatus(item: any): any[] {
   return [{
     key: 'friend_conversation',
     style: 'button',
@@ -101,7 +100,7 @@ function getContactGroupList() {
   })
 }
 
-function startConversation(item: IFriend) {
+function startConversation(item: any) {
   chatApi.getConversationDetail({
     contactId: item.contactId,
     contactType: item.contactType
@@ -110,7 +109,7 @@ function startConversation(item: IFriend) {
   })
 }
 
-function deleteContact(item: IFriend) {
+function deleteContact(item: any) {
   ElMessageBox.confirm(`确定删除好友【${item.userProfile.nickname}】?`, '提示').then(() => {
     chatApi.deleteContact({
       contactId: item.contactId
@@ -127,7 +126,7 @@ function deleteContact(item: IFriend) {
   })
 }
 
-function blockContact(item: IFriend) {
+function blockContact(item: any) {
   ElMessageBox.confirm(`确定拉黑好友【${item.userProfile.nickname}】?`, '提示').then(() => {
     actionApi.addOrUpdate({
       objId: item.contactId,
@@ -147,7 +146,7 @@ function blockContact(item: IFriend) {
   })
 }
 
-function showContactDetail(item: IFriend) {
+function showContactDetail(item: any) {
   chatStore.setCurrentContactType(ContactListTypeEnum.FriendList)
   chatStore.setCurrentContact(item)
   chatStore.setCurrentContactOperation(showApplicationStatus(item))

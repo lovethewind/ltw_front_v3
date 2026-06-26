@@ -14,7 +14,7 @@ import ImageUpload from './image-upload/index.vue'
 import FileUpload from './file-upload/index.vue'
 import VideoUpload from './video-upload/index.vue'
 import TUIChatConfig from '../config'
-import { IEmojiChar } from '@/interface'
+import type { IEmojiChar } from '@/interface'
 
 
 interface IEmits {

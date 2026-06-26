@@ -13,7 +13,7 @@ export default {
     })
   },
 
-  getConversationDetail(params) {
+  getConversationDetail(params: object) {
     return request({
       url: `${apiName}/conversationDetail`,
       method: 'get',

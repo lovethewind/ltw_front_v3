@@ -186,20 +186,3 @@ html.dark {
 }
 
 </style>
-
-<style lang="scss">
-body.article-editing-page {
-  .rightside {
-    right: auto;
-    left: 24px;
-  }
-}
-
-@media screen and (max-width: 759px) {
-  body.article-editing-page {
-    .rightside {
-      left: 10px;
-    }
-  }
-}
-</style>

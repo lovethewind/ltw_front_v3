@@ -21,7 +21,7 @@
 
 <script setup lang="ts">
 import '@wangeditor/editor/dist/css/style.css'
-import { onMounted, shallowRef, onBeforeUnmount, ref } from 'vue'
+import { shallowRef, onBeforeUnmount, ref } from 'vue'
 import { Editor, Toolbar } from '@wangeditor/editor-for-vue'
 import type { IDomEditor } from '@wangeditor/core/dist/core/src/editor/interface'
 import { uploadFile } from '@/utils/oss-upload'
@@ -86,22 +86,10 @@ const editorConfig = {
   }
 }
 
-onMounted(() => {
-  setContentMarginTop()
-  window.addEventListener('resize', setContentMarginTop)
-})
-
 onBeforeUnmount(() => {
   const editor = editorRef.value
   editor && editor.destroy()
-  window.removeEventListener('resize', setContentMarginTop)
 })
-
-function setContentMarginTop() {
-  if (!toolbarRef.value || !contentRef.value) return
-  const height = toolbarRef.value.$el.offsetHeight
-  contentRef.value.$el.style.marginTop = (height < 40 ? 40 : height) + 5 + 'px'
-}
 
 function handleCreated(editor: IDomEditor) {
   editorRef.value = editor // 记录 editor 实例，重要！
@@ -142,21 +130,22 @@ defineExpose({
 }
 
 .editor-toolbar {
+  position: sticky;
+  top: 61px;
   border-bottom: 1px solid #ccc;
-  position: fixed;
-  top: 60px;
   width: 100%;
   display: flex;
   justify-content: center;
-  z-index: 1;
+  background: rgb(255 255 255 / 96%);
+  z-index: 5;
+  backdrop-filter: blur(12px);
 }
 
 .editor-content {
-  border: 1px solid #ccc;
-  margin: 0 auto;
-  width: 980px;
-  border-radius: 5px;
-  min-height: 70vh;
+  border: 0;
+  margin: 0;
+  width: 100%;
+  min-height: calc(100vh - 176px);
   background: #fff;
 }
 

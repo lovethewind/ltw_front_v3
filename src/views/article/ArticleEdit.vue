@@ -299,16 +299,7 @@ const articleMarkdownToolbarExclude = [
   'save',
   'github',
   'fullscreen',
-  'pageFullscreen',
-  'htmlPreview',
-  'catalog',
-  'mermaid',
-  'katex',
-  'prettier',
-  'sub',
-  'sup',
-  'task',
-  'table'
+  'pageFullscreen'
 ]
 const customColors = ref([
   { color: '#f56c6c', percentage: 20 },

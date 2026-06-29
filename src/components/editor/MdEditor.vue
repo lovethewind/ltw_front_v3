@@ -4,7 +4,7 @@
     v-model="contentValue"
     :toolbars-exclude="toolbarExclude as any"
     :footers="[]"
-    :show-toolbar-name="true"
+    :show-toolbar-name="false"
     :tab-width="4"
     @onUploadImg="uploadImg"
     @onChange="contentChange"
@@ -25,7 +25,7 @@ import { useCommonStore } from '@/stores/common'
 const emit = defineEmits(['change'])
 
 interface Props {
-  toolbar?: object,
+  toolbar?: object
   toolbarExclude?: string[]
 }
 
@@ -91,24 +91,28 @@ function getContentLength() {
 
 function uploadImg(files: File[], callback: Function) {
   const file = files[0]
-  ossApi.getUploadSignatureUrl({
-    dirType: UploadFileTypeEnum.IMAGE,
-    fileName: file.name
-  }).then(res => {
-    uploadFile(res.data, file).then(url => {
-      ElMessage({
-        message: '上传成功',
-        type: 'success',
-        plain: true
-      })
-      callback([{
-        url: url,
-        alt: file.name,
-        title: file.name
-      }])
+  ossApi
+    .getUploadSignatureUrl({
+      dirType: UploadFileTypeEnum.IMAGE,
+      fileName: file.name
     })
-  }).finally(() => {
-  })
+    .then((res) => {
+      uploadFile(res.data, file).then((url) => {
+        ElMessage({
+          message: '上传成功',
+          type: 'success',
+          plain: true
+        })
+        callback([
+          {
+            url: url,
+            alt: file.name,
+            title: file.name
+          }
+        ])
+      })
+    })
+    .finally(() => {})
 }
 
 defineExpose({
@@ -134,11 +138,6 @@ defineExpose({
     width: min(1160px, calc(100vw - 48px));
     margin: 0 auto;
 
-    .md-editor-dropdown {
-      position: fixed;
-      top: 105px !important;
-    }
-
     .md-editor-toolbar-item {
       text-align: -webkit-center;
     }
@@ -151,7 +150,7 @@ defineExpose({
 
 .md-editor-content {
   width: min(1160px, calc(100vw - 48px));
-  margin: 10px auto 0 auto;
+  margin: 0 auto;
   border: 1px solid #e4e7ed;
   border-radius: 8px;
   overflow: hidden;
@@ -193,25 +192,31 @@ defineExpose({
 
 body.article-editing-page {
   .md-editor-toolbar-wrapper {
+    overflow: visible;
+
     .md-editor-toolbar {
       width: 100%;
       max-width: none;
-      padding: 0 12px;
+      padding: 0 8px;
+      box-sizing: border-box;
       justify-content: center;
-      overflow-x: hidden;
+      overflow: visible;
+      flex-wrap: wrap;
+      row-gap: 2px;
+
+      .md-editor-toolbar-item {
+        min-width: 32px;
+      }
     }
   }
 
   .md-editor-content {
     width: 100%;
-    height: calc(100vh - 246px);
-    min-height: 620px;
+    //height: calc(100vh - 246px);
+    min-height: 780px;
     max-width: none;
-    margin: 10px 0 0;
   }
 }
 </style>
 
-<style lang="scss" scoped>
-
-</style>
+<style lang="scss" scoped></style>

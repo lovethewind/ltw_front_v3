@@ -32,7 +32,3 @@ coverage
 # Local agent configuration
 .agents/
 .claude/
-
-# Local generated tests
-src/utils/common.test.ts
-src/views/picture/PictureView.test.ts

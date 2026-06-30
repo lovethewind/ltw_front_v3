@@ -114,6 +114,7 @@ function handleClose() {
   margin: 2vh auto;
   overflow: hidden;
   padding: 0;
+  border-radius: 10px;
 
   .el-dialog__header {
     padding: 0;

@@ -55,18 +55,20 @@ export const useCommonStore = defineStore('common', () => {
     author: 'frank',
     bulletin: '欢迎来到心悦心享小站~',
     summary: '生活不止眼前的苟且，还有诗和远方~',
-    logo: 'https://img.lovethewind.com.cn/media/logo/default.png',
+    logo: 'https://source.lovethewind.cn/media/logo/default.png',
     webUrl: 'https://lovethewind.cn',
     name: '恋、晨风',
     isMusicPlayer: false,
     showMusicBar: false,
     loginTypeList: [1],
-    wechatQrCode: 'https://img.lovethewind.com.cn/media/logo/qrcode_for_gh.jpg',
-    footerStyle: 'background:linear-gradient(-45deg, #ee7752, #ce3e75, #23a6d5, #23d5ab);animation: Gradient 10s ease infinite;background-size: 400% 400%;',
+    wechatQrCode: 'https://source.lovethewind.cn/media/logo/qrcode_for_gh.jpg',
+    footerStyle:
+      'background:linear-gradient(-45deg, #ee7752, #ce3e75, #23a6d5, #23d5ab);animation: Gradient 10s ease infinite;background-size: 400% 400%;',
     showFooter: true,
     notice: '网站正在快马加鞭地建设中~',
     aboutMe: '正在撰写中，请稍后~',
-    contactMe: '<p>此网站是基于学习过程记录、经验分享和心得交流</p><br>' +
+    contactMe:
+      '<p>此网站是基于学习过程记录、经验分享和心得交流</p><br>' +
       '<p>部分资源来源于网络，如若发现侵权，请联系我们立即删除</p><br>' +
       '<p>联系方式: 1720045474@qq.com</p>',
     metaInfo: {

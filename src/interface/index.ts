@@ -19,7 +19,6 @@ export interface IUserDetail {
   avatar: string
   background: string
   gender: GenderEnum
-  occupation: string
   summary: string
   address: string
   articleCount: number
@@ -49,7 +48,6 @@ export interface IUserSelfInfo {
   avatar: string
   background: string
   gender: GenderEnum
-  occupation: string
   summary: string
   address: string
   mobile: string

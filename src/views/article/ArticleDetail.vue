@@ -117,7 +117,7 @@
             获取验证码
           </div>
           <!-- 附件列表 -->
-          <div v-if="article.attachList && article.attachList.length > 0" class="article-attachment">
+          <div v-if="isExpanded && article.attachList && article.attachList.length > 0" class="article-attachment">
             <div class="article-attachment-title">
               <Icon icon="carbon:document-attachment" class="font-20" color="orange" />
               <span class="ms-2">附件列表({{ article.attachList.length }})</span>
@@ -133,11 +133,15 @@
                   <span class="article-attachment-name">{{ item.name }}</span>
                 </el-col>
                 <el-col :span="6" class="justify-content-end">
-                  <el-button type="primary" size="small" @click="downloadFile(item.url)"
-                             class="article-attachment-size">
+                  <a
+                    class="article-attachment-download"
+                    :href="getAttachmentDownloadUrl(item.url, item.name)"
+                    :download="item.name"
+                    rel="noopener noreferrer"
+                  >
                     <Icon icon="mage:download" class="font-16" />
                     下载({{ transformSize(item.size) }})
-                  </el-button>
+                  </a>
                 </el-col>
               </el-row>
             </div>
@@ -506,7 +510,6 @@ import actionApi from '@/api/action'
 import { genderMap } from '@/utils/constant'
 import {
   deleteHTMLTag,
-  downloadFile,
   genRandomColor,
   highlightCode,
   markdownToHtml, toWeb,
@@ -586,6 +589,26 @@ const isCollect = computed(() => {
 
 function isFull(id: string | null) {
   return id ? 'post full' : 'post-none'
+}
+
+/**
+ * 生成附件下载地址，并要求 OSS 以附件形式返回文件。
+ *
+ * :param url: 附件原始地址。
+ * :param fileName: 附件文件名。
+ * :return: 追加下载响应头参数后的附件地址。
+ */
+function getAttachmentDownloadUrl(url: string, fileName: string): string {
+  const disposition = `attachment; filename*=UTF-8''${encodeURIComponent(fileName)}`
+
+  try {
+    const downloadUrl = new URL(url, window.location.origin)
+    downloadUrl.searchParams.set('response-content-disposition', disposition)
+    return downloadUrl.toString()
+  } catch {
+    const separator = url.includes('?') ? '&' : '?'
+    return `${url}${separator}response-content-disposition=${encodeURIComponent(disposition)}`
+  }
 }
 
 function getArticle() {
@@ -794,13 +817,6 @@ function collect() {
       userStore.reduceUserArticleCollect(article.value.id)
     }
   })
-}
-
-function previewImg(img: string) {
-  // imagePreview({
-  //   images: imgList.value,
-  //   index: imgList.value.indexOf(img)
-  // })
 }
 
 /**

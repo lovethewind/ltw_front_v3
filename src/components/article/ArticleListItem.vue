@@ -25,7 +25,12 @@
       </div>
       <div class="article-info">
         <div class="first-info">
-          <router-link :to="'/user/' + article.user.id" class="username-avatar-info">
+          <router-link
+            :to="'/user/' + article.user.id"
+            class="username-avatar-info"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             <el-avatar :src="article.user.avatar" size="small" />
             <span class="ms-1 a-link ellipsis username-info">{{ article.user.nickname }}</span>
           </router-link>

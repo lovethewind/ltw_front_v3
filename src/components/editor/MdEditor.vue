@@ -158,11 +158,6 @@ defineExpose({
   box-shadow: 0 16px 36px rgb(15 23 42 / 6%);
 }
 
-.md-editor-input-wrapper,
-.md-editor-preview-wrapper {
-  scrollbar-color: #b8c5d6 transparent;
-}
-
 .md-editor-dark {
   .md-editor-toolbar-wrapper {
     background: rgb(31 41 55 / 96%);

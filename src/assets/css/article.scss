@@ -607,7 +607,7 @@ hr {
   border-radius: 4px;
   background: #f5f5f5;
 
-  a {
+  .article-attachment-download {
     display: flex;
     align-items: center;
     padding: 0 0.75rem;
@@ -617,6 +617,11 @@ hr {
     color: #49b1f5;
     font-size: 12px;
     line-height: 2;
+
+    &:hover {
+      color: #fff !important;
+      background: #49b1f5;
+    }
   }
 
   .article-attachment-title {
@@ -633,10 +638,6 @@ hr {
     justify-content: space-between;
     margin: 5px 0;
     border-radius: 5px;
-
-    &:hover {
-      background: #ccc;
-    }
 
     .el-col {
       display: flex;

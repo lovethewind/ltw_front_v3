@@ -5,7 +5,7 @@
     </div>
   </div>
   <div v-if="userDetail || groupDetail" class="tui-contact">
-    <div v-if="currentContactType !== ContactListTypeEnum.GroupList" class="tui-contact-info">
+    <div v-if="currentContactType !== ContactListTypeEnum.GroupList && userDetail" class="tui-contact-info">
       <div class="user-detail-div">
         <el-row align="middle" justify="start">
           <el-col :span="6">
@@ -107,9 +107,10 @@ import { genderMap } from '@/utils/constant'
 import { covertTimeHowLongAgo } from '@/utils/date'
 import { Icon } from '@iconify/vue'
 import userApi from '@/api/user'
+import type { IUserDetail } from '@/interface'
 
 const chatStore = useChatStore()
-const userDetail = ref<any>({})
+const userDetail = ref<IUserDetail>()
 const groupDetail = ref<any>()
 
 
@@ -125,10 +126,11 @@ const currentContactOperation = computed(() => {
 
 watch(currentContact, (val) => {
   if (!val) {
-    userDetail.value = {}
+    userDetail.value = undefined
     return
   }
   if (currentContactType.value !== ContactListTypeEnum.GroupList) {
+    userDetail.value = undefined
     const userId = (currentContact.value as any)?.userProfile?.id
     if (!userId) return
     userApi.getUserById(userId).then(res => {

@@ -41,11 +41,6 @@
         </el-radio-group>
         <span v-else>{{ genderMap[loginUser.gender].name }}</span>
       </el-form-item>
-      <el-form-item label="头衔">
-        <el-input v-if="isEdit" v-model="loginUser.occupation" maxlength="20" show-word-limit placeholder="高级摸鱼师🐟"
-        />
-        <span v-else>{{ loginUser.occupation }}</span>
-      </el-form-item>
       <el-form-item label="签名">
         <el-input
           v-if="isEdit"

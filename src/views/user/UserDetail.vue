@@ -36,12 +36,6 @@
             IP属地: {{ viewUser.address }}
           </el-col>
         </el-row>
-        <el-row align="middle" justify="start">
-          <el-col>
-            <Icon icon="mdi:crown" color="gold" />
-            头衔: {{ viewUser.occupation }}
-          </el-col>
-        </el-row>
         <el-row align="middle" justify="center">
           <el-col :span="6" class="col-all-center">
             <el-statistic :value="viewUser.articleCount" />
@@ -111,7 +105,7 @@ import { useUserStore } from '@/stores/user'
 import actionApi from '@/api/action'
 import { genderMap } from '@/utils/constant'
 import { formatRegisterTime } from '@/utils/date'
-import { checkIsLogin, toWait } from '@/utils/common'
+import { checkIsLogin } from '@/utils/common'
 import { Icon } from '@iconify/vue'
 import { ActionTypeEnum, ObjectTypeEnum } from '@/enums'
 import { ElMessage } from 'element-plus'
@@ -158,4 +152,3 @@ function chat() {
 </script>
 
 <style src="@/assets/css/user-center.scss" scoped />
-

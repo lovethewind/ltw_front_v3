@@ -42,12 +42,6 @@
                   IP属地: {{ userDetail.address }}
                 </el-col>
               </el-row>
-              <el-row align="middle" justify="start">
-                <el-col>
-                  <Icon icon="mdi:crown" color="gold" />
-                  头衔: {{ userDetail.occupation }}
-                </el-col>
-              </el-row>
               <el-row align="middle" justify="center">
                 <el-col :span="6" class="col-all-center">
                   <el-statistic :value="userDetail.articleCount" />
@@ -99,6 +93,7 @@ import { useUserStore } from '@/stores/user'
 import userApi from '@/api/user'
 import chatApi from '@/api/chat'
 import actionApi from '@/api/action'
+import type { IUserDetail } from '@/interface'
 import { genderMap } from '@/utils/constant'
 import { formatRegisterTime } from '@/utils/date'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -107,7 +102,7 @@ import { ActionTypeEnum, ObjectTypeEnum } from '@/enums'
 
 const chatStore = useChatStore()
 const userStore = useUserStore()
-const userDetail = ref<any>({})
+const userDetail = ref<IUserDetail>()
 
 const currentConversation = computed(() => {
   return chatStore.currentConversation
@@ -158,7 +153,9 @@ function blockUser() {
           type: 'success',
           plain: true
         })
-        userDetail.value.isBlocked = res.data
+        if (userDetail.value) {
+          userDetail.value.isBlocked = res.data
+        }
       })
     }).catch(() => {
     })

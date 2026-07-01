@@ -1,4 +1,5 @@
 @import "variables";
+@import "dialog";
 
 @keyframes Gradient {
   0% {
@@ -199,8 +200,6 @@ a {
   cursor: pointer;
 
   .like-comment,
-  .share-content,
-  .share-content a,
   .origin-article,
   .origin-article a {
     font-size: 12px;
@@ -209,10 +208,6 @@ a {
 
   .article {
     background: #dd9d28;
-  }
-
-  .share {
-    background: #5da35d;
   }
 
   .picture {

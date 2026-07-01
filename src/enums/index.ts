@@ -35,21 +35,6 @@ export enum AlbumTypeEnum {
   PRIVATE = 2
 }
 
-export enum ShareTypeEnum {
-  NOTE = 1,
-  LIFE = 2,
-  EXPERIENCE = 3,
-  MUSIC = 4,
-  VIDEO = 5,
-  RESOURCE = 6,
-  OTHER = 7
-}
-
-export enum ShareSearchContentTypeEnum {
-  CONTENT = 1,
-  TAG = 2
-}
-
 export enum WechatScanResultEnum {
   // 0:未扫码 1: 未绑定 2: 已绑定且是登录用户本人 3: 已过期
   NOT_SCAN = 0,
@@ -104,11 +89,10 @@ export enum ActionTypeEnum {
 }
 
 export enum ObjectTypeEnum {
-  // 对象类型 1:文章 2:评论 3:用户 4:分享 5:图片
+  // 对象类型 1:文章 2:评论 3:用户 5:图片
   ARTICLE = 1,
   COMMENT = 2,
   USER = 3,
-  SHARE = 4,
   PICTURE = 5,
 }
 

@@ -241,9 +241,18 @@
       </div>
     </el-card>
     <!--添加图库-->
-    <el-dialog :title="(pictureAlbumForm.isEdit ? '修改' : '添加') + '图库'"
-               v-model="addPictureAlbumDialogVisible" width="30%" :close-on-click-modal="false">
-      <el-form ref="addPictureAlbumFormRef" :model="pictureAlbumForm" :rules="pictureAlbumRules" label-width="80px">
+    <AppFormDialog
+      v-model="addPictureAlbumDialogVisible"
+      class="picture-edit-dialog"
+      :title="(pictureAlbumForm.isEdit ? '修改' : '添加') + '图库'"
+      width="560px"
+      top="8vh"
+      :close-on-click-modal="false"
+      hero-icon="ic:outline-image"
+      :hero-title="pictureAlbumForm.isEdit ? '整理图库信息' : '创建新的图库'"
+      hero-description="设置封面、名称和可见范围，让图片分类更清楚，也方便后续上传和管理。"
+    >
+      <el-form ref="addPictureAlbumFormRef" :model="pictureAlbumForm" :rules="pictureAlbumRules" label-width="86px" class="app-dialog-form">
         <el-form-item label="图库封面" prop="cover">
           <el-upload
             class="avatar-uploader"
@@ -253,7 +262,11 @@
             :before-upload="beforePictureAlbumCoverUpload"
           >
             <img v-if="pictureAlbumPreviewCover" :src="pictureAlbumPreviewCover" class="picture-album-add-cover" alt="">
-            <span v-else><Icon icon="ic:baseline-add" />添加</span>
+            <span v-else class="app-upload-placeholder">
+              <Icon icon="ic:baseline-add" />
+              <span>选择封面</span>
+              <small>建议使用清晰横图</small>
+            </span>
           </el-upload>
           <div v-if="pictureAlbumPreviewCover"><a @click="handlePictureAlbumCoverRemove">取消</a></div>
         </el-form-item>
@@ -279,15 +292,27 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="cancelAddPictureAlbum()">取消</el-button>
-        <el-button type="primary" :disabled="pictureAlbumAddDisabled" @click="saveOrUpdatePictureAlbum()">提交
-        </el-button>
+        <div class="app-dialog-footer">
+          <el-button @click="cancelAddPictureAlbum()">取消</el-button>
+          <el-button type="primary" :loading="pictureAlbumAddDisabled" @click="saveOrUpdatePictureAlbum()">
+            {{ pictureAlbumForm.isEdit ? '保存修改' : '创建图库' }}
+          </el-button>
+        </div>
       </template>
-    </el-dialog>
+    </AppFormDialog>
     <!--添加图片-->
-    <el-dialog :title="(pictureForm.isEdit ? '修改' : '添加') + '图片'" v-model="addPictureDialogVisible" width="30%"
-               :close-on-click-modal="false">
-      <el-form ref="addPictureFormRef" :model="pictureForm" :rules="pictureRules" label-width="80px">
+    <AppFormDialog
+      v-model="addPictureDialogVisible"
+      class="picture-edit-dialog"
+      :title="(pictureForm.isEdit ? '修改' : '添加') + '图片'"
+      width="520px"
+      top="8vh"
+      :close-on-click-modal="false"
+      hero-icon="ic:outline-add-photo-alternate"
+      :hero-title="pictureForm.isEdit ? '更新图片说明' : '上传一张新图片'"
+      hero-description="选择图片并补充描述，上传后会进入当前图库中展示。"
+    >
+      <el-form ref="addPictureFormRef" :model="pictureForm" :rules="pictureRules" label-width="86px" class="app-dialog-form">
         <el-form-item v-if="!pictureForm.isEdit" label="图片" prop="url">
           <el-upload
             class="avatar-uploader"
@@ -297,7 +322,11 @@
             :before-upload="beforePictureUpload"
           >
             <img v-if="pictureFormPreviewUrl" :src="pictureFormPreviewUrl" class="picture-album-add-cover" alt="">
-            <span v-else>添加</span>
+            <span v-else class="app-upload-placeholder">
+              <Icon icon="ic:baseline-add" />
+              <span>选择图片</span>
+              <small>支持常见图片格式</small>
+            </span>
           </el-upload>
           <div v-if="pictureFormPreviewUrl"><a @click="handlePictureRemove()">取消</a></div>
         </el-form-item>
@@ -307,10 +336,14 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="cancelAddPicture()">取消</el-button>
-        <el-button type="primary" :disabled="pictureAddDisabled" @click="saveOrUpdatePicture()">提交</el-button>
+        <div class="app-dialog-footer">
+          <el-button @click="cancelAddPicture()">取消</el-button>
+          <el-button type="primary" :loading="pictureAddDisabled" @click="saveOrUpdatePicture()">
+            {{ pictureForm.isEdit ? '保存修改' : '上传图片' }}
+          </el-button>
+        </div>
       </template>
-    </el-dialog>
+    </AppFormDialog>
     <!-- 图片预览 -->
     <el-dialog v-model="previewPictureDialogVisible" destroy-on-close
                class="picture-preview-dialog" width="95%" top="20px">
@@ -443,6 +476,7 @@ import { minute } from '@/utils/date'
 import { ActionTypeEnum, AlbumCategoryTypeEnum, AlbumTypeEnum, ObjectTypeEnum, UploadFileTypeEnum } from '@/enums'
 import CommentView from '@/components/comment/CommentView.vue'
 import ReplyView from '@/components/comment/ReplyView.vue'
+import AppFormDialog from '@/components/base/AppFormDialog.vue'
 import commentApi from '@/api/comment'
 import {
   buildPictureQueryParams,

@@ -68,13 +68,6 @@ const routers = [
     }
   },
   {
-    path: '/share',
-    redirect: '/',
-    meta: {
-      title: '分享'
-    }
-  },
-  {
     path: '/about',
     component: () => import('@/views/about/AboutView.vue'),
     meta: {

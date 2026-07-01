@@ -1,10 +1,26 @@
 <template>
-  <el-dialog width="40%" title="意见反馈" v-model="feedbackFlag" @close="closeModal()">
+  <AppFormDialog
+    v-model="feedbackFlag"
+    class="feedback-dialog"
+    width="540px"
+    top="10vh"
+    title="意见反馈"
+    hero-icon="material-symbols:feedback-outline"
+    hero-title="把你的想法告诉我们"
+    hero-description="无论是新需求还是 bug 线索，都可以在这里提交。"
+    @close="closeModal()"
+  >
     <el-form ref="feedbackFormRef" :rules="rules" label-position="left" :model="postForm"
-             :label-width="formLabelWidth">
+             :label-width="formLabelWidth" class="app-dialog-form">
       <el-form-item label="反馈类型" prop="feedbackType">
-        <el-radio v-model="postForm.feedbackType" :label="1">提交需求</el-radio>
-        <el-radio v-model="postForm.feedbackType" :label="2">反馈bug</el-radio>
+        <el-radio-group v-model="postForm.feedbackType" class="app-dialog-segmented">
+          <el-radio-button :value="1">
+            提交需求
+          </el-radio-button>
+          <el-radio-button :value="2">
+            反馈 Bug
+          </el-radio-button>
+        </el-radio-group>
       </el-form-item>
       <el-form-item label="联系邮箱" prop="email">
         <el-input v-model="postForm.email" placeholder="请填写您的联系邮箱" />
@@ -19,10 +35,12 @@
       </div>
     </el-form>
     <template #footer>
-      <el-button @click="closeModal()">取 消</el-button>
-      <el-button type="primary" :disabled="feedbackDisabled" @click="submit">确 定</el-button>
+      <div class="app-dialog-footer">
+        <el-button @click="closeModal()">取 消</el-button>
+        <el-button type="primary" :loading="feedbackDisabled" @click="submit">提交反馈</el-button>
+      </div>
     </template>
-  </el-dialog>
+  </AppFormDialog>
 </template>
 
 <script setup lang="ts">
@@ -30,6 +48,7 @@ import { ref, computed } from 'vue'
 import { ElMessage, type FormInstance } from 'element-plus'
 import commonApi from '@/api/common.js'
 import { useModalStore } from '@/stores/modal'
+import AppFormDialog from '@/components/base/AppFormDialog.vue'
 
 const modalStore = useModalStore()
 

@@ -146,12 +146,21 @@
         </template>
       </el-dialog>
 
-      <el-dialog class="website-dialog" width="520px" top="10vh" center title="投稿网站"
-                 v-model="dialogFormVisible"
-                 :close-on-click-modal="false"
-                 @close="closeModal()">
-        <span class="color-red">注:已经申请过的/正在审核的网站无法重复申请</span>
-        <el-form ref="postFormRef" :rules="rules" :model="postForm" label-width="100" class="mt-4">
+      <AppFormDialog
+        v-model="dialogFormVisible"
+        class="website-dialog"
+        width="560px"
+        top="8vh"
+        center
+        title="投稿网站"
+        :close-on-click-modal="false"
+        hero-icon="mage:plus"
+        hero-title="推荐一个值得收藏的网站"
+        hero-description="填好基础信息后会进入审核，审核通过后将通过通知告知。"
+        tip="已经申请过的或正在审核的网站无法重复申请。"
+        @close="closeModal()"
+      >
+        <el-form ref="postFormRef" :rules="rules" :model="postForm" label-width="92" class="app-dialog-form">
           <el-form-item label="网站分类" prop="categoryId">
             <el-select v-model="postForm.categoryId" placeholder="请选择网站分类" class="website-category-select">
               <el-option
@@ -178,10 +187,14 @@
           </el-form-item>
         </el-form>
         <template #footer>
-          <el-button @click="closeModal()">取 消</el-button>
-          <el-button type="primary" :disabled="btnDisabled" @click="submit">确 定</el-button>
+          <div class="app-dialog-footer">
+            <el-button @click="closeModal()">取 消</el-button>
+            <el-button type="primary" :loading="btnDisabled" @click="submit">
+              提交申请
+            </el-button>
+          </div>
         </template>
-      </el-dialog>
+      </AppFormDialog>
     </div>
   </main>
 </template>
@@ -192,6 +205,7 @@ import websiteApi from '@/api/website'
 import { checkIsLogin } from '@/utils/common'
 import { ElMessage, type FormInstance } from 'element-plus'
 import { Icon } from '@iconify/vue'
+import AppFormDialog from '@/components/base/AppFormDialog.vue'
 import {
   filterWebsiteCategories,
   filterWebsiteCategoriesByCategory,
@@ -741,12 +755,12 @@ function closeModal() {
   line-height: 1.5;
 }
 
-:deep(.visit-dialog .el-dialog__footer) {
+:global(.visit-dialog .el-dialog__footer) {
   padding-top: 0;
   text-align: center;
 }
 
-:deep(.visit-dialog .el-button) {
+:global(.visit-dialog .el-button) {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -880,18 +894,11 @@ html.dark {
     --el-avatar-size: 52px;
   }
 
-  :deep(.website-dialog),
-  :deep(.visit-dialog) {
+  :global(.visit-dialog) {
+    margin-top: 3vh !important;
+    max-height: 94vh;
+    overflow-y: auto;
     width: calc(100vw - 32px) !important;
-  }
-
-  :deep(.website-dialog .el-form-item) {
-    display: block;
-  }
-
-  :deep(.website-dialog .el-form-item__label) {
-    justify-content: flex-start;
-    margin-bottom: 6px;
   }
 }
 </style>

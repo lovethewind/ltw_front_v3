@@ -74,13 +74,21 @@
       <span class="color-red">注:如果已经申请过需要修改信息 提交后需重新审核</span>
     </div>
     <div>
-      <el-dialog width="35%" top="10vh"
-                 center
-                 title="申请友链"
-                 v-model="dialogFormVisible"
-                 :close-on-click-modal="false"
-                 @close="closeModal()">
-        <el-form ref="postFormRef" :rules="rules" :model="postForm" label-width="100">
+      <AppFormDialog
+        v-model="dialogFormVisible"
+        class="link-dialog"
+        width="560px"
+        top="8vh"
+        center
+        title="申请友链"
+        :close-on-click-modal="false"
+        hero-icon="noto:link"
+        hero-title="交换一个有趣的入口"
+        hero-description="提交站点信息后会进入审核，通过后会通过邮件告知。"
+        tip="如果已经申请过但需要修改信息，重新提交后也需要再次审核。"
+        @close="closeModal()"
+      >
+        <el-form ref="postFormRef" :rules="rules" :model="postForm" label-width="92" class="app-dialog-form">
           <el-form-item label="网站名称" prop="name">
             <el-input v-model="postForm.name" autocomplete="off" />
           </el-form-item>
@@ -103,10 +111,12 @@
 
         </el-form>
         <template #footer>
-          <el-button @click="closeModal()">取 消</el-button>
-          <el-button type="primary" :disabled="btnDisabled" @click="submit()">确 定</el-button>
+          <div class="app-dialog-footer">
+            <el-button @click="closeModal()">取 消</el-button>
+            <el-button type="primary" :loading="btnDisabled" @click="submit()">提交申请</el-button>
+          </div>
         </template>
-      </el-dialog>
+      </AppFormDialog>
     </div>
   </el-card>
 </template>
@@ -118,6 +128,7 @@ import linkApi from '@/api/link'
 import { checkIsLogin, randomSortList, toWeb, copy } from '@/utils/common'
 import { ElMessage, type FormInstance } from 'element-plus'
 import { Icon } from '@iconify/vue'
+import AppFormDialog from '@/components/base/AppFormDialog.vue'
 
 const commonStore = useCommonStore()
 

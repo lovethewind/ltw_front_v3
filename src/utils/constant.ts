@@ -35,62 +35,6 @@ export const articleStatusTypeMap = {
   4: ''
 }
 
-// 分享类别 1.笔记 2.生活 3.经验 4.音乐 5.视频 6.资源 7.其他
-export const shareTypeList = [
-  {
-    value: 1,
-    name: '笔记',
-    icon: 'mdi:notebook',
-    color: '#2196f3'
-  },
-  {
-    value: 2,
-    name: '生活',
-    icon: 'mdi:lifebuoy',
-    color: '#4caf50'
-  },
-  {
-    value: 3,
-    name: '经验',
-    icon: 'mdi:lightbulb-on',
-    color: '#ff9800'
-  },
-  {
-    value: 4,
-    name: '音乐',
-    icon: 'mdi:music',
-    color: '#9c27b0'
-  },
-  {
-    value: 5,
-    name: '视频',
-    icon: 'mdi:video',
-    color: '#f44336'
-  },
-  {
-    value: 6,
-    name: '资源',
-    icon: 'mdi:zip-box',
-    color: '#607d8b'
-  },
-  {
-    value: 7,
-    name: '其他',
-    icon: 'mdi:robot',
-    color: '#795548'
-  }
-]
-
-export const shareTypeMap = {
-  1: '笔记',
-  2: '生活',
-  3: '经验',
-  4: '音乐',
-  5: '视频',
-  6: '资源',
-  7: '其他'
-}
-
 export const NoticeTypeList = [
   // 1: 系统 2: 评论 3:回复(评论) 4: @我 5: 点赞 6: 收藏 7: 关注
   {

@@ -1,0 +1,241 @@
+.app-form-dialog {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.app-form-dialog .el-dialog__header {
+  padding-bottom: 12px;
+  border-bottom: 1px solid #edf0f5;
+}
+
+.app-form-dialog .el-dialog__body {
+  padding: 18px 24px 10px;
+}
+
+.app-form-dialog .el-dialog__footer {
+  padding: 14px 24px 20px;
+  border-top: 1px solid #edf0f5;
+}
+
+.app-dialog-hero {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin: -2px 0 18px;
+  padding: 16px;
+  border: 1px solid #dbeeea;
+  border-radius: 8px;
+  background: #f4fbf9;
+}
+
+.app-dialog-hero__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  background: #2c7a7b;
+  color: #fff;
+  font-size: 20px;
+}
+
+.app-dialog-hero__content {
+  min-width: 0;
+}
+
+.app-dialog-hero h3 {
+  margin: 0 0 6px;
+  color: #20242a;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.app-dialog-hero p {
+  margin: 0;
+  color: #667085;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.app-dialog-tip {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 18px;
+  padding: 10px 12px;
+  border: 1px solid #fde7c7;
+  border-radius: 8px;
+  background: #fff8eb;
+  color: #b54708;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.app-dialog-form .el-form-item {
+  margin-bottom: 18px;
+}
+
+.app-dialog-form .el-input__wrapper,
+.app-dialog-form .el-select__wrapper,
+.app-dialog-form .el-textarea__inner {
+  border-radius: 8px;
+  box-shadow: 0 0 0 1px #d7dde8 inset;
+}
+
+.app-dialog-form .el-input__wrapper:hover,
+.app-dialog-form .el-select__wrapper:hover,
+.app-dialog-form .el-textarea__inner:hover {
+  box-shadow: 0 0 0 1px #9ec5bd inset;
+}
+
+.app-dialog-form .avatar-uploader {
+  display: inline-flex;
+}
+
+.app-dialog-form .avatar-uploader .el-upload {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  width: 116px;
+  height: 116px;
+  border: 1px dashed #bfd0dd;
+  border-radius: 8px;
+  background: #f8fbfd;
+  color: #667085;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+}
+
+.app-dialog-form .avatar-uploader .el-upload:hover {
+  border-color: #2c7a7b;
+  background: #f4fbf9;
+  color: #2c7a7b;
+}
+
+.app-dialog-form .picture-album-add-cover {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.app-upload-placeholder {
+  display: inline-flex;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  padding: 10px;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.app-upload-placeholder svg {
+  font-size: 24px;
+}
+
+.app-upload-placeholder span {
+  color: #344054;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.app-upload-placeholder small {
+  color: #98a2b3;
+  font-size: 12px;
+}
+
+.app-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  width: 100%;
+}
+
+.app-dialog-footer .el-button {
+  min-width: 92px;
+}
+
+.app-dialog-segmented {
+  width: 100%;
+}
+
+.app-dialog-segmented .el-radio-button {
+  flex: 1;
+}
+
+.app-dialog-segmented .el-radio-button__inner {
+  width: 100%;
+  border-color: #d7dde8;
+}
+
+html.dark .app-dialog-hero {
+  border-color: #343941;
+  background: #1f2329;
+}
+
+html.dark .app-dialog-hero h3 {
+  color: #f5f7fb;
+}
+
+html.dark .app-dialog-hero p {
+  color: #b9c0cc;
+}
+
+html.dark .app-dialog-tip {
+  border-color: #5f4630;
+  background: #2a2118;
+  color: #f5c37d;
+}
+
+html.dark .app-form-dialog .el-dialog__header,
+html.dark .app-form-dialog .el-dialog__footer {
+  border-color: #343941;
+}
+
+html.dark .app-dialog-form .avatar-uploader .el-upload {
+  border-color: #3f4650;
+  background: #20242a;
+  color: #b9c0cc;
+}
+
+html.dark .app-upload-placeholder span {
+  color: #f5f7fb;
+}
+
+html.dark .app-upload-placeholder small {
+  color: #8e98a8;
+}
+
+@media screen and (max-width: 759px) {
+  .app-form-dialog {
+    margin-top: 3vh !important;
+    max-height: 94vh;
+    overflow-y: auto;
+    width: calc(100vw - 32px) !important;
+  }
+
+  .app-form-dialog .el-form-item {
+    display: block;
+  }
+
+  .app-form-dialog .el-form-item__label {
+    justify-content: flex-start;
+    margin-bottom: 6px;
+  }
+
+  .app-dialog-hero {
+    padding: 14px;
+  }
+
+  .app-dialog-footer {
+    flex-direction: column-reverse;
+  }
+
+  .app-dialog-footer .el-button {
+    width: 100%;
+    margin-left: 0;
+  }
+}

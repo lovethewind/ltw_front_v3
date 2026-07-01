@@ -40,16 +40,12 @@ export function dealNoticeMessageContent(message: IMessage<INotice>) {
         content += getNoticeTypeContent(message, 'article')
       } else if (message.message.detail.commentType === ObjectTypeEnum.PICTURE) {
         content += getNoticeTypeContent(message, 'picture')
-      } else if (message.message.detail.commentType === ObjectTypeEnum.SHARE) {
-        content += getNoticeTypeContent(message, 'share')
       }
     } else { // 其他操作以及点赞的是其他内容
       if (message.message.detail.objType === ObjectTypeEnum.ARTICLE) {
         content += getNoticeTypeContent(message, 'article')
       } else if (message.message.detail.objType === ObjectTypeEnum.PICTURE) {
         content += getNoticeTypeContent(message, 'picture')
-      } else if (message.message.detail.objType === ObjectTypeEnum.SHARE) {
-        content += getNoticeTypeContent(message, 'share')
       }
     }
   }
@@ -69,8 +65,6 @@ function getNoticeTypeContent(message: IMessage<INotice>, type: string): string 
     return `<div class="origin-article"><a class="tag-a article">文章</a><a href="/article/${message.message.detail.objId}" target="_blank">${message.message.detail.objContent}</a></div>`
   } else if (type === 'picture') {
     return `<div class="picture-content"><a class="tag-a picture">图片</a><img src="${message.message.detail.objContent}" alt="" /><div>`
-  } else if (type === 'share') {
-    return `<div class="share-content"><a class="tag-a share">分享</a><span>${message.message.detail.objContent}</span><div>`
   } else if (type === 'user') {
     return `<div class="user-content"><a href="/user/${message.message.detail.fromUser.id}" target="_blank"><img src="${message.message.detail.fromUser.avatar}" alt="" /> ${message.message.detail.fromUser.nickname}</a></div>`
   } else if (type === 'content') {

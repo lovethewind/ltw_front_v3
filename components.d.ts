@@ -9,6 +9,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     404: typeof import('./src/components/base/404.vue')['default']
     ActionsMenu: typeof import('./src/components/chat/components/TUIConversation/actions-menu/index.vue')['default']
+    AppFormDialog: typeof import('./src/components/base/AppFormDialog.vue')['default']
     ArticleListItem: typeof import('./src/components/article/ArticleListItem.vue')['default']
     BackTop: typeof import('./src/components/base/BackTop.vue')['default']
     ChatHeader: typeof import('./src/components/chat/components/TUIChat/chat-header/index.vue')['default']
@@ -59,6 +60,7 @@ declare module 'vue' {
     ElPopover: typeof import('element-plus/es')['ElPopover']
     ElProgress: typeof import('element-plus/es')['ElProgress']
     ElRadio: typeof import('element-plus/es')['ElRadio']
+    ElRadioButton: typeof import('element-plus/es')['ElRadioButton']
     ElRadioGroup: typeof import('element-plus/es')['ElRadioGroup']
     ElRow: typeof import('element-plus/es')['ElRow']
     ElSelect: typeof import('element-plus/es')['ElSelect']

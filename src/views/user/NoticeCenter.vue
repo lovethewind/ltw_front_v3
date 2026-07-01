@@ -83,10 +83,6 @@
                           <el-image :src="notice.detail.objContent" class="w-50"
                                     :preview-src-list="[notice.detail.objContent]" />
                         </div>
-                        <div v-if="[notice.detail.objType, notice.detail.commentType].includes(ObjectTypeEnum.SHARE)">
-                          <el-tag size="small" type="success">分享</el-tag>
-                          <span>{{ notice.detail.objContent }}</span>
-                        </div>
                         <div v-if="notice.detail?.commentId" class="font-12">
                           原评论: {{ notice.detail?.commentContent }}
                         </div>

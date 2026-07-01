@@ -67,10 +67,11 @@ export function formatTimeToSecond(time: number) {
 
 /**
  * 转为时间为字符串形式 如1秒前 10分钟前
- * @param time
- * @returns {string}
+ *
+ * :param time: 时间戳或时间字符串。
+ * :return: 格式化后的相对时间或日期文本。
  */
-export function covertTimeHowLongAgo(time: number | string) {
+export function covertTimeHowLongAgo(time: number | string): string {
   if (typeof time === 'string') {
     time = new Date(time).getTime()
   }
@@ -80,7 +81,7 @@ export function covertTimeHowLongAgo(time: number | string) {
   let ret = ''
   if (formatTime.getFullYear() < nowTime.getFullYear()) {
     // last year
-    ret = formatTime.getFullYear() + '-' + (padZero(formatTime.getMonth() + 1)) + '-' + formatTime.getDate() + ' ' + padZero(formatTime.getHours()) + ':' + padZero(formatTime.getMinutes()) + ''
+    ret = formatTime.getFullYear() + '-' + (padZero(formatTime.getMonth() + 1)) + '-' + padZero(formatTime.getDate()) + ' ' + padZero(formatTime.getHours()) + ':' + padZero(formatTime.getMinutes()) + ''
   } else if (howLong < 2) {
     ret = '刚刚'
   } else if (howLong < 60) {

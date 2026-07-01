@@ -38,7 +38,7 @@
             <!-- 发表时间 -->
             <span class="me-1">{{ covertTimeHowLongAgo(item.createTime) }}</span>
             <!-- ip属地 -->
-            <span class="me-1">IP属地: {{ item.user.address }}</span>
+            <span class="me-1">{{ item.user.address }}</span>
           </div>
           <!-- 评论内容 -->
           <div v-dompurify-html="item.content" class="comment-content" />
@@ -76,7 +76,7 @@
                   {{ covertTimeHowLongAgo(childItem.createTime) }}
                 </span>
                 <!-- ip属地 -->
-                <span class="me-1">IP属地: {{ childItem.user.address }}</span>
+                <span class="me-1">{{ childItem.user.address }}</span>
               </div>
               <!-- 回复内容 -->
               <div class="comment-content">

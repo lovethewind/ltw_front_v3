@@ -2,12 +2,12 @@
   <div :class="[navClass, 'nav']">
     <!--     手机端导航栏-->
     <div class="d-md-none nav-mobile-container">
-      <div class="float-left blog-title">
+      <div class="blog-title">
         <router-link to="/">
           {{ websiteInfo.home }}
         </router-link>
       </div>
-      <div class="d-flex align-content-center justify-content-center">
+      <div class="nav-mobile-actions">
         <div class="menus-item">
           <el-button type="primary" size="small" @click="toPostBlog">
             <Icon icon="mage:edit" />
@@ -16,9 +16,6 @@
         </div>
         <a @click="openSearch">
           <Icon icon="tabler:search" />
-        </a>
-        <a style="margin-left:10px;" @click="openDrawer">
-          <Icon icon="ep:operation" />
         </a>
       </div>
     </div>
@@ -195,10 +192,6 @@ function toNoticePage(val: number) {
 
 function openSearch() {
   modalStore.setSearchFlag(true)
-}
-
-function openDrawer() {
-  modalStore.setDrawer(true)
 }
 
 function openLogin() {

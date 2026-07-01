@@ -84,7 +84,7 @@
           <el-pagination
             v-model:current-page="pictureAlbumQueryParams.pageNum"
             background
-            layout="prev, pager, next, jumper"
+            :layout="isMobile() ? 'prev, pager, next' : 'prev, pager, next, jumper'"
             :total="albumCount"
             :page-size="pictureAlbumQueryParams.pageSize"
             :pager-count="isMobile() ? 5 : 7"
@@ -122,7 +122,7 @@
           <el-pagination
             v-model:current-page="userPictureAlbumQueryParams.pageNum"
             background
-            layout="prev, pager, next, jumper"
+            :layout="isMobile() ? 'prev, pager, next' : 'prev, pager, next, jumper'"
             :total="albumCount"
             :page-size="userPictureAlbumQueryParams.pageSize"
             :pager-count="isMobile() ? 5 : 7"
@@ -135,26 +135,33 @@
     <el-card v-loading="pictureLoading" class="picture-container">
       <template #header>
         <div class="picture-list-header">
-          <span v-if="albumCategory === AlbumCategoryTypeEnum.ALL">{{ currentActive ? currentActive.name : '全部' }} > 共{{ count
-            }}张图片</span>
-          <span v-if="albumCategory === AlbumCategoryTypeEnum.MY">{{ userCurrentActive ? userCurrentActive.name : '全部'
-            }} > 共{{ count }}张图片</span>
-          <el-button type="primary" size="small" class="float-right" @click="openAddPicture()">
+          <div class="picture-list-heading">
+            <div class="picture-list-title-row">
+              <span class="picture-list-title" v-if="albumCategory === AlbumCategoryTypeEnum.ALL">
+                {{ currentActive ? currentActive.name : '全部' }}
+              </span>
+              <span class="picture-list-title" v-if="albumCategory === AlbumCategoryTypeEnum.MY">
+                {{ userCurrentActive ? userCurrentActive.name : '全部' }}
+              </span>
+              <span class="picture-list-count">{{ count }} 张图片</span>
+            </div>
+            <div class="picture-list-desc">
+              <span v-if="albumCategory === AlbumCategoryTypeEnum.ALL">
+                {{ currentActive ? currentActive.description : '所有分类下的图片' }}
+              </span>
+              <span v-if="albumCategory === AlbumCategoryTypeEnum.MY">
+                {{ userCurrentActive ? userCurrentActive.description : '所有分类下的图片' }}
+              </span>
+            </div>
+          </div>
+          <el-button type="primary" size="small" class="picture-list-add-button" @click="openAddPicture()">
             <Icon icon="ic:baseline-add" />
             添加图片
           </el-button>
-          <div class="color-gray-light mt-1">
-            <span
-              v-if="albumCategory === AlbumCategoryTypeEnum.ALL">{{ currentActive ? currentActive.description : '所有分类下的图片'
-              }}</span>
-            <span v-if="albumCategory === AlbumCategoryTypeEnum.MY"
-                  class="color-gray-light">{{ userCurrentActive ? userCurrentActive.description : '所有分类下的图片'
-              }}</span>
-          </div>
         </div>
       </template>
       <el-row :gutter="12" class="picture-grid">
-        <el-col v-for="item in pictureList" :key="item.id" :xs="12" :sm="8" :md="6" :lg="4" class="picture-list-item">
+        <el-col v-for="item in pictureList" :key="item.id" :xs="12" :sm="8" :md="6" :lg="6" class="picture-list-item">
           <div class="picture-list-item-frame" @click="openPreviewPicture(item)">
             <img :src="item.thumbUrl || item.url" alt="" class="picture-list-item-img">
             <div class="picture-list-item-overlay">
@@ -181,7 +188,7 @@
         <el-pagination
           v-model:current-page="pictureQueryParams.pageNum"
           background
-          layout="prev, pager, next, jumper"
+          :layout="isMobile() ? 'prev, pager, next' : 'prev, pager, next, jumper'"
           :total="count"
           :page-size="pictureQueryParams.pageSize"
           :pager-count="isMobile() ? 5 : 7"
@@ -192,7 +199,7 @@
         <el-pagination
           v-model:current-page="userPictureQueryParams.pageNum"
           background
-          layout="prev, pager, next, jumper"
+          :layout="isMobile() ? 'prev, pager, next' : 'prev, pager, next, jumper'"
           :total="count"
           :page-size="userPictureQueryParams.pageSize"
           :pager-count="isMobile() ? 5 : 7"
@@ -302,50 +309,52 @@
           </button>
         </section>
         <aside class="picture-preview-sidebar">
-          <div class="picture-preview-author">
-            <a :href="'user/' + previewPictureItem.userId" target="_blank" class="ellipsis">
-              <el-avatar :src="previewPictureItem.user.avatar" size="small" />
-              <span>{{ previewPictureItem.user.nickname }}</span>
-            </a>
-            <span class="picture-preview-time">
-              <Icon icon="mingcute:time-line" />
-              {{ minute(previewPictureItem.createTime) }}
-            </span>
-          </div>
-          <div class="picture-preview-meta">
-            <span>
-              <Icon icon="clarity:picture-line" />
-              {{ previewPictureItem.width }}x{{ previewPictureItem.height }}
-            </span>
-            <span>
-              <Icon icon="mage:download" />
-              {{ transformSize(previewPictureItem.size) }}
-            </span>
-          </div>
-          <div v-if="previewPictureItem.description" class="picture-preview-description text-break">
-            {{ previewPictureItem.description }}
-          </div>
-          <div class="picture-preview-actions">
-            <el-button :type="previewPictureItem.hasLike ? 'primary' : ''" size="small"
-                       :disabled="pictureActionDisabled"
-                       @click="thumbPicture(previewPictureItem.id)">
-              <Icon icon="tabler:thumb-up" />
-              赞({{ previewPictureItem.likeCount || 0 }})
-            </el-button>
-            <el-button type="success" size="small" @click="downloadPicture()">
-              <Icon icon="mage:download" />
-              下载
-            </el-button>
-            <el-button v-if="user && previewPictureItem.userId === user.id" type="primary" size="small"
-                       @click="openEditPicture">
-              <Icon icon="lucide:edit" />
-              编辑
-            </el-button>
-            <el-button v-if="user && previewPictureItem.userId === user.id" type="danger" size="small"
-                       @click="deletePicture(previewPictureItem.id)">
-              <Icon icon="material-symbols:delete-outline" />
-              删除
-            </el-button>
+          <div class="picture-preview-info">
+            <div class="picture-preview-author">
+              <a :href="'user/' + previewPictureItem.userId" target="_blank" class="ellipsis">
+                <el-avatar :src="previewPictureItem.user.avatar" size="small" />
+                <span>{{ previewPictureItem.user.nickname }}</span>
+              </a>
+              <span class="picture-preview-time">
+                <Icon icon="mingcute:time-line" />
+                {{ minute(previewPictureItem.createTime) }}
+              </span>
+            </div>
+            <div class="picture-preview-meta">
+              <span>
+                <Icon icon="clarity:picture-line" />
+                {{ previewPictureItem.width }}x{{ previewPictureItem.height }}
+              </span>
+              <span>
+                <Icon icon="mage:download" />
+                {{ transformSize(previewPictureItem.size) }}
+              </span>
+            </div>
+            <div v-if="previewPictureItem.description" class="picture-preview-description text-break">
+              {{ previewPictureItem.description }}
+            </div>
+            <div class="picture-preview-actions">
+              <el-button :type="previewPictureItem.hasLike ? 'primary' : ''" size="small"
+                         :disabled="pictureActionDisabled"
+                         @click="thumbPicture(previewPictureItem.id)">
+                <Icon icon="tabler:thumb-up" />
+                赞({{ previewPictureItem.likeCount || 0 }})
+              </el-button>
+              <el-button type="success" size="small" @click="downloadPicture()">
+                <Icon icon="mage:download" />
+                下载
+              </el-button>
+              <el-button v-if="user && previewPictureItem.userId === user.id" type="primary" size="small"
+                         @click="openEditPicture">
+                <Icon icon="lucide:edit" />
+                编辑
+              </el-button>
+              <el-button v-if="user && previewPictureItem.userId === user.id" type="danger" size="small"
+                         @click="deletePicture(previewPictureItem.id)">
+                <Icon icon="material-symbols:delete-outline" />
+                删除
+              </el-button>
+            </div>
           </div>
           <div class="picture-preview-comments">
             <div ref="emptyReplyRef" class="empty-reply-div" v-show="replyShouldFixed">

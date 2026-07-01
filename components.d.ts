@@ -104,7 +104,6 @@ declare module 'vue' {
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     ScrollButton: typeof import('./src/components/chat/components/TUIChat/message-list/scroll-button/index.vue')['default']
-    SideNavBar: typeof import('./src/components/layout/SideNavBar.vue')['default']
     ToolbarItemContainer: typeof import('./src/components/chat/components/TUIChat/message-input-toolbar/toolbar-item-container/index.vue')['default']
     TopNavBar: typeof import('./src/components/layout/TopNavBar.vue')['default']
     VideoUpload: typeof import('./src/components/chat/components/TUIChat/message-input-toolbar/video-upload/index.vue')['default']

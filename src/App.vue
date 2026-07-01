@@ -3,8 +3,6 @@
     <el-header>
       <!-- 导航栏 -->
       <TopNavBar />
-      <!-- 侧边导航栏 -->
-      <SideNavBar />
     </el-header>
     <el-main ref="mainRef">
       <!-- 内容 -->
@@ -37,7 +35,6 @@ import '@/assets/css/main.scss'
 import { onBeforeMount, ref } from 'vue'
 import { RouterView } from 'vue-router'
 import TopNavBar from '@/components/layout/TopNavBar.vue'
-import SideNavBar from '@/components/layout/SideNavBar.vue'
 import BackTop from '@/components/base/BackTop.vue'
 import LoginModel from '@/components/model/LoginModel.vue'
 import RegisterModel from '@/components/model/RegisterModel.vue'

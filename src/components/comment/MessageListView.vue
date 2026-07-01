@@ -35,8 +35,6 @@
           </div>
           <!-- 信息 -->
           <div class="comment-info">
-            <!-- 楼层 -->
-            <span class="me-1">{{ mainCount - index }}楼</span>
             <!-- 发表时间 -->
             <span class="me-1">{{ covertTimeHowLongAgo(item.createTime) }}</span>
             <!-- ip属地 -->
@@ -73,8 +71,6 @@
               </div>
               <!-- 信息 -->
               <div class="comment-info">
-                <!-- 楼层 -->
-                <span class="me-1">{{ item.childrenCount - childrenIndex }}楼</span>
                 <!-- 发表时间 -->
                 <span class="me-1">
                   {{ covertTimeHowLongAgo(childItem.createTime) }}

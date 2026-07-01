@@ -110,4 +110,7 @@ declare module 'vue' {
     VideoUpload: typeof import('./src/components/chat/components/TUIChat/message-input-toolbar/video-upload/index.vue')['default']
     WSIndex: typeof import('./src/components/ws/WSIndex.vue')['default']
   }
+  export interface ComponentCustomProperties {
+    vLoading: typeof import('element-plus/es')['ElLoadingDirective']
+  }
 }

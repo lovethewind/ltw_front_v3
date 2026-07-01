@@ -1,7 +1,7 @@
 <template>
   <div class="picture_div">
     <!-- 图库分类 -->
-    <el-card class="picture-container" shadow="always">
+    <el-card v-loading="pictureAlbumLoading" class="picture-container" shadow="always">
       <template #header>
         <div class="picture-album-title">
           <el-row>
@@ -17,7 +17,7 @@
                 我的图库
               </a>
             </el-col>
-            <el-col :sm="9" :xs="12" :class="[isMobile() ? '' : 'float-right text-right']">
+            <el-col :sm="9" :xs="12" class="picture-album-actions">
               <el-button type="primary" size="small" @click="openAddPictureAlbum()">
                 <Icon icon="ic:baseline-add" />
                 添加图库
@@ -32,22 +32,43 @@
                 <Icon icon="material-symbols:delete-outline" />
                 删除图库
               </el-button>
+              <el-dropdown class="picture-album-actions-more" trigger="click">
+                <el-button type="primary" size="small">
+                  <Icon icon="ic:round-more-horiz" />
+                </el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item @click="openAddPictureAlbum()">
+                      <Icon icon="ic:baseline-add" />
+                      添加图库
+                    </el-dropdown-item>
+                    <el-dropdown-item v-if="albumCategory === AlbumCategoryTypeEnum.MY" @click="openEditPictureAlbum()">
+                      <Icon icon="lucide:edit" />
+                      编辑图库
+                    </el-dropdown-item>
+                    <el-dropdown-item v-if="albumCategory === AlbumCategoryTypeEnum.MY" @click="deletePictureAlbum()">
+                      <Icon icon="material-symbols:delete-outline" />
+                      删除图库
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
             </el-col>
           </el-row>
         </div>
       </template>
       <!-- 全部图库 -->
       <div v-if="albumCategory === AlbumCategoryTypeEnum.ALL">
-        <el-row>
-          <el-col :span="3" class="picture-album-list-item">
-            <div class="picture-album-list-item-div" @click="changePictureAlbum(null)">
+        <el-row :gutter="8" class="picture-album-grid">
+          <el-col :xs="8" :sm="6" :md="4" :lg="3" class="picture-album-list-item">
+            <div :class="['picture-album-list-item-div', {'is-active': currentActive === null}]" @click="changePictureAlbum(null)">
               <img :src="defaultAlbumCover" alt="" class="picture-album-list-item-img">
               <a :class="['ellipsis', currentActive === null ? 'active' : 'name']"
                  @click="changePictureAlbum(null)">全部</a>
             </div>
           </el-col>
-          <el-col v-for="item in pictureAlbumList" :key="item.id" :span="3" class="picture-album-list-item">
-            <div class="picture-album-list-item-div" @click="changePictureAlbum(item)">
+          <el-col v-for="item in pictureAlbumList" :key="item.id" :xs="8" :sm="6" :md="4" :lg="3" class="picture-album-list-item">
+            <div :class="['picture-album-list-item-div', {'is-active': currentActive && currentActive.id === item.id}]" @click="changePictureAlbum(item)">
               <img :src="item.cover" alt="" class="picture-album-list-item-img">
               <a :class="['ellipsis', currentActive && currentActive.id === item.id ? 'active' : 'name']"
                  @click="changePictureAlbum(item)">
@@ -65,6 +86,7 @@
             background
             layout="prev, pager, next, jumper"
             :total="albumCount"
+            :page-size="pictureAlbumQueryParams.pageSize"
             :pager-count="isMobile() ? 5 : 7"
             @change="getPictureAlbumPageList()"
           />
@@ -72,16 +94,16 @@
       </div>
       <!-- 我的图库 -->
       <div v-else>
-        <el-row>
-          <el-col :span="3" class="picture-album-list-item text-center">
-            <div class="picture-album-list-item-div" @click="changeUserPictureAlbum(null)">
+        <el-row :gutter="8" class="picture-album-grid">
+          <el-col :xs="8" :sm="6" :md="4" :lg="3" class="picture-album-list-item text-center">
+            <div :class="['picture-album-list-item-div', {'is-active': userCurrentActive === null}]" @click="changeUserPictureAlbum(null)">
               <img :src="defaultAlbumCover" alt="" class="picture-album-list-item-img">
               <a :class="['ellipsis', userCurrentActive === null ? 'active' : 'name']"
                  @click="changeUserPictureAlbum(null)">全部</a>
             </div>
           </el-col>
-          <el-col v-for="item in pictureAlbumList" :key="item.id" :span="3" class="picture-album-list-item text-center">
-            <div class="picture-album-list-item-div" @click="changeUserPictureAlbum(item)">
+          <el-col v-for="item in pictureAlbumList" :key="item.id" :xs="8" :sm="6" :md="4" :lg="3" class="picture-album-list-item text-center">
+            <div :class="['picture-album-list-item-div', {'is-active': userCurrentActive && userCurrentActive.id === item.id}]" @click="changeUserPictureAlbum(item)">
               <img :src="item.cover" alt="" class="picture-album-list-item-img">
               <a :class="['ellipsis', userCurrentActive && userCurrentActive.id === item.id ? 'active' : 'name']"
                  @click="changeUserPictureAlbum(item)">
@@ -102,6 +124,7 @@
             background
             layout="prev, pager, next, jumper"
             :total="albumCount"
+            :page-size="userPictureAlbumQueryParams.pageSize"
             :pager-count="isMobile() ? 5 : 7"
             @change="getUserPictureAlbumPageList()"
           />
@@ -109,7 +132,7 @@
       </div>
     </el-card>
     <!-- 图片列表 -->
-    <el-card class="picture-container">
+    <el-card v-loading="pictureLoading" class="picture-container">
       <template #header>
         <div class="picture-list-header">
           <span v-if="albumCategory === AlbumCategoryTypeEnum.ALL">{{ currentActive ? currentActive.name : '全部' }} > 共{{ count
@@ -130,18 +153,37 @@
           </div>
         </div>
       </template>
-      <el-row>
-        <el-col v-for="item in pictureList" :key="item.id" :span="4" class="picture-list-item">
-          <img :src="item.thumbUrl || item.url" alt="" class="picture-list-item-img" @click="openPreviewPicture(item)">
+      <el-row :gutter="12" class="picture-grid">
+        <el-col v-for="item in pictureList" :key="item.id" :xs="12" :sm="8" :md="6" :lg="4" class="picture-list-item">
+          <div class="picture-list-item-frame" @click="openPreviewPicture(item)">
+            <img :src="item.thumbUrl || item.url" alt="" class="picture-list-item-img">
+            <div class="picture-list-item-overlay">
+              <span>
+                <Icon icon="tabler:thumb-up" />
+                {{ item.likeCount || 0 }}
+              </span>
+              <span>
+                <Icon icon="iconamoon:comment-dots" />
+                {{ item.commentCount || 0 }}
+              </span>
+              <span v-if="item.width && item.height" class="picture-list-item-size">{{ item.width }}x{{ item.height }}</span>
+            </div>
+          </div>
         </el-col>
       </el-row>
-      <el-empty v-if="pictureList.length === 0" />
+      <el-empty v-if="pictureList.length === 0" :description="pictureEmptyDescription">
+        <el-button v-if="canAddPictureToCurrentAlbum" type="primary" size="small" @click="openAddPicture()">
+          <Icon icon="ic:baseline-add" />
+          添加图片
+        </el-button>
+      </el-empty>
       <div v-if="albumCategory === AlbumCategoryTypeEnum.ALL" class="pagination-container mt-2">
         <el-pagination
           v-model:current-page="pictureQueryParams.pageNum"
           background
           layout="prev, pager, next, jumper"
           :total="count"
+          :page-size="pictureQueryParams.pageSize"
           :pager-count="isMobile() ? 5 : 7"
           @change="getAlbumPicturePageList()"
         />
@@ -152,6 +194,7 @@
           background
           layout="prev, pager, next, jumper"
           :total="count"
+          :page-size="userPictureQueryParams.pageSize"
           :pager-count="isMobile() ? 5 : 7"
           @change="getUserAlbumPicturePageList()"
         />
@@ -225,7 +268,7 @@
       </el-form>
       <template #footer>
         <el-button @click="cancelAddPicture()">取消</el-button>
-        <el-button type="primary" @click="saveOrUpdatePicture()">提交</el-button>
+        <el-button type="primary" :disabled="pictureAddDisabled" @click="saveOrUpdatePicture()">提交</el-button>
       </template>
     </el-dialog>
     <!-- 图片预览 -->
@@ -233,9 +276,30 @@
                class="picture-preview-dialog" width="95%" top="20px">
       <div class="picture-preview-layout">
         <section class="picture-preview-stage">
+          <div v-if="previewPicturePosition.total" class="picture-preview-counter">
+            {{ previewPicturePosition.current }} / {{ previewPicturePosition.total }}
+          </div>
+          <button
+            class="picture-preview-nav picture-preview-nav-prev"
+            type="button"
+            :disabled="!previousPreviewPicture"
+            aria-label="上一张图片"
+            @click="switchPreviewPicture('prev')"
+          >
+            <Icon icon="mdi:chevron-left" />
+          </button>
           <div class="display-image-div">
             <img ref="displayImageRef" :src="previewPictureItem.url" alt="" class="display-image">
           </div>
+          <button
+            class="picture-preview-nav picture-preview-nav-next"
+            type="button"
+            :disabled="!nextPreviewPicture"
+            aria-label="下一张图片"
+            @click="switchPreviewPicture('next')"
+          >
+            <Icon icon="mdi:chevron-right" />
+          </button>
         </section>
         <aside class="picture-preview-sidebar">
           <div class="picture-preview-author">
@@ -263,6 +327,7 @@
           </div>
           <div class="picture-preview-actions">
             <el-button :type="previewPictureItem.hasLike ? 'primary' : ''" size="small"
+                       :disabled="pictureActionDisabled"
                        @click="thumbPicture(previewPictureItem.id)">
               <Icon icon="tabler:thumb-up" />
               赞({{ previewPictureItem.likeCount || 0 }})
@@ -315,7 +380,7 @@
 
 <script setup lang="ts">
 import defaultAlbumCover from '@/assets/images/default_album_cover.jpg'
-import { computed, nextTick, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
 import { Icon } from '@iconify/vue'
 import { useUserStore } from '@/stores/user'
@@ -337,6 +402,14 @@ import { ActionTypeEnum, AlbumCategoryTypeEnum, AlbumTypeEnum, ObjectTypeEnum, U
 import CommentView from '@/components/comment/CommentView.vue'
 import ReplyView from '@/components/comment/ReplyView.vue'
 import commentApi from '@/api/comment'
+import {
+  getAdjacentPictureItem,
+  getNextLikeCount,
+  getPictureDownloadName,
+  getPreviewPicturePosition,
+  type PreviewDirection,
+  resetPaginationPage
+} from '@/views/picture/picture-view-utils'
 
 const userStore = useUserStore()
 
@@ -359,6 +432,10 @@ const replyShouldFixed = ref(false)
 const addPictureAlbumDialogVisible = ref(false)
 const addPictureDialogVisible = ref(false)
 const previewPictureDialogVisible = ref(false)
+const pictureAlbumLoading = ref(false)
+const pictureLoading = ref(false)
+const pictureAddDisabled = ref(false)
+const pictureActionDisabled = ref(false)
 const previewPictureItem = ref<any>({})
 const pictureAlbumList = ref<any>([])
 const pictureList = ref<any>([])
@@ -417,6 +494,26 @@ const pictureRules = ref({
 const user = computed(() => {
   return userStore.user
 })
+const previousPreviewPicture = computed(() => {
+  return getAdjacentPictureItem(pictureList.value, previewPictureItem.value.id, 'prev')
+})
+const nextPreviewPicture = computed(() => {
+  return getAdjacentPictureItem(pictureList.value, previewPictureItem.value.id, 'next')
+})
+const previewPicturePosition = computed(() => {
+  return getPreviewPicturePosition(pictureList.value, previewPictureItem.value.id)
+})
+const canAddPictureToCurrentAlbum = computed(() => {
+  return (albumCategory.value === AlbumCategoryTypeEnum.ALL && !!currentActive.value)
+    || (albumCategory.value === AlbumCategoryTypeEnum.MY && !!userCurrentActive.value)
+})
+const pictureEmptyDescription = computed(() => {
+  const activeAlbum = albumCategory.value === AlbumCategoryTypeEnum.ALL ? currentActive.value : userCurrentActive.value
+  if (activeAlbum) {
+    return '这个图库还没有图片'
+  }
+  return '请选择一个具体图库后添加图片'
+})
 
 onMounted(() => {
   if (isMobile()) {
@@ -427,23 +524,49 @@ onMounted(() => {
   }
   getPictureAlbumPageList()
   changePictureAlbum(currentActive.value)
+  window.addEventListener('keydown', handlePreviewKeydown)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handlePreviewKeydown)
 })
 
 
-function getPictureAlbumPageList() {
+/**
+ * 获取公开图库分页列表。
+ *
+ * :return: 无返回值。
+ */
+function getPictureAlbumPageList(): void {
+  pictureAlbumLoading.value = true
   pictureApi.getPictureAlbumPageList(pictureAlbumQueryParams.value.pageNum, pictureAlbumQueryParams.value.pageSize, {}).then(res => {
     pictureAlbumList.value = res.data.records
     albumCount.value = res.data.total
+  }).finally(() => {
+    pictureAlbumLoading.value = false
   })
 }
 
-function changePictureAlbum(item: any) {
+/**
+ * 切换公开图库并重新加载图片列表。
+ *
+ * :param item: 当前选中的图库。
+ * :return: 无返回值。
+ */
+function changePictureAlbum(item: any): void {
   currentActive.value = item
   pictureForm.value.albumId = item ? item.id : null
+  resetPaginationPage(pictureQueryParams.value)
   getAlbumPicturePageList()
 }
 
-function getUserPictureAlbumPageList() {
+/**
+ * 获取当前用户图库分页列表。
+ *
+ * :return: 无返回值。
+ */
+function getUserPictureAlbumPageList(): void {
+  pictureAlbumLoading.value = true
   pictureApi.getUserPictureAlbumPageList(
     userPictureAlbumQueryParams.value.pageNum,
     userPictureAlbumQueryParams.value.pageSize,
@@ -452,16 +575,31 @@ function getUserPictureAlbumPageList() {
   ).then(res => {
     pictureAlbumList.value = res.data.records
     albumCount.value = res.data.total
+  }).finally(() => {
+    pictureAlbumLoading.value = false
   })
 }
 
-function changeUserPictureAlbum(item: any) {
+/**
+ * 切换当前用户图库并重新加载图片列表。
+ *
+ * :param item: 当前选中的用户图库。
+ * :return: 无返回值。
+ */
+function changeUserPictureAlbum(item: any): void {
   userCurrentActive.value = item
   pictureForm.value.albumId = item ? item.id : null
+  resetPaginationPage(userPictureQueryParams.value)
   getUserAlbumPicturePageList()
 }
 
-function getAlbumPicturePageList() {
+/**
+ * 获取公开图片分页列表。
+ *
+ * :return: 无返回值。
+ */
+function getAlbumPicturePageList(): void {
+  pictureLoading.value = true
   pictureApi.getAlbumPicturePageList(
     pictureQueryParams.value.pageNum,
     pictureQueryParams.value.pageSize,
@@ -469,10 +607,18 @@ function getAlbumPicturePageList() {
   ).then(res => {
     pictureList.value = res.data.records
     count.value = res.data.total
+  }).finally(() => {
+    pictureLoading.value = false
   })
 }
 
-function getUserAlbumPicturePageList() {
+/**
+ * 获取当前用户图片分页列表。
+ *
+ * :return: 无返回值。
+ */
+function getUserAlbumPicturePageList(): void {
+  pictureLoading.value = true
   pictureApi.getUserAlbumPicturePageList(
     userPictureQueryParams.value.pageNum,
     userPictureQueryParams.value.pageSize,
@@ -480,18 +626,28 @@ function getUserAlbumPicturePageList() {
   ).then(res => {
     pictureList.value = res.data.records
     count.value = res.data.total
+  }).finally(() => {
+    pictureLoading.value = false
   })
 }
 
-function changePictureAlbumCategory(type: AlbumCategoryTypeEnum) {
+/**
+ * 切换图库分类来源。
+ *
+ * :param type: 图库分类来源。
+ * :return: 无返回值。
+ */
+function changePictureAlbumCategory(type: AlbumCategoryTypeEnum): void {
   if (albumCategory.value === type) {
     return
   }
   if (type === AlbumCategoryTypeEnum.ALL) { // 所有公开的
+    resetPaginationPage(pictureAlbumQueryParams.value)
     getPictureAlbumPageList()
     changePictureAlbum(currentActive.value)
   } else { // 自己所有的
     if (!checkIsLogin()) return
+    resetPaginationPage(userPictureAlbumQueryParams.value)
     getUserPictureAlbumPageList()
     changeUserPictureAlbum(userCurrentActive.value)
   }
@@ -783,7 +939,16 @@ async function uploadPictureImage(data: any, imageFile: File): Promise<void> {
   data.thumbUrl = await uploadFile(thumbRes.data, thumbFile)
 }
 
-function saveOrUpdatePicture() {
+/**
+ * 保存或更新图片，提交期间禁用按钮防止重复提交。
+ *
+ * :return: 无返回值。
+ */
+function saveOrUpdatePicture(): void {
+  if (pictureAddDisabled.value) {
+    return
+  }
+  pictureAddDisabled.value = true
   if (pictureForm.value.isEdit) {
     updatePicture()
   } else {
@@ -791,9 +956,15 @@ function saveOrUpdatePicture() {
   }
 }
 
-function addPicture() {
+/**
+ * 新增图片。
+ *
+ * :return: 无返回值。
+ */
+function addPicture(): void {
   addPictureFormRef.value?.validate((async (valid: boolean) => {
     if (!valid) {
+      pictureAddDisabled.value = false
       return false
     }
     ElMessage({
@@ -806,6 +977,7 @@ function addPicture() {
       try {
         await uploadPictureImage(saveData, pictureForm.value.url as File)
       } catch (error) {
+        pictureAddDisabled.value = false
         ElMessage({
           message: '图片上传失败，请稍后重试',
           type: 'error',
@@ -822,11 +994,18 @@ function addPicture() {
       })
       cancelAddPicture()
       changeUserOrPictureAlbum()
+    }).finally(() => {
+      pictureAddDisabled.value = false
     })
   }) as any)
 }
 
-function updatePicture() {
+/**
+ * 更新图片描述。
+ *
+ * :return: 无返回值。
+ */
+function updatePicture(): void {
   pictureApi.updatePicture({
     id: pictureForm.value.id,
     description: pictureForm.value.description
@@ -839,6 +1018,8 @@ function updatePicture() {
     previewPictureItem.value.description = pictureForm.value.description
     cancelAddPicture()
     changeUserOrPictureAlbum()
+  }).finally(() => {
+    pictureAddDisabled.value = false
   })
 }
 
@@ -855,31 +1036,93 @@ function handlePictureRemove() {
   pictureForm.value.thumbUrl = null
 }
 
-function openPreviewPicture(item: any) {
+/**
+ * 打开图片预览弹窗。
+ *
+ * :param item: 当前预览图片。
+ * :return: 无返回值。
+ */
+function openPreviewPicture(item: any): void {
   cancelReply()
   previewPictureDialogVisible.value = true
   previewPictureItem.value = item
 }
 
-function downloadPicture() {
+/**
+ * 切换预览图片。
+ *
+ * :param direction: 切换方向。
+ * :return: 无返回值。
+ */
+function switchPreviewPicture(direction: PreviewDirection): void {
+  const item = direction === 'prev' ? previousPreviewPicture.value : nextPreviewPicture.value
+  if (!item) {
+    return
+  }
+  openPreviewPicture(item)
+}
+
+/**
+ * 处理图片预览弹窗快捷键。
+ *
+ * :param event: 键盘事件。
+ * :return: 无返回值。
+ */
+function handlePreviewKeydown(event: KeyboardEvent): void {
+  if (!previewPictureDialogVisible.value || isTypingTarget(event.target)) {
+    return
+  }
+  if (event.key === 'ArrowLeft') {
+    switchPreviewPicture('prev')
+  }
+  if (event.key === 'ArrowRight') {
+    switchPreviewPicture('next')
+  }
+}
+
+/**
+ * 判断当前焦点是否处于输入类元素中。
+ *
+ * :param target: 事件目标。
+ * :return: 是否处于输入类元素中。
+ */
+function isTypingTarget(target: EventTarget | null): boolean {
+  const element = target as HTMLElement | null
+  return !!element && ['INPUT', 'TEXTAREA'].includes(element.tagName)
+}
+
+/**
+ * 下载当前预览图片。
+ *
+ * :return: 无返回值。
+ */
+function downloadPicture(): void {
   const a = document.createElement('a')
   a.href = previewPictureItem.value.url
-  a.download = previewPictureItem.value.name
+  a.download = getPictureDownloadName(previewPictureItem.value)
   a.click()
 }
 
-function thumbPicture(_id?: any) {
+/**
+ * 点赞或取消点赞当前预览图片。
+ *
+ * :param _id: 图片 ID，保留模板调用参数。
+ * :return: 无返回值。
+ */
+function thumbPicture(_id?: any): void {
+  if (pictureActionDisabled.value) {
+    return
+  }
+  pictureActionDisabled.value = true
   actionApi.addOrUpdate({
     actionType: ActionTypeEnum.LIKE,
     objType: ObjectTypeEnum.PICTURE,
     objId: previewPictureItem.value.id
   }).then(res => {
     previewPictureItem.value.hasLike = res.data
-    if (res.data) {
-      previewPictureItem.value.likeCount++
-    } else {
-      previewPictureItem.value.likeCount--
-    }
+    previewPictureItem.value.likeCount = getNextLikeCount(previewPictureItem.value.likeCount, res.data)
+  }).finally(() => {
+    pictureActionDisabled.value = false
   })
 }
 

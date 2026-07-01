@@ -15,6 +15,10 @@ export interface PicturePreviewItem {
   id?: string | number | null
 }
 
+export interface PictureAlbumItem {
+  id?: string | number | null
+}
+
 export interface PictureCommentItem extends PicturePreviewItem {
   commentCount?: number | null
 }
@@ -114,6 +118,23 @@ export function buildPictureQueryParams(
     params.sortType = sortType
   }
   return params
+}
+
+/**
+ * 根据当前图库分类获取添加图片弹窗默认图库 ID。
+ *
+ * :param albumCategory: 当前图库分类。
+ * :param currentAlbum: 当前选中的公开图库。
+ * :param userCurrentAlbum: 当前选中的用户图库。
+ * :return: 添加图片弹窗默认选中的图库 ID，未选中具体图库时返回空字符串。
+ */
+export function getSelectedAlbumId(
+  albumCategory: number,
+  currentAlbum: PictureAlbumItem | null | undefined,
+  userCurrentAlbum: PictureAlbumItem | null | undefined
+): string | number {
+  const selectedAlbum = albumCategory === 1 ? currentAlbum : userCurrentAlbum
+  return selectedAlbum?.id || ''
 }
 
 /**

@@ -7,6 +7,7 @@ import {
   getNextLikeCount,
   getPictureDownloadName,
   getPreviewPicturePosition,
+  getSelectedAlbumId,
   resetPaginationPage,
   sortPictureList,
   syncPictureCommentCount
@@ -69,6 +70,13 @@ describe('picture-view-utils', () => {
       albumId: 12,
       sortType: 'like'
     })
+  })
+
+  it('根据当前图库分类获取添加图片弹窗默认图库', () => {
+    expect(getSelectedAlbumId(1, { id: 12 }, { id: 24 })).toBe(12)
+    expect(getSelectedAlbumId(2, { id: 12 }, { id: 24 })).toBe(24)
+    expect(getSelectedAlbumId(1, null, { id: 24 })).toBe('')
+    expect(getSelectedAlbumId(2, { id: 12 }, null)).toBe('')
   })
 
   it('按当前页图片指标排序', () => {

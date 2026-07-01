@@ -330,6 +330,14 @@
           </el-upload>
           <div v-if="pictureFormPreviewUrl"><a @click="handlePictureRemove()">取消</a></div>
         </el-form-item>
+        <el-form-item v-if="!pictureForm.isEdit" label="图库" prop="albumId">
+          <el-select v-model="pictureForm.albumId" placeholder="请选择图库" filterable class="w-100">
+            <el-option v-for="item in pictureAlbumList" :key="item.id" :label="item.name" :value="item.id">
+              <span v-if="albumCategory === AlbumCategoryTypeEnum.MY && item.albumType === AlbumTypeEnum.PRIVATE" class="color-red">[私]</span>
+              <span>{{ item.name }}</span>
+            </el-option>
+          </el-select>
+        </el-form-item>
         <el-form-item label="图片描述" prop="description">
           <el-input v-model="pictureForm.description" type="textarea" :rows="5" maxlength="200" show-word-limit
                     placeholder="请输入图片描述" />
@@ -486,6 +494,7 @@ import {
   getNextLikeCount,
   getPictureDownloadName,
   getPreviewPicturePosition,
+  getSelectedAlbumId,
   type PictureFilterType,
   type PictureSortType,
   type PreviewDirection,
@@ -585,6 +594,9 @@ const pictureForm = ref<any>({
   height: 0
 })
 const pictureRules = ref({
+  albumId: [
+    { required: true, message: '请选择图库', trigger: 'change' }
+  ],
   url: [
     { required: true, message: '请上传图片', trigger: 'change' }
   ],
@@ -1019,15 +1031,7 @@ function handlePictureAlbumCoverRemove() {
 function openAddPicture() {
   if (!checkIsLogin()) return
   pictureForm.value.isEdit = false
-  if ((albumCategory.value === AlbumCategoryTypeEnum.ALL && !currentActive.value)
-    || (albumCategory.value === AlbumCategoryTypeEnum.MY && !userCurrentActive.value)) {
-    ElMessage({
-      message: '请先选择一个图库分类(【全部】除外)',
-      type: 'info',
-      plain: true
-    })
-    return
-  }
+  pictureForm.value.albumId = getSelectedAlbumId(albumCategory.value, currentActive.value, userCurrentActive.value)
   addPictureDialogVisible.value = true
 }
 

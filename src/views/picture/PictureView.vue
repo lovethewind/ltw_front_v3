@@ -132,7 +132,7 @@
       </div>
     </el-card>
     <!-- 图片列表 -->
-    <el-card v-loading="pictureLoading" class="picture-container">
+    <el-card v-loading="pictureLoading && pictureList.length > 0" class="picture-container">
       <template #header>
         <div class="picture-list-header">
           <div class="picture-list-heading">
@@ -154,16 +154,46 @@
               </span>
             </div>
           </div>
+          <div v-if="pictureList.length > 0" class="picture-list-toolbar">
+            <el-select v-model="pictureSortType" size="small" class="picture-list-toolbar-select" @change="handlePictureSortChange">
+              <el-option v-for="item in pictureSortOptions" :key="item.value" :label="item.label" :value="item.value" />
+            </el-select>
+            <el-select v-model="pictureFilterType" size="small" class="picture-list-toolbar-select">
+              <el-option v-for="item in pictureFilterOptions" :key="item.value" :label="item.label" :value="item.value" />
+            </el-select>
+            <el-button v-if="hasPictureDisplayCondition" size="small" @click="resetPictureDisplayCondition">
+              重置
+            </el-button>
+          </div>
           <el-button type="primary" size="small" class="picture-list-add-button" @click="openAddPicture()">
             <Icon icon="ic:baseline-add" />
             添加图片
           </el-button>
         </div>
       </template>
-      <el-row :gutter="12" class="picture-grid">
-        <el-col v-for="item in pictureList" :key="item.id" :xs="12" :sm="8" :md="6" :lg="6" class="picture-list-item">
+      <el-row v-if="pictureLoading && pictureList.length === 0" :gutter="12" class="picture-grid">
+        <el-col v-for="index in pictureSkeletonCount" :key="'picture-skeleton-' + index" :xs="12" :sm="8" :md="6" :lg="6" class="picture-list-item">
+          <el-skeleton animated class="picture-list-skeleton">
+            <template #template>
+              <el-skeleton-item variant="image" class="picture-list-skeleton-image" />
+              <div class="picture-list-skeleton-meta">
+                <el-skeleton-item variant="text" class="picture-list-skeleton-badge" />
+                <el-skeleton-item variant="text" class="picture-list-skeleton-badge" />
+                <el-skeleton-item variant="text" class="picture-list-skeleton-size" />
+              </div>
+            </template>
+          </el-skeleton>
+        </el-col>
+      </el-row>
+      <el-empty v-else-if="pictureLoadError" description="图片加载失败">
+        <el-button type="primary" size="small" @click="retryPictureList">
+          重试
+        </el-button>
+      </el-empty>
+      <el-row v-else :gutter="12" class="picture-grid">
+        <el-col v-for="item in displayPictureList" :key="item.id" :xs="12" :sm="8" :md="6" :lg="6" class="picture-list-item">
           <div class="picture-list-item-frame" @click="openPreviewPicture(item)">
-            <img :src="item.thumbUrl || item.url" alt="" class="picture-list-item-img">
+            <img :src="item.thumbUrl || item.url || ''" alt="" class="picture-list-item-img" @error="handlePictureImageError">
             <div class="picture-list-item-overlay">
               <span>
                 <Icon icon="tabler:thumb-up" />
@@ -178,8 +208,11 @@
           </div>
         </el-col>
       </el-row>
-      <el-empty v-if="pictureList.length === 0" :description="pictureEmptyDescription">
-        <el-button v-if="canAddPictureToCurrentAlbum" type="primary" size="small" @click="openAddPicture()">
+      <el-empty v-if="!pictureLoading && !pictureLoadError && displayPictureList.length === 0" :description="pictureEmptyDescription">
+        <el-button v-if="pictureList.length > 0" size="small" @click="resetPictureDisplayCondition">
+          清除筛选
+        </el-button>
+        <el-button v-if="pictureList.length === 0 && canAddPictureToCurrentAlbum" type="primary" size="small" @click="openAddPicture()">
           <Icon icon="ic:baseline-add" />
           添加图片
         </el-button>
@@ -296,7 +329,7 @@
             <Icon icon="mdi:chevron-left" />
           </button>
           <div class="display-image-div">
-            <img ref="displayImageRef" :src="previewPictureItem.url" alt="" class="display-image">
+            <img ref="displayImageRef" :src="previewPictureItem.url" alt="" class="display-image" @error="handlePictureImageError">
           </div>
           <button
             class="picture-preview-nav picture-preview-nav-next"
@@ -412,12 +445,19 @@ import CommentView from '@/components/comment/CommentView.vue'
 import ReplyView from '@/components/comment/ReplyView.vue'
 import commentApi from '@/api/comment'
 import {
+  buildPictureQueryParams,
+  filterPictureList,
   getAdjacentPictureItem,
+  getNextCommentCount,
   getNextLikeCount,
   getPictureDownloadName,
   getPreviewPicturePosition,
+  type PictureFilterType,
+  type PictureSortType,
   type PreviewDirection,
-  resetPaginationPage
+  resetPaginationPage,
+  sortPictureList,
+  syncPictureCommentCount
 } from '@/views/picture/picture-view-utils'
 
 const userStore = useUserStore()
@@ -443,6 +483,7 @@ const addPictureDialogVisible = ref(false)
 const previewPictureDialogVisible = ref(false)
 const pictureAlbumLoading = ref(false)
 const pictureLoading = ref(false)
+const pictureLoadError = ref(false)
 const pictureAddDisabled = ref(false)
 const pictureActionDisabled = ref(false)
 const previewPictureItem = ref<any>({})
@@ -469,6 +510,24 @@ const userPictureQueryParams = ref({
   pageNum: 1,
   pageSize: 18
 })
+const pictureSkeletonCount = 8
+const pictureSortType = ref<PictureSortType>('default')
+const pictureFilterType = ref<PictureFilterType>('all')
+const pictureSortOptions: Array<{ label: string, value: PictureSortType }> = [
+  { label: '默认排序', value: 'default' },
+  { label: '最新优先', value: 'latest' },
+  { label: '最多点赞', value: 'like' },
+  { label: '最多评论', value: 'comment' },
+  { label: '最高分辨率', value: 'resolution' }
+]
+const pictureFilterOptions: Array<{ label: string, value: PictureFilterType }> = [
+  { label: '全部图片', value: 'all' },
+  { label: '横图', value: 'landscape' },
+  { label: '竖图', value: 'portrait' },
+  { label: '方图', value: 'square' },
+  { label: '有描述', value: 'withDescription' },
+  { label: '无描述', value: 'withoutDescription' }
+]
 const pictureAlbumAddDisabled = ref(false)
 const pictureAlbumPreviewCover = ref('')
 const pictureAlbumForm = ref<any>(Object.assign({}, defaultPictureAlbumForm))
@@ -503,20 +562,29 @@ const pictureRules = ref({
 const user = computed(() => {
   return userStore.user
 })
+const displayPictureList = computed(() => {
+  return sortPictureList(filterPictureList(pictureList.value, pictureFilterType.value), pictureSortType.value)
+})
 const previousPreviewPicture = computed(() => {
-  return getAdjacentPictureItem(pictureList.value, previewPictureItem.value.id, 'prev')
+  return getAdjacentPictureItem(displayPictureList.value, previewPictureItem.value.id, 'prev')
 })
 const nextPreviewPicture = computed(() => {
-  return getAdjacentPictureItem(pictureList.value, previewPictureItem.value.id, 'next')
+  return getAdjacentPictureItem(displayPictureList.value, previewPictureItem.value.id, 'next')
 })
 const previewPicturePosition = computed(() => {
-  return getPreviewPicturePosition(pictureList.value, previewPictureItem.value.id)
+  return getPreviewPicturePosition(displayPictureList.value, previewPictureItem.value.id)
+})
+const hasPictureDisplayCondition = computed(() => {
+  return pictureSortType.value !== 'default' || pictureFilterType.value !== 'all'
 })
 const canAddPictureToCurrentAlbum = computed(() => {
   return (albumCategory.value === AlbumCategoryTypeEnum.ALL && !!currentActive.value)
     || (albumCategory.value === AlbumCategoryTypeEnum.MY && !!userCurrentActive.value)
 })
 const pictureEmptyDescription = computed(() => {
+  if (pictureList.value.length > 0 && displayPictureList.value.length === 0) {
+    return '当前筛选没有匹配图片'
+  }
   const activeAlbum = albumCategory.value === AlbumCategoryTypeEnum.ALL ? currentActive.value : userCurrentActive.value
   if (activeAlbum) {
     return '这个图库还没有图片'
@@ -609,13 +677,16 @@ function changeUserPictureAlbum(item: any): void {
  */
 function getAlbumPicturePageList(): void {
   pictureLoading.value = true
+  pictureLoadError.value = false
   pictureApi.getAlbumPicturePageList(
     pictureQueryParams.value.pageNum,
     pictureQueryParams.value.pageSize,
-    { albumId: pictureForm.value.albumId }
+    buildPictureQueryParams(pictureForm.value.albumId, pictureSortType.value)
   ).then(res => {
     pictureList.value = res.data.records
     count.value = res.data.total
+  }).catch(() => {
+    pictureLoadError.value = true
   }).finally(() => {
     pictureLoading.value = false
   })
@@ -628,13 +699,16 @@ function getAlbumPicturePageList(): void {
  */
 function getUserAlbumPicturePageList(): void {
   pictureLoading.value = true
+  pictureLoadError.value = false
   pictureApi.getUserAlbumPicturePageList(
     userPictureQueryParams.value.pageNum,
     userPictureQueryParams.value.pageSize,
-    { albumId: pictureForm.value.albumId }
+    buildPictureQueryParams(pictureForm.value.albumId, pictureSortType.value)
   ).then(res => {
     pictureList.value = res.data.records
     count.value = res.data.total
+  }).catch(() => {
+    pictureLoadError.value = true
   }).finally(() => {
     pictureLoading.value = false
   })
@@ -661,6 +735,44 @@ function changePictureAlbumCategory(type: AlbumCategoryTypeEnum): void {
     changeUserPictureAlbum(userCurrentActive.value)
   }
   albumCategory.value = type
+}
+
+/**
+ * 重置当前页图片排序和筛选条件。
+ *
+ * :return: 无返回值。
+ */
+function resetPictureDisplayCondition(): void {
+  pictureSortType.value = 'default'
+  pictureFilterType.value = 'all'
+  retryPictureList()
+}
+
+/**
+ * 切换图片排序时重置分页并重新加载服务端排序结果。
+ *
+ * :return: 无返回值。
+ */
+function handlePictureSortChange(): void {
+  if (albumCategory.value === AlbumCategoryTypeEnum.ALL) {
+    resetPaginationPage(pictureQueryParams.value)
+  } else {
+    resetPaginationPage(userPictureQueryParams.value)
+  }
+  retryPictureList()
+}
+
+/**
+ * 重新加载当前图库图片列表。
+ *
+ * :return: 无返回值。
+ */
+function retryPictureList(): void {
+  if (albumCategory.value === AlbumCategoryTypeEnum.ALL) {
+    getAlbumPicturePageList()
+  } else {
+    getUserAlbumPicturePageList()
+  }
 }
 
 function openAddPictureAlbum() {
@@ -1072,6 +1184,21 @@ function switchPreviewPicture(direction: PreviewDirection): void {
 }
 
 /**
+ * 图片加载失败时替换为默认图，避免卡片和预览出现破图。
+ *
+ * :param event: 图片加载错误事件。
+ * :return: 无返回值。
+ */
+function handlePictureImageError(event: Event): void {
+  const image = event.currentTarget as HTMLImageElement | null
+  if (!image || image.dataset.fallbackApplied) {
+    return
+  }
+  image.dataset.fallbackApplied = 'true'
+  image.src = defaultAlbumCover
+}
+
+/**
  * 处理图片预览弹窗快捷键。
  *
  * :param event: 键盘事件。
@@ -1171,7 +1298,8 @@ function replyPicture(val: any) {
       type: 'success',
       plain: true
     })
-    previewPictureItem.value.commentCount++
+    previewPictureItem.value.commentCount = getNextCommentCount(previewPictureItem.value.commentCount)
+    syncPictureCommentCount(pictureList.value, previewPictureItem.value.id, previewPictureItem.value.commentCount)
     const add = res.data
     add.user = Object.assign({}, user.value)
     add.index = index

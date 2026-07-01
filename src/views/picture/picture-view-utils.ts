@@ -15,6 +15,31 @@ export interface PicturePreviewItem {
   id?: string | number | null
 }
 
+export interface PictureCommentItem extends PicturePreviewItem {
+  commentCount?: number | null
+}
+
+export type PictureSortType = 'default' | 'latest' | 'like' | 'comment' | 'resolution'
+
+export type PictureServerSortType = Exclude<PictureSortType, 'default'>
+
+export type PictureFilterType = 'all' | 'landscape' | 'portrait' | 'square' | 'withDescription' | 'withoutDescription'
+
+export interface PictureQueryParams {
+  albumId?: string | number | null
+  sortType?: PictureServerSortType
+}
+
+export interface PictureDisplayItem extends PictureCommentItem {
+  url?: string | null
+  thumbUrl?: string | null
+  createTime?: string | Date | null
+  likeCount?: number | null
+  width?: number | null
+  height?: number | null
+  description?: string | null
+}
+
 export interface PreviewPicturePosition {
   current: number
   total: number
@@ -40,6 +65,102 @@ export function resetPaginationPage(params: PaginationParams): void {
 export function getNextLikeCount(currentCount: number | null | undefined, hasLike: boolean): number {
   const count = currentCount || 0
   return hasLike ? count + 1 : Math.max(0, count - 1)
+}
+
+/**
+ * 根据评论成功结果计算下一次评论数。
+ *
+ * :param currentCount: 当前评论数。
+ * :return: 计算后的评论数。
+ */
+export function getNextCommentCount(currentCount: number | null | undefined): number {
+  return (currentCount || 0) + 1
+}
+
+/**
+ * 同步当前页图片列表中指定图片的评论数。
+ *
+ * :param list: 当前页图片列表。
+ * :param pictureId: 要同步评论数的图片 ID。
+ * :param commentCount: 最新评论数。
+ * :return: 无返回值。
+ */
+export function syncPictureCommentCount<T extends PictureCommentItem>(
+  list: T[],
+  pictureId: string | number | null | undefined,
+  commentCount: number
+): void {
+  const picture = list.find(item => item.id === pictureId)
+  if (picture) {
+    picture.commentCount = commentCount
+  }
+}
+
+/**
+ * 构建图片列表查询参数，只在非默认排序时透传排序类型。
+ *
+ * :param albumId: 当前图库 ID。
+ * :param sortType: 当前排序类型。
+ * :return: 图片列表查询参数。
+ */
+export function buildPictureQueryParams(
+  albumId: string | number | null | undefined,
+  sortType: PictureSortType
+): PictureQueryParams {
+  const params: PictureQueryParams = {
+    albumId
+  }
+  if (sortType !== 'default') {
+    params.sortType = sortType
+  }
+  return params
+}
+
+/**
+ * 按当前页图片指标排序，不修改原数组。
+ *
+ * :param list: 当前页图片列表。
+ * :param sortType: 排序类型。
+ * :return: 排序后的图片列表。
+ */
+export function sortPictureList<T extends PictureDisplayItem>(list: T[], sortType: PictureSortType): T[] {
+  const sortedList = [...list]
+  switch (sortType) {
+    case 'latest':
+      return sortedList.sort((a, b) => getDateTime(b.createTime) - getDateTime(a.createTime))
+    case 'like':
+      return sortedList.sort((a, b) => (b.likeCount || 0) - (a.likeCount || 0))
+    case 'comment':
+      return sortedList.sort((a, b) => (b.commentCount || 0) - (a.commentCount || 0))
+    case 'resolution':
+      return sortedList.sort((a, b) => getResolution(b) - getResolution(a))
+    default:
+      return list
+  }
+}
+
+/**
+ * 按当前页图片类型筛选。
+ *
+ * :param list: 当前页图片列表。
+ * :param filterType: 筛选类型。
+ * :return: 筛选后的图片列表。
+ */
+export function filterPictureList<T extends PictureDisplayItem>(list: T[], filterType: PictureFilterType): T[] {
+  switch (filterType) {
+    case 'landscape':
+      return list.filter(item => !!item.width && !!item.height && item.width > item.height)
+    case 'portrait':
+      return list.filter(item => !!item.width && !!item.height && item.width < item.height)
+    case 'square':
+      return list.filter(item => !!item.width && !!item.height && item.width === item.height)
+    case 'withDescription':
+      return list.filter(item => !!item.description?.trim())
+    case 'withoutDescription':
+      return list.filter(item => !item.description?.trim())
+    default:
+      return list
+  }
 }
 
 /**
@@ -109,4 +230,27 @@ function getUrlExtension(url?: string | null): string {
   const pathname = new URL(url, 'https://localhost').pathname
   const match = pathname.match(/\.[a-zA-Z0-9]+$/)
   return match ? match[0] : ''
+}
+
+/**
+ * 获取图片创建时间戳。
+ *
+ * :param value: 创建时间。
+ * :return: 时间戳。
+ */
+function getDateTime(value?: string | Date | null): number {
+  if (!value) {
+    return 0
+  }
+  return new Date(value).getTime() || 0
+}
+
+/**
+ * 获取图片分辨率面积。
+ *
+ * :param item: 图片信息。
+ * :return: 分辨率面积。
+ */
+function getResolution(item: PictureDisplayItem): number {
+  return (item.width || 0) * (item.height || 0)
 }

@@ -87,11 +87,9 @@ const conversationListInnerDomRef = ref<HTMLElement | undefined>()
 const actionsMenuPosition = ref<{
   top: number;
   left: number | undefined;
-  conversationHeight: number | undefined;
 }>({
   top: 0,
-  left: undefined,
-  conversationHeight: undefined
+  left: undefined
 })
 const currentPage = ref(1)
 const pageSize = ref(20)
@@ -156,7 +154,14 @@ function getConversationList() {
   })
 }
 
-function receiveMessage(message: any) {
+/**
+ * 接收聊天消息并更新会话列表。
+ *
+ * :param message: 收到的聊天消息。
+ * :return: 无返回值。
+ */
+function receiveMessage(message: any): void {
+  if (!message.conversationId) return
   const conversation = conversationList.value.find(item => item.conversationId === message.conversationId)
   if (conversation) {
     conversation.lastMessage = message
@@ -215,14 +220,21 @@ function showConversationActionMenu(event: MouseEvent, conversation: any, index:
 }
 
 
-function getActionsMenuPosition(event: MouseEvent) {
-  const rect = ((event.currentTarget || event.target) as HTMLElement)?.getBoundingClientRect() || {}
-  if (rect) {
-    actionsMenuPosition.value = {
-      top: rect.bottom - 30,
-      left: rect.left - 220,
-      conversationHeight: rect.height
-    }
+/**
+ * 获取会话右键菜单显示位置。
+ *
+ * :param event: 鼠标右键事件。
+ * :return: 无返回值。
+ */
+function getActionsMenuPosition(event: MouseEvent): void {
+  const menuWidth = 148
+  const menuHeight = 180
+  const gap = 8
+  const maxLeft = window.innerWidth - menuWidth - gap
+  const maxTop = window.innerHeight - menuHeight - gap
+  actionsMenuPosition.value = {
+    top: Math.max(gap, Math.min(event.clientY, maxTop)),
+    left: Math.max(gap, Math.min(event.clientX, maxLeft))
   }
 }
 

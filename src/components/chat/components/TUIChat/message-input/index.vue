@@ -9,6 +9,7 @@
         :enableInput="props.enableInput"
         @sendMessage="sendMessage"
       />
+      <slot name="toolbar" />
       <MessageInputButton
         v-if="!props.isMuted"
         @sendMessage="sendMessage"
@@ -111,11 +112,14 @@ defineExpose({
 
 <style scoped lang="scss">
 @import "../../../assets/styles/common";
+@import "@/assets/css/variables";
 
 .message-input-wrapper {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
+  padding: 10px 14px 14px;
+  background: #fff;
 }
 
 .message-input-container {
@@ -124,12 +128,38 @@ defineExpose({
   display: flex;
   flex-direction: column;
   border: none;
-  overflow: hidden;
+  overflow: visible;
+  position: relative;
+  border: 1px solid #dfe7ee;
+  border-radius: 8px;
+  background: #fbfcfd;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+
+  &:focus-within {
+    border-color: #8bc5bb;
+    box-shadow: 0 0 0 3px rgba(47, 143, 131, 0.12);
+  }
 }
 
 .message-input-container-h5 {
   display: flex;
   flex-flow: row nowrap;
   align-items: flex-end;
+}
+
+html.dark {
+  .message-input-wrapper {
+    background: $dark-main-color;
+  }
+
+  .message-input-container {
+    background: #232425;
+    border-color: $dark-border-color;
+
+    &:focus-within {
+      border-color: #37D18C;
+      box-shadow: 0 0 0 3px rgba(55, 209, 140, 0.14);
+    }
+  }
 }
 </style>

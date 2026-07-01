@@ -40,6 +40,11 @@ export enum MessageSendStatusEnum {
   DELETE = 4
 }
 
+export enum ChatMessageFailReasonEnum {
+  BLOCKED = 1,
+  SYSTEM_ERROR = 2
+}
+
 export enum ApplyStatusEnum {
   PENDING = 1,
   AGREE = 2,

@@ -34,9 +34,26 @@ const sendMessage = () => {
 
 .message-input-button {
   position: absolute;
-  bottom: 20px;
-  right: 20px;
+  bottom: 6px;
+  right: 12px;
   text-align: right;
+
+  :deep(.el-button) {
+    height: 34px;
+    padding: 0 14px;
+    border: none;
+    border-radius: 8px;
+    background: #2f8f83;
+    box-shadow: 0 10px 22px rgba(47, 143, 131, 0.22);
+    transition: background-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+
+    &:hover,
+    &:focus {
+      background: #26766d;
+      transform: translateY(-1px);
+      box-shadow: 0 14px 26px rgba(47, 143, 131, 0.28);
+    }
+  }
 
   &-h5 {
     position: static;

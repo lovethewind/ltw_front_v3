@@ -5,9 +5,9 @@
     @click="scrollToMessageListBottom"
   >
     <Icon
-      width="10px"
-      height="10px"
-      color="#98bdd0"
+      class="scroll-button-icon"
+      width="16px"
+      height="16px"
       icon="mdi:arrow-down"
     />
     <div class="scroll-button-text">
@@ -34,8 +34,13 @@ const scrollButtonContent = computed(() =>
 )
 
 
-// When the scroll height of the message list upwards is greater than one screen, show scrolling to the latest tips.
-async function judgeScrollOverOneScreen(e: Event) {
+/**
+ * 判断消息列表是否已向上滚动超过一屏。
+ *
+ * :param e: 滚动事件对象。
+ * :return: 无返回值。
+ */
+async function judgeScrollOverOneScreen(e: Event): Promise<void> {
   if (e.target) {
     try {
       const { height } = getBoundingClientRect(`${(e.target as HTMLElement)?.id}` || 'messageList') || {}
@@ -54,7 +59,12 @@ async function judgeScrollOverOneScreen(e: Event) {
   }
 }
 
-function scrollToMessageListBottom() {
+/**
+ * 滚动到消息列表底部。
+ *
+ * :return: 无返回值。
+ */
+function scrollToMessageListBottom(): void {
   emits('scrollToLatestMessage')
 }
 
@@ -69,33 +79,55 @@ defineExpose({
 
 .scroll-button {
   position: absolute;
-  bottom: 10px;
-  right: 10px;
-  width: 92px;
-  height: 28px;
-  background: #fff;
-  border: 1px solid #e0e0e0;
-  box-shadow: 0 4px 12px -5px rgba(0, 0, 0, 0.1);
+  bottom: 18px;
+  right: 22px;
+  min-width: 108px;
+  height: 36px;
+  padding: 0 14px;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(47, 143, 131, 0.18);
+  box-shadow: 0 14px 32px rgba(31, 41, 51, 0.14);
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  border-radius: 3px;
+  border-radius: 18px;
+  color: #2f8f83;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  backdrop-filter: blur(10px);
+  transition: background-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+
+  &:hover {
+    background: #fff;
+    box-shadow: 0 18px 36px rgba(31, 41, 51, 0.18);
+    transform: translateY(-1px);
+  }
+
+  &-icon {
+    flex: 0 0 auto;
+  }
 
   &-text {
     font-family: PingFangSC-Regular, system-ui;
-    font-size: 10px;
-    color: #98bdd0;
-    margin-left: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    color: currentColor;
+    margin-left: 5px;
   }
 }
 
 html.dark {
   .scroll-button {
-    background: $dark-main-color;
+    background: rgba(35, 36, 37, 0.94);
     border: 1px solid $dark-border-color;
+    color: #37D18C;
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.34);
+
+    &:hover {
+      background: #2e2e2e;
+      box-shadow: 0 18px 36px rgba(0, 0, 0, 0.4);
+    }
   }
 }
 </style>

@@ -292,13 +292,12 @@
                 <el-col :span="18">
                   <el-row align="middle">
                     <el-col :span="24">
-                      <span class="font-14 fw-bold">
+                      <span class="article-author-name">
                         <router-link :to="'/user/' + currentArticleUser.id"
                                      class="a-link"
                                      target="_blank"
                                      rel="noopener noreferrer">{{ currentArticleUser.nickname }}</router-link>
-                        <Icon :icon="genderMap[currentArticleUser.gender].icon"
-                              :color="genderMap[currentArticleUser.gender].color" />
+                        <GenderBadge :gender="currentArticleUser.gender" />
                       </span>
                     </el-col>
                     <el-col :span="24">
@@ -507,7 +506,6 @@ import searchApi from '@/api/search'
 import commentApi from '@/api/comment'
 import userApi from '@/api/user'
 import actionApi from '@/api/action'
-import { genderMap } from '@/utils/constant'
 import {
   deleteHTMLTag,
   genRandomColor,
@@ -521,6 +519,7 @@ import { ActionTypeEnum, ObjectTypeEnum } from '@/enums'
 import type { IBaseArticle, IReply } from '@/interface'
 import { EventName } from '@/event-server/event-name'
 import { EventServer } from '@/event-server'
+import GenderBadge from '@/components/base/GenderBadge.vue'
 
 const route = useRoute()
 const router = useRouter()

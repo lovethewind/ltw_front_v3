@@ -15,13 +15,18 @@
 
 <script lang="ts" setup>
 import { onMounted, onUnmounted, toRefs } from 'vue'
-import type { IChatMessage, IChatUpdateMessage } from '@/interface/ws'
+import type { IChatMessage } from '@/interface/ws'
 import { MessageSendStatusEnum } from '@/enums/ws'
 import { EventServer } from '@/event-server'
 import { EventName } from '@/event-server/event-name'
 
 interface IProps {
   messageItem: IChatMessage
+}
+
+interface ITempMessageProgress {
+  tempId: string
+  progress?: number
 }
 
 const props = defineProps<IProps>()
@@ -38,7 +43,13 @@ onUnmounted(() => {
   eventServer.off(EventName.UPDATE_TEMP_MESSAGE, updateMessage)
 })
 
-function updateMessage(message: IChatUpdateMessage) {
+/**
+ * 更新临时图片消息上传进度。
+ *
+ * :param message: 临时消息上传进度。
+ * :return: 无返回值。
+ */
+function updateMessage(message: ITempMessageProgress): void {
   if (message.tempId !== messageItem.value.tempId) return
   messageItem.value.progress = message.progress
 }

@@ -17,12 +17,23 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    color: #8794a1;
+    background: #eef3f7;
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 600;
+      color: #60707f;
+    }
   }
 
   &-header {
-    padding: 10px;
+    height: 60px;
+    padding: 0 20px;
     box-sizing: border-box;
     display: flex;
+    background: #fff;
   }
 
   &-message-list {
@@ -44,19 +55,36 @@
   }
 
   &-message-input-toolbar {
-    border-bottom: 1px solid #efefef;
+    border-bottom: none;
+    background: transparent;
   }
 
   &-message-input {
-    height: 160px;
+    height: 156px;
     display: flex;
+    background: #fff;
   }
 }
 
 html.dark {
   .tui-chat {
+    &-default {
+      background: #18191a;
+      color: #9ca3af;
+
+      h1 {
+        color: #d1d5db;
+      }
+    }
+
+    &-header,
+    &-message-input {
+      background: $dark-main-color;
+    }
+
     &-message-input-toolbar {
-      border-bottom: 1px solid $dark-border-color;
+      border-bottom: none;
+      background: transparent;
     }
   }
 }

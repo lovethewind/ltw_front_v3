@@ -13,9 +13,9 @@
           </el-col>
           <el-col :span="18" class="username-info">
             <el-row align="middle" justify="start">
-              <el-col :span="24">
+              <el-col :span="24" class="username-line">
                 {{ userDetail.nickname }}
-                <Icon :icon="genderMap[userDetail.gender].icon" :color="genderMap[userDetail.gender].color" />
+                <GenderBadge :gender="userDetail.gender" />
               </el-col>
               <el-col :span="24" class="font-12">
                 {{ userDetail.summary }}
@@ -103,15 +103,18 @@
 import { computed, ref, watch } from 'vue'
 import { useChatStore } from '@/stores/chat'
 import { ContactListTypeEnum } from '@/enums/ws'
-import { genderMap } from '@/utils/constant'
 import { covertTimeHowLongAgo } from '@/utils/date'
 import { Icon } from '@iconify/vue'
 import userApi from '@/api/user'
 import type { IUserDetail } from '@/interface'
+import type { IContactSearchItem, ICurrentContact } from '@/interface/ws'
+import GenderBadge from '@/components/base/GenderBadge.vue'
 
 const chatStore = useChatStore()
 const userDetail = ref<IUserDetail>()
 const groupDetail = ref<any>()
+const userDetailCache = new Map<string, IUserDetail>()
+const userDetailPendingMap = new Map<string, Promise<IUserDetail>>()
 
 
 const currentContact = computed<any>(() => {
@@ -129,14 +132,55 @@ watch(currentContact, (val) => {
     userDetail.value = undefined
     return
   }
+  if (isContactSearchItem(val as ICurrentContact)) {
+    userDetail.value = val.searchUserDetail
+    return
+  }
   if (currentContactType.value !== ContactListTypeEnum.GroupList) {
     userDetail.value = undefined
-    const userId = (currentContact.value as any)?.userProfile?.id
+    const userId = currentContact.value?.userProfile?.id
     if (!userId) return
-    userApi.getUserById(userId).then(res => {
-      userDetail.value = res.data
+    getUserDetail(userId).then(detail => {
+      if (currentContact.value?.userProfile?.id === userId) {
+        userDetail.value = detail
+      }
     })
   }
 })
+
+/**
+ * 获取用户详情，并合并同一用户的重复请求。
+ *
+ * :param userId: 用户 id。
+ * :return: 用户详情。
+ */
+function getUserDetail(userId: string): Promise<IUserDetail> {
+  const cachedDetail = userDetailCache.get(userId)
+  if (cachedDetail) {
+    return Promise.resolve(cachedDetail)
+  }
+  const pendingRequest = userDetailPendingMap.get(userId)
+  if (pendingRequest) {
+    return pendingRequest
+  }
+  const request = userApi.getUserById(userId).then(res => {
+    userDetailCache.set(userId, res.data)
+    return res.data
+  }).finally(() => {
+    userDetailPendingMap.delete(userId)
+  })
+  userDetailPendingMap.set(userId, request)
+  return request
+}
+
+/**
+ * 判断当前联系人是否为添加好友搜索结果。
+ *
+ * :param contact: 当前通讯录右侧联系人。
+ * :return: 是搜索结果时返回 true。
+ */
+function isContactSearchItem(contact: ICurrentContact): contact is IContactSearchItem {
+  return 'searchUserDetail' in contact
+}
 </script>
 <style lang="scss" scoped src="./style/index.scss"></style>

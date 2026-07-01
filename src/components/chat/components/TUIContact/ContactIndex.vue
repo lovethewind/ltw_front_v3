@@ -26,26 +26,36 @@ import ContactInfo from './contact-info/ContactInfoIndex.vue'
   box-sizing: border-box;
   display: flex;
   overflow: hidden;
+  background: #eef3f7;
 
   &-left {
-    min-width: 285px;
-    flex: 0 0 24%;
+    min-width: 310px;
+    flex: 0 0 310px;
     overflow: auto;
     display: flex;
     flex-direction: column;
+    background: #f9fafb;
   }
 
   &-right {
-    border-left: 1px solid #f4f5f9;
+    border-left: 1px solid #e8edf2;
     flex: 1;
     overflow: hidden;
+    background: #eef3f7;
   }
 }
 
 html.dark {
   .tui-contact {
+    background: #18191a;
+
+    &-left {
+      background: $dark-main-color;
+    }
+
     &-right {
       border-left: 1px solid $dark-border-color;
+      background: #18191a;
     }
   }
 }

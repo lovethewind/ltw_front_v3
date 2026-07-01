@@ -15,12 +15,6 @@
       <div v-if="isNotInGroup" :class="{'tui-chat-leave-group': true}">
         {{ leaveGroupReasonText }}
       </div>
-      <MessageInputToolbar
-        class="tui-chat-message-input-toolbar"
-        :displayType="inputToolbarDisplayType"
-        @insertEmoji="insertEmoji"
-        @scrollToLatestMessage="scrollToLatestMessage"
-      />
       <MessageInput
         ref="messageInputRef"
         class="tui-chat-message-input"
@@ -29,7 +23,16 @@
         :muteText="'TUIChat.您已被管理员禁言'"
         :placeholder="'TUIChat.请输入消息'"
         :inputToolbarDisplayType="inputToolbarDisplayType"
-      />
+      >
+        <template #toolbar>
+          <MessageInputToolbar
+            class="tui-chat-message-input-toolbar"
+            :displayType="inputToolbarDisplayType"
+            @insertEmoji="insertEmoji"
+            @scrollToLatestMessage="scrollToLatestMessage"
+          />
+        </template>
+      </MessageInput>
     </div>
   </div>
 </template>

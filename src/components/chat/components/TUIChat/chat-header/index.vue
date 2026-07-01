@@ -1,87 +1,86 @@
 <template>
   <div class="chat-header">
     <div class="chat-header-container">
-      <span>{{ currentConversation?.userProfile?.nickname || currentConversation?.groupProfile?.name }}</span>
-    </div>
-    <div class="chat-header-setting">
-      <el-popover trigger="click" width="280">
+      <el-popover v-if="currentConversation?.userProfile" trigger="click" width="360" popper-class="chat-user-popover chat-header-user-popover" @show="getUserDetail">
         <template #default>
           <div v-if="userDetail" class="more-info">
-            <div class="user-detail-div">
-              <el-row align="middle" justify="start">
-                <el-col :span="8">
-                  <el-avatar :size="80" :src="userDetail.avatar" />
-                </el-col>
-                <el-col :span="16" class="username-info">
-                  <el-row align="middle" justify="start">
-                    <el-col :span="24">
-                      {{ userDetail.nickname }}
-                      <Icon :icon="genderMap[userDetail.gender].icon" :color="genderMap[userDetail.gender].color" />
-                    </el-col>
-                    <el-col :span="24" class="font-12">
-                      {{ userDetail.summary }}
-                    </el-col>
-                  </el-row>
-                </el-col>
-              </el-row>
-              <el-row align="middle" justify="start">
-                <el-col :span="24">
-                  <Icon icon="mdi:id-card" color="skyblue" />
-                  uid: {{ userDetail.uid }}
-                </el-col>
-              </el-row>
-              <el-row align="middle" justify="start">
-                <el-col :span="24">
-                  <Icon icon="mdi:leaf" color="green" />
-                  站龄: {{ formatRegisterTime(userDetail.registerTimestamp) }}
-                </el-col>
-              </el-row>
-              <el-row align="middle" justify="start">
-                <el-col>
-                  <Icon icon="tdesign:location" color="red" />
-                  IP属地: {{ userDetail.address }}
-                </el-col>
-              </el-row>
-              <el-row align="middle" justify="center">
-                <el-col :span="6" class="col-all-center">
-                  <el-statistic :value="userDetail.articleCount" />
-                </el-col>
-                <el-col :span="6" class="col-all-center">
-                  <el-statistic :value="userDetail.commentCount" />
-                </el-col>
-                <el-col :span="6" class="col-all-center">
-                  <el-statistic :value="userDetail.fansCount" />
-                </el-col>
-                <el-col :span="6" class="col-all-center">
-                  <el-statistic :value="userDetail.viewCount" />
-                </el-col>
-              </el-row>
-              <el-row align="middle" justify="center">
-                <el-col :span="6" class="col-all-center"> 文章</el-col>
-                <el-col :span="6" class="col-all-center"> 评论</el-col>
-                <el-col :span="6" class="col-all-center"> 粉丝</el-col>
-                <el-col :span="6" class="col-all-center"> 访问量</el-col>
-              </el-row>
-              <el-row align="middle" justify="center" class="mt-4">
-                <el-col :span="24" class="col-all-center">
-                  <el-button v-if="!userDetail.isFriend && !userDetail.isBlocked" type="primary" size="small"
-                             @click="addFriend">
-                    <Icon icon="tdesign:user-add" />
-                    添加好友
-                  </el-button>
-                  <el-button type="info" size="small" @click="blockUser">
-                    <Icon icon="ic:baseline-block" />
-                    {{ userDetail?.isBlocked ? '取消拉黑' : '拉黑' }}
-                  </el-button>
-                </el-col>
-              </el-row>
+            <div class="more-info-profile">
+              <el-avatar :size="68" :src="userDetail.avatar" />
+              <div class="more-info-profile-main">
+                <div class="more-info-name">
+                  <span>{{ userDetail.nickname }}</span>
+                  <GenderBadge :gender="userDetail.gender" />
+                </div>
+                <div class="more-info-summary">
+                  {{ userDetail.summary || '这个人还没有签名' }}
+                </div>
+              </div>
+            </div>
+            <div class="more-info-meta">
+              <div class="more-info-meta-item">
+                <Icon icon="mdi:id-card-outline" />
+                <span>UID</span>
+                <strong>{{ userDetail.uid }}</strong>
+              </div>
+              <div class="more-info-meta-item">
+                <Icon icon="mdi:sprout-outline" />
+                <span>站龄</span>
+                <strong>{{ formatRegisterTime(userDetail.registerTimestamp) }}</strong>
+              </div>
+              <div class="more-info-meta-item">
+                <Icon icon="mdi:map-marker-outline" />
+                <span>IP属地</span>
+                <strong>{{ userDetail.address || '未知' }}</strong>
+              </div>
+            </div>
+            <div class="more-info-stats">
+              <div>
+                <strong>{{ userDetail.articleCount }}</strong>
+                <span>文章</span>
+              </div>
+              <div>
+                <strong>{{ userDetail.commentCount }}</strong>
+                <span>评论</span>
+              </div>
+              <div>
+                <strong>{{ userDetail.fansCount }}</strong>
+                <span>粉丝</span>
+              </div>
+              <div>
+                <strong>{{ userDetail.viewCount }}</strong>
+                <span>访问</span>
+              </div>
+            </div>
+            <div class="more-info-actions">
+              <el-button v-if="!userDetail.isFriend && !userDetail.isBlocked" type="primary" size="small"
+                         @click="addFriend">
+                <Icon icon="tdesign:user-add" />
+                添加好友
+              </el-button>
+              <el-button type="info" size="small" @click="blockUser">
+                <Icon icon="ic:baseline-block" />
+                {{ userDetail?.isBlocked ? '取消拉黑' : '拉黑' }}
+              </el-button>
             </div>
           </div>
         </template>
         <template #reference>
-          <Icon icon="ri:more-fill" @click="getUserDetail" />
+          <el-avatar
+            class="chat-header-avatar"
+            shape="square"
+            :src="currentConversation.userProfile.avatar"
+          />
         </template>
       </el-popover>
+      <el-avatar
+        v-else-if="currentConversation?.groupProfile"
+        class="chat-header-avatar"
+        shape="square"
+        :src="currentConversation.groupProfile.avatar"
+      />
+      <span class="chat-header-title">
+        {{ currentConversation?.userProfile?.nickname || currentConversation?.groupProfile?.name }}
+      </span>
     </div>
   </div>
 </template>
@@ -94,11 +93,11 @@ import userApi from '@/api/user'
 import chatApi from '@/api/chat'
 import actionApi from '@/api/action'
 import type { IUserDetail } from '@/interface'
-import { genderMap } from '@/utils/constant'
 import { formatRegisterTime } from '@/utils/date'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ContactTypeEnum } from '@/enums/ws'
 import { ActionTypeEnum, ObjectTypeEnum } from '@/enums'
+import GenderBadge from '@/components/base/GenderBadge.vue'
 
 const chatStore = useChatStore()
 const userStore = useUserStore()
@@ -167,25 +166,118 @@ function blockUser() {
 @import "@/assets/css/variables";
 
 .more-info {
+  padding: 4px;
+  color: #25313d;
 
-  .user-detail-div {
-    font-size: 14px;
+  &-profile {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #e8edf2;
 
-    .col-all-center {
-      justify-content: center;
+    .el-avatar {
+      flex: 0 0 auto;
+      border-radius: 14px;
+      box-shadow: 0 10px 22px rgba(31, 41, 51, 0.12);
+    }
+  }
+
+  &-profile-main {
+    min-width: 0;
+  }
+
+  &-name {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    color: #1f2933;
+    font-size: 17px;
+    font-weight: 700;
+
+    span {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  &-summary {
+    margin-top: 5px;
+    color: #73808c;
+    font-size: 13px;
+    line-height: 18px;
+    word-break: break-word;
+  }
+
+  &-meta {
+    display: grid;
+    gap: 9px;
+    padding-top: 14px;
+  }
+
+  &-meta-item {
+    display: grid;
+    grid-template-columns: 22px 54px minmax(0, 1fr);
+    align-items: center;
+    color: #73808c;
+    font-size: 13px;
+
+    svg {
+      width: 17px;
+      height: 17px;
+      color: #2f8f83;
     }
 
-    .el-row {
-      padding-bottom: 5px;
+    strong {
+      min-width: 0;
+      color: #25313d;
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
 
-      .el-col {
-        display: flex;
-        align-items: center;
+  &-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid #e8edf2;
 
-        svg {
-          margin-right: 5px;
-        }
-      }
+    div {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      min-width: 0;
+    }
+
+    strong {
+      color: #1f2933;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    span {
+      color: #8794a1;
+      font-size: 12px;
+    }
+  }
+
+  &-actions {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 16px;
+
+    .el-button {
+      min-width: 86px;
+      border-radius: 8px;
     }
   }
 }
@@ -196,24 +288,45 @@ function blockUser() {
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid #e6e6e6;
+  border-bottom: 1px solid #e8edf2;
+  background: #fff;
 
   &-container {
     display: inline-flex;
     justify-content: flex-start;
     align-items: center;
-    font-size: 14px;
+    min-width: 0;
+    gap: 10px;
+    font-size: 16px;
     font-weight: 500;
+  }
+
+  &-avatar {
+    flex: 0 0 auto;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  &-title {
+    min-width: 0;
+    overflow: hidden;
+    color: #1f2933;
+    font-weight: 600;
+    line-height: 24px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   &-content {
     margin-right: 20px;
     flex: 1;
     font-size: 16px;
-    line-height: 30px;
+    line-height: 28px;
     font-family: PingFangSC-Medium, serif;
     font-weight: 500;
-    color: #000;
+    color: #1f2933;
     letter-spacing: 0;
     overflow: hidden;
     white-space: nowrap;
@@ -222,17 +335,79 @@ function blockUser() {
 
   &-back,
   &-setting {
-    width: 27px;
-    height: 27px;
+    width: 32px;
+    height: 32px;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
+    border-radius: 8px;
     cursor: pointer;
+    color: #60707f;
+    transition: background-color 160ms ease, color 160ms ease;
+
+    &:hover {
+      background: #edf3f5;
+      color: #2f8f83;
+    }
   }
 }
 
 html.dark {
+  .more-info {
+    color: #e5e7eb;
+
+    &-profile,
+    &-stats {
+      border-color: $dark-border-color;
+    }
+
+    &-name,
+    &-meta-item strong,
+    &-stats strong {
+      color: #f3f4f6;
+    }
+
+    &-summary,
+    &-meta-item,
+    &-stats span {
+      color: #9ca3af;
+    }
+
+    &-meta-item svg {
+      color: #37D18C;
+    }
+  }
+
   .chat-header {
     border-bottom: 1px solid $dark-border-color;
+    background: $dark-main-color;
+
+    &-title,
+    &-content {
+      color: #e5e7eb;
+    }
+
+    &-back,
+    &-setting {
+      color: #9ca3af;
+
+      &:hover {
+        background: $dark-hover-color;
+        color: #37D18C;
+      }
+    }
   }
+}
+
+:global(.chat-user-popover) {
+  padding: 14px;
+  border: 1px solid #dfe7ee;
+  border-radius: 10px;
+  box-shadow: 0 18px 44px rgba(31, 41, 51, 0.14);
+}
+
+:global(html.dark .chat-user-popover) {
+  border-color: $dark-border-color;
+  background: #232425;
 }
 </style>

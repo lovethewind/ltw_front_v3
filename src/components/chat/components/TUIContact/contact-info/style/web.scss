@@ -1,23 +1,76 @@
+@import "@/assets/css/variables";
+
 .tui-contact {
-  width: 60%;
-  margin: 30px auto;
-  padding: 20px;
+  width: min(560px, 78%);
+  margin: 48px auto;
+  padding: 28px;
+  box-sizing: border-box;
+  border: 1px solid #dfe7ee;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 16px 40px rgba(31, 41, 51, 0.08);
+
+  &-default {
+    min-height: 280px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #8794a1;
+    font-size: 15px;
+  }
 
   &-info {
 
     .user-detail-div {
       font-size: 14px;
+      color: #25313d;
 
       .el-row {
-        padding-bottom: 10px;
+        padding-bottom: 12px;
 
         .el-col {
           display: flex;
           align-items: center;
+          line-height: 22px;
 
           svg {
             margin-right: 5px;
           }
+        }
+      }
+
+      > .el-row:first-child {
+        margin-bottom: 14px;
+        padding-bottom: 18px;
+        border-bottom: 1px solid #e8edf2;
+
+        .el-avatar {
+          border-radius: 12px;
+          box-shadow: 0 10px 24px rgba(31, 41, 51, 0.12);
+        }
+
+        .username-info {
+          font-size: 18px;
+          font-weight: 700;
+          color: #1f2933;
+
+          .username-line {
+            gap: 6px;
+            min-width: 0;
+          }
+
+          .font-12 {
+            margin-top: 4px;
+            color: #8794a1;
+            font-size: 13px;
+            font-weight: 400;
+          }
+        }
+      }
+
+      > .el-row:not(:first-child) {
+        .el-col:first-child {
+          color: #8794a1;
         }
       }
     }
@@ -26,14 +79,62 @@
   &-operate {
     display: flex;
     justify-content: center;
-    margin-top: 30px;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 24px;
 
     &-text {
-      margin-right: 20px;
+      margin-right: 0;
+      color: #8794a1;
+      font-size: 14px;
     }
 
     &-button {
-      margin-right: 20px;
+      min-width: 92px;
+      margin-right: 0;
+      border-radius: 8px;
+    }
+  }
+}
+
+html.dark {
+  .tui-contact {
+    background: #232425;
+    border-color: $dark-border-color;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+
+    &-default {
+      color: #9ca3af;
+    }
+
+    &-info {
+      .user-detail-div {
+        color: #e5e7eb;
+
+        > .el-row:first-child {
+          border-bottom-color: $dark-border-color;
+
+          .username-info {
+            color: #f3f4f6;
+
+            .font-12 {
+              color: #9ca3af;
+            }
+          }
+        }
+
+        > .el-row:not(:first-child) {
+          .el-col:first-child {
+            color: #9ca3af;
+          }
+        }
+      }
+    }
+
+    &-operate {
+      &-text {
+        color: #9ca3af;
+      }
     }
   }
 }

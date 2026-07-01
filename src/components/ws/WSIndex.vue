@@ -59,7 +59,13 @@ function onError(e: Event) {
   console.log('连接错误', e)
 }
 
-function onMessage(e: MessageEvent) {
+/**
+ * 处理 WebSocket 服务端消息。
+ *
+ * :param e: WebSocket 消息事件。
+ * :return: 无返回值。
+ */
+function onMessage(e: MessageEvent): void {
   const message: any = JSON.parse(e.data) as ReceiveMessage
   if (message.messageType == MessageTypeEnum.SYSTEM_IN_TIME) {
     if (message.showType === MessageShowTypeEnum.NOTIFICATION) {
@@ -79,12 +85,12 @@ function onMessage(e: MessageEvent) {
     return
   }
   if (message.messageType === MessageTypeEnum.CHAT_MESSAGE) {
-    if (!modalStore.chatFlag // 聊天弹窗未打开
-      || message.message.conversationId !== chatStore.currentConversation?.conversationId // 不是当前会话
-      || ((message.message.conversationId === chatStore.currentConversation?.conversationId && chatStore.currentNavbar === 'contact')) // 是当前会话但在通讯录页面
-      && message.message.userId !== user.value?.id // 不是我发出的消息
-      && message.message.status !== MessageSendStatusEnum.FAIL  // 不是发送失败
-    ) {
+    const isFailReceipt = message.message.status === MessageSendStatusEnum.FAIL
+    const isCurrentConversation = message.message.conversationId === chatStore.currentConversation?.conversationId
+    const shouldNotify = !isFailReceipt
+      && message.message.userId !== user.value?.id
+      && (!modalStore.chatFlag || !isCurrentConversation || (isCurrentConversation && chatStore.currentNavbar === 'contact'))
+    if (shouldNotify) {
       ElNotification({
         title: message.message.userProfile?.nickname || message.message.groupProfile?.name,
         message: dealChatMessageContent(message.message),

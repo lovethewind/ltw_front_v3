@@ -360,6 +360,26 @@ hr {
   :deep(svg) {
     margin-right: 5px;
   }
+
+  :deep(.gender-badge svg) {
+    margin-right: 0;
+  }
+}
+
+.article-author-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  font-size: 14px;
+  font-weight: 700;
+
+  .a-link {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
 .right-title {

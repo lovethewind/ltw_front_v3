@@ -139,7 +139,7 @@
                   <a :href="'/user/' + item.id" target="_blank" class="font-bold font-14 me-1">
                     {{ item.nickname }}
                   </a>
-                  <Icon :icon="genderMap[item.gender].icon" :color="genderMap[item.gender].color" />
+                  <GenderBadge :gender="item.gender" />
                 </el-col>
               </el-row>
               <el-row justify="center" align="bottom">
@@ -170,7 +170,7 @@ import { Icon } from '@iconify/vue'
 import { date } from '@/utils/date'
 import { covertNumberDisplay, deleteHTMLTag, genRandomColor, isMobile } from '@/utils/common'
 import { SearchTypeEnum } from '@/enums'
-import { genderMap } from '@/utils/constant'
+import GenderBadge from '@/components/base/GenderBadge.vue'
 
 const baseSearchDict = {
   currentPage: 1,

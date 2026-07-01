@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="chatFlag" :show-close="false" class="chat-dialog" @close="handleClose">
+  <el-dialog v-model="chatFlag" :show-close="false" class="chat-dialog" align-center @close="handleClose">
     <div class="TUIKit">
       <div class="TUIKit-navbar">
         <div class="d-flex justify-content-center mt-2 mb-4">
@@ -110,14 +110,29 @@ function handleClose() {
 </style>
 <style lang="scss">
 .chat-dialog {
-  width: 60%;
-  margin: 2vh auto;
+  width: min(1120px, 92vw);
+  margin: 0 auto;
   overflow: hidden;
   padding: 0;
-  border-radius: 10px;
+  background: #f6f8fb;
+  border-radius: 12px;
+
+  .el-dialog {
+    background: transparent;
+  }
 
   .el-dialog__header {
     padding: 0;
+  }
+
+  .el-dialog__body {
+    padding: 0;
+  }
+}
+
+@media (max-width: 900px) {
+  .chat-dialog {
+    width: 96vw;
   }
 }
 </style>

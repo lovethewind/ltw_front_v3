@@ -83,7 +83,8 @@ const currentConversation = computed(() => {
 })
 
 const userStore = useUserStore()
-const isOfficial = ref(true)
+const SAFE_TIP_SESSION_KEY = 'ltw_chat_safe_tip_shown'
+const isOfficial = ref(sessionStorage.getItem(SAFE_TIP_SESSION_KEY) !== 'true')
 const eventServer = EventServer.getInstance()
 
 const messageListRef = ref<HTMLElement>()
@@ -106,6 +107,7 @@ watch(currentConversation, () => {
 })
 
 onMounted(async () => {
+  markSafeTipShown()
   eventServer.on(EventName.RECEIVE_CHAT_MESSAGE, onReceiveMessage)
   eventServer.on(EventName.INSERT_TEMP_MESSAGE, insertTempMessage)
   eventServer.on(EventName.RESEND_CHAT_MESSAGE, resendMessage)
@@ -152,14 +154,22 @@ async function getHistoryMessageList() {
   })
 }
 
-function onReceiveMessage(message: IChatMessage) {
-  if (user.value?.id === message.userId) {
-    // If the message is a temporary message, replace it with the actual message
+/**
+ * 处理收到的完整聊天消息，并按 tempId 合并本地临时消息。
+ *
+ * :param message: 服务端返回的完整聊天消息。
+ * :return: 无返回值。
+ */
+function onReceiveMessage(message: IChatMessage): void {
+  if (message.tempId) {
     const sendMessage = tempMessageMap.value.get(message.tempId)
     if (sendMessage) {
       tempMessageMap.value.delete(message.tempId)
       Object.assign(sendMessage, message)
+      return
     }
+  }
+  if (user.value?.id === message.userId) {
     return
   }
   if (currentConversation.value?.conversationId !== message.conversationId) return
@@ -179,6 +189,7 @@ function insertTempMessage(message: IChatSendMessage) {
 
 function resendMessage(message: IChatSendMessage) {
   message.status = MessageSendStatusEnum.SENDING
+  delete message.failReason
   message.tempId = message.tempId || uuid()
   tempMessageMap.value.set(message.tempId, message)
   eventServer.emit(EventName.SEND_CHAT_MESSAGE, message)
@@ -194,7 +205,23 @@ async function loadMoreMessage() {
   }
 }
 
-function closeSafeTip() {
+/**
+ * 标记安全提示已在本次会话显示。
+ *
+ * :return: 无返回值。
+ */
+function markSafeTipShown(): void {
+  if (isOfficial.value) {
+    sessionStorage.setItem(SAFE_TIP_SESSION_KEY, 'true')
+  }
+}
+
+/**
+ * 关闭安全提示并记录本次会话已显示。
+ *
+ * :return: 无返回值。
+ */
+function closeSafeTip(): void {
   isOfficial.value = false
 }
 

@@ -132,7 +132,7 @@ defineExpose({
     display: flex;
     flex-direction: column;
     flex: 1;
-    padding: 3px 10px 10px;
+    padding: 12px 106px 30px 14px;
   }
 
   &-area {
@@ -143,6 +143,14 @@ defineExpose({
     overflow-y: auto;
     border: none;
     outline: none;
+    background: transparent;
+    color: #1f2933;
+    font-size: 14px;
+    line-height: 1.6;
+
+    &::placeholder {
+      color: #9aa7b2;
+    }
   }
 
   &-mute {
@@ -179,6 +187,22 @@ defineExpose({
     .custom-image,
     .custom-image-emoji {
       display: inline;
+    }
+  }
+}
+
+html.dark {
+  .message-input-editor {
+    &-area {
+      color: #e5e7eb;
+
+      &::placeholder {
+        color: #6b7280;
+      }
+    }
+
+    &-mute {
+      color: #9ca3af;
     }
   }
 }

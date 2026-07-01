@@ -1,9 +1,13 @@
+@import "@/assets/css/variables";
+
 .tui-conversation-list {
   font-family: PingFangSC-Regular, serif;
   font-weight: 400;
   letter-spacing: 0;
   flex: 1;
   overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #c7d2da transparent;
 }
 
 .tui-conversation {
@@ -14,24 +18,45 @@
     cursor: pointer;
     box-sizing: border-box;
     overflow: hidden;
+    min-height: 68px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+
+    &:hover {
+      background: #fff;
+      border-color: #dfe7ee;
+      box-shadow: 0 8px 24px rgba(31, 41, 51, 0.07);
+      transform: translateY(-1px);
+    }
+
+    &-selected {
+      background: #e8f4f1;
+      border-color: #8ccbc1;
+      box-shadow: inset 3px 0 0 #2f8f83;
+    }
 
     .left {
       position: relative;
-      width: 36px;
-      height: 36px;
+      flex: 0 0 42px;
+      width: 42px;
+      height: 42px;
 
       .num {
         position: absolute;
         display: inline-block;
-        right: 0;
-        top: -5px;
-        min-width: 15px;
-        padding: 0 2.5px;
-        height: 15px;
+        right: -4px;
+        top: -4px;
+        min-width: 18px;
+        padding: 0 5px;
+        height: 18px;
         font-size: 10px;
         text-align: center;
-        line-height: 15px;
-        border-radius: 7.5px;
+        line-height: 18px;
+        border-radius: 9px;
+        color: #fff;
+        background: #e85d4f;
+        box-shadow: 0 4px 10px rgba(232, 93, 79, 0.28);
       }
 
       .num-notify {
@@ -48,19 +73,19 @@
       }
 
       .avatar {
-        width: 30px;
-        height: 30px;
-        border-radius: 5px;
+        width: 42px;
+        height: 42px;
+        border-radius: 8px;
       }
 
       .online-status {
         box-sizing: border-box;
         position: absolute;
-        width: 10px;
-        height: 10px;
-        left: 28px;
-        top: 28px;
-        border: 1px solid #fff;
+        width: 11px;
+        height: 11px;
+        left: 33px;
+        top: 32px;
+        border: 2px solid #fff;
         box-shadow: 0 0 1px rgba(0, 0, 0, 0.1);
         border-radius: 50%;
 
@@ -78,6 +103,7 @@
       line-height: 16px;
       display: flex;
       flex-direction: column;
+      gap: 6px;
 
       .time {
         font-size: 12px;
@@ -90,7 +116,8 @@
     .content {
       display: flex;
       flex: 1;
-      padding-left: 8px;
+      min-width: 0;
+      padding-left: 12px;
       justify-content: space-between;
       box-sizing: border-box;
       overflow: hidden;
@@ -120,9 +147,11 @@
       }
 
       .name {
-        width: 110px;
+        width: 150px;
         letter-spacing: 0;
-        font-size: 14px;
+        font-size: 15px;
+        font-weight: 600;
+        color: #25313d;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -146,6 +175,7 @@
           white-space: nowrap;
           font-size: 12px;
           line-height: 16px;
+          color: #7b8794;
         }
       }
     }
@@ -155,8 +185,7 @@
 
       .tui-conversation-item {
         &:hover {
-          border: 1px saddlebrown solid;
-          background: rgba(0, 110, 255, 0.1);
+          border-color: #dfe7ee;
         }
       }
 
@@ -191,11 +220,35 @@
 html.dark {
   .tui-conversation {
     &-item {
+      &:hover {
+        background: #232425;
+        border-color: $dark-border-color;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.24);
+      }
+
+      &-selected {
+        background: rgba(55, 209, 140, 0.12);
+        border-color: rgba(55, 209, 140, 0.32);
+        box-shadow: inset 3px 0 0 #37D18C;
+      }
+
+      .left {
+        .online-status {
+          border-color: $dark-main-color;
+        }
+      }
+
       .content {
         &-header {
           &-label {
             .name {
-              color: #eee;
+              color: #e5e7eb;
+            }
+          }
+
+          .middle-box {
+            &-content {
+              color: #9ca3af;
             }
           }
         }

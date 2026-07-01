@@ -1,3 +1,5 @@
+@import "@/assets/css/variables";
+
 .tui-chat {
   width: 100%;
   height: 100%;
@@ -43,10 +45,14 @@
       padding-left: 10px;
     }
 
-    .tui-message-list {
+      .tui-message-list {
       flex: 1;
       height: 100%;
       overflow: hidden auto;
+      padding: 18px 18px 14px;
+      background: #eef3f7;
+      scrollbar-width: thin;
+      scrollbar-color: #c7d2da transparent;
 
       .message-no-more {
         font-size: 12px;
@@ -71,20 +77,20 @@
         height: 28px;
         padding: 0 5px;
         background: #fff;
-        border: 1px solid #e0e0e0;
-        box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.06);
+        border: 1px solid #dfe7ee;
+        box-shadow: 0 10px 28px rgba(31, 41, 51, 0.12);
         display: flex;
         flex-direction: row;
         align-items: center;
         justify-content: center;
-        border-radius: 3px;
+        border-radius: 14px;
         cursor: pointer;
 
         &-text {
           font-family: PingFangSC-Regular, serif;
           font-weight: 400;
           font-size: 10px;
-          color: #147aff;
+          color: #2f8f83;
           letter-spacing: 0;
           text-align: center;
           padding-left: 3px;
@@ -94,9 +100,10 @@
       .message-li {
         display: flex;
         flex-direction: column;
+        margin-bottom: 10px;
 
         &:first-child {
-          margin-top: 5px;
+          margin-top: 0;
         }
 
         .message-item {
@@ -148,6 +155,26 @@
       position: absolute;
       width: 100%;
       height: 100%;
+    }
+  }
+}
+
+html.dark {
+  .tui-chat {
+    &-main {
+      .tui-message-list {
+        background: #18191a;
+
+        .to-bottom-tip {
+          background: #232425;
+          border-color: $dark-border-color;
+          box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+        }
+      }
+
+      .tui-chat-safe-tips {
+        background-color: rgba(255, 149, 0, 0.14);
+      }
     }
   }
 }

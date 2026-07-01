@@ -1,5 +1,6 @@
 import {
   ApplyStatusEnum,
+  ChatMessageFailReasonEnum,
   ChatGroupTypeEnum,
   ChatMessageTypeEnum,
   ContactTypeEnum, MessageSendStatusEnum,
@@ -7,6 +8,7 @@ import {
   MessageTypeEnum
 } from '@/enums/ws'
 import { ObjectTypeEnum } from '@/enums'
+import type { IUserDetail } from '@/interface'
 
 export interface ExtensionInfo {
   weight: number;
@@ -111,6 +113,16 @@ export interface IFriendApplyItem {
 
 export type IContactListType = IFriend & IFriendApplyItem & IBlackListItem & IGroupInfo
 
+export interface IContactSearchItem {
+  id: string
+  contactId: string
+  contactType: ContactTypeEnum
+  userProfile: IUserProfile
+  searchUserDetail: IUserDetail
+}
+
+export type ICurrentContact = IContactListType | IContactSearchItem
+
 export interface IChatSendMessage {
   userId: string
   contactId: string
@@ -120,13 +132,9 @@ export interface IChatSendMessage {
   content: string
   attach?: IAttach[]
   status: MessageSendStatusEnum
+  failReason?: ChatMessageFailReasonEnum
   tempId: string
   createTime: string
-  progress?: number
-}
-
-export interface IChatUpdateMessage {
-  tempId: string
   progress?: number
 }
 
@@ -145,6 +153,7 @@ export interface IChatMessage {
   createTime: string
   tempId: string
   status: MessageSendStatusEnum
+  failReason?: ChatMessageFailReasonEnum
   progress?: number
 }
 

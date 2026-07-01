@@ -41,7 +41,7 @@
                       :type="option.type"
                       size="small"
                       class="tui-contact-list-card-bottom-application-bottom"
-                      @click="option.onClick"
+                      @click.stop="option.onClick"
                     >
                       {{ option.label }}
                     </el-button>

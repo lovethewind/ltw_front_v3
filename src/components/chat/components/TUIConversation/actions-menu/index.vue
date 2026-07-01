@@ -55,7 +55,6 @@ interface IProps {
   actionsMenuPosition: {
     top: number
     left?: number
-    conversationHeight?: number
   }
   selectedConversation: IConversation | undefined
 }
@@ -111,20 +110,21 @@ function closeConversationActionMenu() {
 @import "@/assets/css/variables";
 
 .actions-menu {
-  position: absolute;
+  position: fixed;
   left: 0;
+  width: 148px;
   border-radius: 8px;
   border: 1px solid #e0e0e0;
-  box-shadow: 0 -4px 12px 0 rgba(0, 0, 0, 0.06);
+  box-shadow: 0 12px 32px rgba(31, 41, 51, 0.16);
   background-color: #fff;
   overflow: hidden;
   opacity: 1;
-  z-index: 1;
+  z-index: 3000;
 
   .actions-menu-item {
     cursor: pointer;
-    padding: 10px 20px;
-    font-size: 12px;
+    padding: 12px 20px;
+    font-size: 14px;
     word-break: keep-all;
 
     &:hover {

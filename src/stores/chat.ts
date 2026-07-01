@@ -1,13 +1,13 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
-import type { IContactListType, IConversation, IOption } from '@/interface/ws'
+import type { ICurrentContact, IConversation, IOption } from '@/interface/ws'
 import { ContactListTypeEnum } from '@/enums/ws'
 
 export const useChatStore = defineStore('chat', () => {
   const editorContent = ref('')
   const currentNavbar = ref('message')
   const currentConversation = ref<IConversation>()
-  const currentContact = ref<IContactListType>()
+  const currentContact = ref<ICurrentContact>()
   const currentContactType = ref<ContactListTypeEnum>()
   const currentContactOperation = ref<IOption[]>([])
   const addConversationUserId = ref<string>()  // 点击私聊按钮
@@ -34,11 +34,23 @@ export const useChatStore = defineStore('chat', () => {
     addConversationUserId.value = val
   }
 
-  function setCurrentContact(val: IContactListType) {
+  /**
+   * 设置通讯录右侧当前展示的联系人。
+   *
+   * :param val: 好友、申请、黑名单、群组或搜索结果联系人。
+   * :return: 无返回值。
+   */
+  function setCurrentContact(val: ICurrentContact): void {
     currentContact.value = val
   }
 
-  function setCurrentContactType(val: ContactListTypeEnum) {
+  /**
+   * 设置通讯录右侧当前联系人所属列表类型。
+   *
+   * :param val: 联系人列表类型；搜索结果没有固定列表类型时可为空。
+   * :return: 无返回值。
+   */
+  function setCurrentContactType(val?: ContactListTypeEnum): void {
     currentContactType.value = val
   }
 

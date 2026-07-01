@@ -76,6 +76,7 @@ declare module 'vue' {
     FileUpload: typeof import('./src/components/chat/components/TUIChat/message-input-toolbar/file-upload/index.vue')['default']
     FooterView: typeof import('./src/components/layout/FooterView.vue')['default']
     ForgetModel: typeof import('./src/components/model/ForgetModel.vue')['default']
+    GenderBadge: typeof import('./src/components/base/GenderBadge.vue')['default']
     ImageUpload: typeof import('./src/components/chat/components/TUIChat/message-input-toolbar/image-upload/index.vue')['default']
     IndexView: typeof import('./src/components/chat/IndexView.vue')['default']
     LoadMore: typeof import('./src/components/base/LoadMore.vue')['default']

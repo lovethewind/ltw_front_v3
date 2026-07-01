@@ -35,12 +35,17 @@ function insertEmoji(emojiObj: IEmojiChar) {
 @import "@/assets/css/variables";
 
 .message-input-toolbar {
-  border-top: 1px solid #f4f5f9;
-  width: 100%;
-  max-width: 100%;
+  position: absolute;
+  left: 12px;
+  bottom: 2px;
+  z-index: 2;
+  width: auto;
+  max-width: calc(100% - 130px);
   display: flex;
   flex-direction: row;
   justify-content: space-between;
+  padding: 0;
+  background: transparent;
   user-select: none;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -56,12 +61,20 @@ function insertEmoji(emojiObj: IEmojiChar) {
     .extension-list {
       list-style: none;
       display: flex;
+      gap: 6px;
 
       &-item {
-        width: 20px;
-        height: 20px;
-        padding: 12px 10px 1px;
+        width: 28px;
+        height: 28px;
+        padding: 4px;
+        border-radius: 8px;
         cursor: pointer;
+        transition: background-color 160ms ease, transform 160ms ease;
+
+        &:hover {
+          background: #edf3f5;
+          transform: translateY(-1px);
+        }
       }
     }
   }
@@ -69,7 +82,15 @@ function insertEmoji(emojiObj: IEmojiChar) {
 
 html.dark {
   .message-input-toolbar {
-    border-top: 1px solid $dark-border-color;
+    border-top: none;
+
+    .extension-list {
+      &-item {
+        &:hover {
+          background: $dark-hover-color;
+        }
+      }
+    }
   }
 }
 </style>

@@ -8,9 +8,9 @@
           </el-col>
           <el-col :span="16" class="username-info">
             <el-row align="middle" justify="start">
-              <el-col :span="24">
+              <el-col :span="24" class="user-detail-name">
                 {{ viewUser.nickname }}
-                <Icon :icon="genderMap[viewUser.gender].icon" :color="genderMap[viewUser.gender].color" />
+                <GenderBadge :gender="viewUser.gender" />
               </el-col>
               <el-col :span="24" class="font-12">
                 {{ viewUser.summary }}
@@ -103,7 +103,6 @@
 import { computed, toRefs } from 'vue'
 import { useUserStore } from '@/stores/user'
 import actionApi from '@/api/action'
-import { genderMap } from '@/utils/constant'
 import { formatRegisterTime } from '@/utils/date'
 import { checkIsLogin } from '@/utils/common'
 import { Icon } from '@iconify/vue'
@@ -112,6 +111,7 @@ import { ElMessage } from 'element-plus'
 import { EventServer } from '@/event-server'
 import { EventName } from '@/event-server/event-name'
 import type { IUserDetail } from '@/interface'
+import GenderBadge from '@/components/base/GenderBadge.vue'
 
 const props = defineProps<{
   viewUser: IUserDetail

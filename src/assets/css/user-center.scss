@@ -188,6 +188,16 @@
       }
     }
   }
+
+  .user-detail-name {
+    gap: 6px;
+    min-width: 0;
+    font-weight: 700;
+  }
+
+  :deep(.gender-badge svg) {
+    margin-right: 0;
+  }
 }
 
 .active {

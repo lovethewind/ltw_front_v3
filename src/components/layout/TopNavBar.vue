@@ -4,7 +4,8 @@
     <div class="d-md-none nav-mobile-container">
       <div class="blog-title">
         <router-link to="/">
-          {{ websiteInfo.home }}
+          <span class="brand-mark">心</span>
+          <span class="brand-name">{{ websiteInfo.home }}</span>
         </router-link>
       </div>
       <div class="nav-mobile-actions">
@@ -14,10 +15,39 @@
             创作
           </el-button>
         </div>
-        <a @click="openSearch">
+        <button class="nav-icon-button" type="button" aria-label="搜索" @click="openSearch">
           <Icon icon="tabler:search" />
-        </a>
+        </button>
+        <button
+          class="nav-icon-button mobile-menu-button"
+          type="button"
+          aria-label="打开导航菜单"
+          @click="mobileMenuVisible = true"
+        >
+          <Icon icon="tabler:menu-2" />
+        </button>
       </div>
+      <el-drawer
+        v-model="mobileMenuVisible"
+        append-to-body
+        class="mobile-menu-drawer"
+        direction="rtl"
+        size="76%"
+        title="导航"
+      >
+        <div class="mobile-menu-list">
+          <router-link
+            v-for="menu in navMenus"
+            :key="'mobile_nav_' + menu.path"
+            :to="menu.path"
+            class="mobile-menu-item"
+            @click="handleMobileMenuSelect(menu.path)"
+          >
+            <Icon :icon="menu.icon" />
+            <span>{{ menu.name }}</span>
+          </router-link>
+        </div>
+      </el-drawer>
     </div>
     <!--    电脑导航栏-->
     <div class="d-md-inline-flex d-none nav-container align-content-center">
@@ -25,102 +55,130 @@
         <el-col :xs="8" :sm="7" class="ps-2">
           <div class="float-left blog-title">
             <router-link to="/">
-              {{ websiteInfo.home }}
+              <span class="brand-mark">心</span>
+              <span class="brand-name">{{ websiteInfo.home }}</span>
             </router-link>
           </div>
         </el-col>
         <el-col :xs="16" :sm="10" class="text-center">
           <div class="center nav-title">
-            <div class="menus-item">
-              <router-link class="menu-btn" to="/">
-                首页
-              </router-link>
-            </div>
-            <div class="menus-item">
-              <router-link to="/picture" class="menu-btn">图库</router-link>
-            </div>
-            <div class="menus-item">
-              <router-link to="/website" class="menu-btn">网站导航</router-link>
-            </div>
-            <div class="menus-item">
-              <router-link to="/link" class="menu-btn">友链</router-link>
-            </div>
-            <div class="menus-item">
-              <router-link to="/message-board" class="menu-btn">
-                留言板
+            <div
+              v-for="menu in navMenus"
+              :key="'desktop_nav_' + menu.path"
+              class="menus-item"
+            >
+              <router-link :to="menu.path" class="menu-btn">
+                {{ menu.name }}
               </router-link>
             </div>
           </div>
         </el-col>
         <el-col :xs="0" :sm="7" class="pe-2">
           <div class="nav-title-right">
-            <div class="menus-item">
-              <Icon icon="mdi:search" @click="toSearchPage()" />
-            </div>
-            <div class="menus-item">
+            <div class="nav-actions">
+              <button class="nav-action-button" type="button" aria-label="打开搜索页" @click="toSearchPage">
+                <Icon icon="tabler:search" />
+              </button>
               <el-popover
-                placement="top"
-                title="消息"
-                :width="200"
+                v-if="user"
+                placement="bottom-end"
+                popper-class="notice-popover"
+                :width="280"
                 trigger="hover"
               >
                 <template #default>
-                  <el-row
-                    v-for="notice in NoticeTypeList"
-                    :key="'notice_' + notice.value"
-                    @click="toNoticePage(notice.value)"
-                    class="notice-item">
-                    <Icon :icon="notice.icon" />
-                    <el-badge v-if="noticeUnreadCountMap[notice.value]" :value="noticeUnreadCountMap[notice.value]"
-                              :offset="[12, 8]">
-                      {{ notice.name }}
-                    </el-badge>
-                    <span v-else>{{ notice.name }}</span>
-                  </el-row>
+                  <div class="notice-panel">
+                    <div class="notice-panel-header">
+                      <div>
+                        <div class="notice-panel-title">消息通知</div>
+                        <div class="notice-panel-summary">
+                          {{ totalUnreadCount ? '共 ' + totalUnreadCount + ' 条未读' : '暂无未读消息' }}
+                        </div>
+                      </div>
+                      <span class="notice-panel-dot" :class="{ 'is-empty': !totalUnreadCount }" />
+                    </div>
+                    <div v-if="unreadNoticeList.length" class="notice-panel-list">
+                      <button
+                        v-for="notice in unreadNoticeList"
+                        :key="'notice_' + notice.value"
+                        type="button"
+                        class="notice-item"
+                        @click="toNoticePage(notice.value)"
+                      >
+                        <span class="notice-item-icon">
+                          <Icon :icon="notice.icon" />
+                        </span>
+                        <span class="notice-item-content">
+                          <span class="notice-item-name">{{ notice.name }}</span>
+                          <span class="notice-item-desc">
+                            有新的消息
+                          </span>
+                        </span>
+                        <span class="notice-item-count">
+                          {{ getNoticeUnreadCountByType(notice.value) }}
+                        </span>
+                      </button>
+                    </div>
+                    <div v-else class="notice-panel-empty">
+                      <Icon icon="tabler:bell-check" />
+                      <span>暂无未读消息</span>
+                    </div>
+                  </div>
                 </template>
                 <template #reference>
-                  <el-badge v-if="totalUnreadCount" :value="totalUnreadCount">
-                    <Icon icon="mdi:bell-outline" @click="toNoticePage(NoticeTypeEnum.SYSTEM)" />
+                  <el-badge v-if="totalUnreadCount" :value="totalUnreadCount" class="nav-action-badge">
+                    <button class="nav-action-button" type="button" aria-label="查看消息"
+                            @click="toNoticePage(NoticeTypeEnum.SYSTEM)">
+                      <Icon icon="mdi:bell-outline" />
+                    </button>
                   </el-badge>
-                  <Icon v-else icon="mdi:bell-outline" @click="toNoticePage(NoticeTypeEnum.SYSTEM)" />
+                  <button v-else class="nav-action-button" type="button" aria-label="查看消息"
+                          @click="toNoticePage(NoticeTypeEnum.SYSTEM)">
+                    <Icon icon="mdi:bell-outline" />
+                  </button>
                 </template>
               </el-popover>
-            </div>
-            <div class="menus-item">
-              <el-button type="primary" size="small" @click="toPostBlog()">
-                <Icon icon="mage:edit" class="font-18" />
-                创作
-              </el-button>
-            </div>
-            <div class="menus-item">
-              <a v-if="!user" class="menu-btn" @click="openLogin">
-                <Icon icon="bx:user" class="font-18" />
-                登录
-              </a>
+              <button class="nav-write-button" type="button" aria-label="创作文章" @click="toPostBlog()">
+                <Icon icon="mage:edit" />
+                <span>创作</span>
+              </button>
+              <button v-if="!user" class="nav-action-button nav-login-button" type="button" aria-label="登录"
+                      @click="openLogin">
+                <Icon icon="bx:user" />
+              </button>
               <div v-else>
-                <el-dropdown>
-                  <img class="user-avatar" :src="user.avatar" height="30" width="30" alt=""
-                       @click="router.push('/user/' + user?.id)">
+                <el-dropdown popper-class="user-profile-popper" trigger="hover">
+                  <button class="user-avatar-button" type="button" aria-label="打开用户菜单">
+                    <img class="user-avatar" :src="user.avatar" height="30" width="30" alt="">
+                  </button>
                   <template #dropdown>
-                    <el-card class="user-header-profile">
-                      <div class="m-2 pt-1 text-center font-14">
-                        {{ user.nickname }}
+                    <div class="user-profile-card">
+                      <div class="user-profile-header">
+                        <img class="user-profile-avatar" :src="user.avatar" alt="">
+                        <div class="user-profile-meta">
+                          <div class="user-profile-name">{{ user.nickname }}</div>
+                          <div class="user-profile-summary">
+                            {{ user.summary || '这个人很神秘，还没有简介' }}
+                          </div>
+                        </div>
                       </div>
-                      <div class="m-2 pt-1 text-center font-12">
-                        {{ user.summary }}
+                      <div class="user-profile-actions">
+                        <button class="user-profile-action" type="button" @click="router.push('/user/' + user?.id)">
+                          <span class="user-profile-action-icon">
+                            <Icon icon="mingcute:user-4-line" />
+                          </span>
+                          <span>个人中心</span>
+                          <Icon class="user-profile-action-arrow" icon="tabler:chevron-right" />
+                        </button>
+                        <button class="user-profile-action is-danger" type="button" @click="logout">
+                          <span class="user-profile-action-icon">
+                            <Icon icon="material-symbols:logout" />
+                          </span>
+                          <span>退出登录</span>
+                          <Icon class="user-profile-action-arrow" icon="tabler:chevron-right" />
+                        </button>
                       </div>
-                      <el-divider />
-                      <el-row>
-                        <el-col :span="24" @click="router.push('/user/' + user?.id)">
-                          <Icon icon="mingcute:user-4-line" class="font-18" color="pink" />
-                          个人中心
-                        </el-col>
-                        <el-col :span="24" @click="logout">
-                          <Icon icon="material-symbols:logout" class="font-18" color="#0d6efd" />
-                          退出
-                        </el-col>
-                      </el-row>
-                    </el-card>
+                    </div>
                   </template>
                 </el-dropdown>
               </div>
@@ -150,6 +208,12 @@ import { checkIsLogin } from '@/utils/common'
 import { EventName } from '@/event-server/event-name'
 import { EventServer } from '@/event-server'
 
+interface NavMenu {
+  name: string
+  path: string
+  icon: string
+}
+
 const route = useRoute()
 const router = useRouter()
 
@@ -158,15 +222,26 @@ const commonStore = useCommonStore()
 const modalStore = useModalStore()
 
 const navClass = ref('nav-fixed')
+const mobileMenuVisible = ref(false)
 const noticeUnreadCountMap = ref<any>({})
 const totalUnreadCount = ref(0)
 const eventServer = EventServer.getInstance()
+const navMenus: NavMenu[] = [
+  { name: '首页', path: '/', icon: 'tabler:home' },
+  { name: '图库', path: '/picture', icon: 'tabler:photo' },
+  { name: '网站导航', path: '/website', icon: 'tabler:compass' },
+  { name: '友链', path: '/link', icon: 'tabler:link' },
+  { name: '留言板', path: '/message-board', icon: 'tabler:message-circle' }
+]
 
 const user = computed(() => {
   return userStore.user
 })
 const websiteInfo = computed(() => {
   return commonStore.websiteInfo
+})
+const unreadNoticeList = computed(() => {
+  return NoticeTypeList.filter(notice => getNoticeUnreadCountByType(notice.value) > 0)
 })
 
 onMounted(() => {
@@ -188,6 +263,16 @@ function getNoticeUnreadCount() {
 function toNoticePage(val: number) {
   if (!checkIsLogin()) return
   router.push('/user-notice/' + val)
+}
+
+/**
+ * 获取指定通知类型的未读数量。
+ *
+ * :param noticeValue: 通知类型值。
+ * :return: 当前通知类型的未读数量。
+ */
+function getNoticeUnreadCountByType(noticeValue: number): number {
+  return Number(noticeUnreadCountMap.value[noticeValue] || 0)
 }
 
 function openSearch() {
@@ -227,5 +312,16 @@ function toPostBlog() {
 
 function toSearchPage() {
   router.push('/search')
+}
+
+/**
+ * 处理移动端菜单项点击，关闭抽屉并交给路由链接完成跳转。
+ *
+ * :param path: 当前点击的菜单路径。
+ * :return: 无返回值。
+ */
+function handleMobileMenuSelect(path: string): void {
+  void path
+  mobileMenuVisible.value = false
 }
 </script>

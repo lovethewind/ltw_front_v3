@@ -31,7 +31,10 @@
 
       <aside class="article-side-panel">
         <section class="article-setting-section">
-          <div class="article-setting-title">发布设置</div>
+          <div class="article-setting-title">
+            <Icon icon="material-symbols:tune-rounded" />
+            发布设置
+          </div>
           <el-form-item label="分类" prop="categoryId" class="article-category-item">
             <el-select v-model="postForm.categoryId" filterable placeholder="选择分类">
               <el-option v-for="item in categoryList" :key="item.id" :value="item.id" :label="item.name" />
@@ -52,7 +55,10 @@
         </section>
 
         <section class="article-setting-section">
-          <div class="article-setting-title">封面</div>
+          <div class="article-setting-title">
+            <Icon icon="material-symbols:image-outline" />
+            封面
+          </div>
           <el-form-item prop="cover" class="article-cover-item">
             <el-upload
               v-if="!CoverPreviewUrl"
@@ -81,7 +87,10 @@
         </section>
 
         <section class="article-setting-section">
-          <div class="article-setting-title">标签</div>
+          <div class="article-setting-title">
+            <Icon icon="material-symbols:label-outline" />
+            标签
+          </div>
           <el-form-item prop="tagList" class="article-tag-item">
             <div class="article-tag-list">
               <el-tag
@@ -97,40 +106,98 @@
                 {{ tagMap[tagId].name }}
               </el-tag>
               <el-popover
-                placement="bottom"
+                v-model:visible="isTagPopoverVisible"
+                placement="left"
                 width="450"
                 trigger="click"
+                popper-class="article-tag-popover"
+                :fallback-placements="['top', 'bottom', 'right']"
               >
-                <el-autocomplete
-                  v-model="searchTagKeyword"
-                  :fetch-suggestions="searchTag"
-                  :trigger-on-focus="false"
-                  placeholder="请输入文字搜索"
-                  class="mb-2 w-100"
-                  @select="handleSelectTag"
-                >
-                  <template #default="{ item }">
-                    <span class="name">{{ item.name }}</span>
-                  </template>
-                </el-autocomplete>
-                <el-tabs v-model="tabActiveName" tab-position="left" :stretch="true">
-                  <el-tab-pane v-for="(tags, index) in tagList" :key="tags.id" :label="tags.name" :name="'tag_' + index">
-                    <el-tag
-                      v-for="tag in tags.children"
-                      :key="tag.id"
-                      size="small"
-                      :disable-transitions="false"
-                      effect="light"
-                      :type="postForm.tagList.includes(tag.id) ? 'info' : 'success'"
-                      :style="{margin: '5px', cursor:(postForm.tagList.includes(tag.id) ? '' : 'pointer')}"
-                      @click="handleAddTag(tag)"
-                    >
-                      {{ tag.name }}
-                    </el-tag>&nbsp;
-                  </el-tab-pane>
-                </el-tabs>
+                <div class="article-tag-picker">
+                  <div class="article-tag-picker__header">
+                    <div class="article-tag-picker__icon">
+                      <Icon icon="material-symbols:label-outline" />
+                    </div>
+                    <div class="article-tag-picker__heading">
+                      <strong>选择文章标签</strong>
+                      <span>搜索或按分类快速选择</span>
+                    </div>
+                    <span class="article-tag-picker__count">{{ postForm.tagList.length }}/5</span>
+                  </div>
+                  <el-autocomplete
+                    v-model="searchTagKeyword"
+                    value-key="name"
+                    :fetch-suggestions="searchTag"
+                    :trigger-on-focus="false"
+                    :teleported="false"
+                    placeholder="搜索标签名称"
+                    class="article-tag-picker__search"
+                    @select="handleSelectTag"
+                  >
+                    <template #prefix>
+                      <Icon icon="material-symbols:search-rounded" />
+                    </template>
+                    <template #default="{ item }">
+                      <span class="name">{{ item.name }}</span>
+                    </template>
+                  </el-autocomplete>
+                  <button
+                    v-if="canCreateCustomTag"
+                    class="article-tag-picker__create"
+                    type="button"
+                    :disabled="customTagCreating || postForm.tagList.length >= 5"
+                    @click="createCustomTag"
+                  >
+                    <span class="article-tag-picker__create-icon">
+                      <Icon icon="material-symbols:add-rounded" />
+                    </span>
+                    <span class="article-tag-picker__create-content">
+                      <strong>创建"{{ customTagName }}"</strong>
+                      <small>创建为未分组标签，并立即添加到文章</small>
+                    </span>
+                    <Icon
+                      :icon="customTagCreating ? 'material-symbols:progress-activity' : 'material-symbols:arrow-forward-rounded'"
+                      :class="{ 'is-loading': customTagCreating }"
+                    />
+                  </button>
+                  <div v-else-if="customTagName.length > 20" class="article-tag-picker__create-tip is-error">
+                    <Icon icon="material-symbols:error-outline-rounded" />
+                    标签名称不能超过 20 个字符
+                  </div>
+                  <el-tabs
+                    v-model="tabActiveName"
+                    tab-position="left"
+                    :stretch="true"
+                    class="article-tag-picker__tabs"
+                  >
+                    <el-tab-pane v-for="(tags, index) in tagList" :key="tags.id" :label="tags.name" :name="'tag_' + index">
+                      <div class="article-tag-picker__options">
+                        <el-tag
+                          v-for="tag in tags.children"
+                          :key="tag.id"
+                          size="small"
+                          :disable-transitions="false"
+                          effect="light"
+                          :type="postForm.tagList.includes(tag.id) ? 'info' : 'success'"
+                          :class="['article-tag-option', { 'is-selected': postForm.tagList.includes(tag.id) }]"
+                          @click="handleAddTag(tag)"
+                        >
+                          <Icon v-if="postForm.tagList.includes(tag.id)" icon="material-symbols:check-rounded" />
+                          {{ tag.name }}
+                        </el-tag>
+                      </div>
+                    </el-tab-pane>
+                  </el-tabs>
+                  <div class="article-tag-picker__tip">
+                    <Icon icon="material-symbols:info-outline-rounded" />
+                    再次点击已选标签即可取消选择
+                  </div>
+                </div>
                 <template #reference>
-                  <el-button type="primary" plain size="small">添加标签</el-button>
+                  <el-button type="primary" plain size="small">
+                    <Icon icon="material-symbols:add-rounded" />
+                    添加标签
+                  </el-button>
                 </template>
               </el-popover>
               <span class="article-tag-tip">最多选择5个标签</span>
@@ -139,21 +206,34 @@
         </section>
 
         <section class="article-setting-section">
-          <div class="article-setting-title">附件</div>
+          <div class="article-setting-title">
+            <Icon icon="material-symbols:attach-file" />
+            附件
+          </div>
           <el-form-item class="article-attach-item">
-            <el-button type="primary" plain size="small" @click="isShowAttachment = true">添加附件</el-button>
+            <div class="article-attach-header">
+              <el-button type="primary" plain size="small" @click="isShowAttachment = true">
+                <Icon icon="material-symbols:add-rounded" />
+                添加附件
+              </el-button>
+              <span v-if="postForm.attachList.length" class="article-attach-count">
+                {{ postForm.attachList.length }} 个
+              </span>
+            </div>
             <div class="attachment-list">
-              <el-row v-for="attach in postForm.attachList" :key="attach.uid">
-                <el-col :span="18" class="ellipsis">
-                  <a :href="attach.url" target="_blank">{{ attach.name }}({{ transformSize(attach.size) }})</a>
-                </el-col>
-                <el-col :span="6">
-                  <a class="color-red" @click="deleteAttach(attach)">
-                    <Icon icon="material-symbols:delete-outline" />
-                    删除
-                  </a>
-                </el-col>
-              </el-row>
+              <div v-for="attach in postForm.attachList" :key="attach.uid" class="attachment-list__item">
+                <a :href="attach.url" target="_blank" class="attachment-list__file-icon">
+                  <Icon icon="material-symbols:draft-outline-rounded" />
+                </a>
+                <a :href="attach.url" target="_blank" class="attachment-list__content">
+                  <span class="attachment-list__name">{{ attach.name }}</span>
+                  <span class="attachment-list__size">{{ transformSize(attach.size) }}</span>
+                </a>
+                <button class="attachment-list__delete" type="button" @click="deleteAttach(attach)">
+                  <Icon icon="material-symbols:delete-outline" />
+                  <span>删除</span>
+                </button>
+              </div>
             </div>
           </el-form-item>
         </section>
@@ -182,42 +262,89 @@
     </div>
   </el-form>
   <!-- 上传附件 -->
-  <el-dialog title="上传附件" v-model="isShowAttachment" class="attachment-dialog" :show-close="false">
-    <el-upload
-      action=""
-      accept="*"
-      class="attach-upload"
-      drag
-      multiple
-      :on-remove="removeAttachment"
-      :on-change="beforeAttachmentUpload"
-      :file-list="attachList"
-      :auto-upload="false"
-    >
-      <Icon icon="material-symbols:upload" />
-      <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
-      <div class="el-upload__tip">附件大小不能超过1GB</div>
-    </el-upload>
+  <el-dialog
+    v-model="isShowAttachment"
+    class="attachment-dialog app-form-dialog"
+    width="560px"
+    align-center
+    :show-close="false"
+  >
+    <template #header>
+      <div class="attachment-dialog__hero">
+        <div class="attachment-dialog__icon">
+          <Icon icon="material-symbols:attach-file" />
+        </div>
+        <div>
+          <h2>上传附件</h2>
+          <p>支持一次选择多个文件，最多 5 个</p>
+        </div>
+      </div>
+    </template>
+    <div class="attachment-dialog__content">
+      <el-upload
+        action=""
+        accept="*"
+        class="attach-upload"
+        drag
+        multiple
+        :on-remove="removeAttachment"
+        :on-change="beforeAttachmentUpload"
+        :file-list="attachList"
+        :auto-upload="false"
+      >
+        <div class="attach-upload__icon">
+          <Icon icon="material-symbols:upload-rounded" />
+        </div>
+        <div class="el-upload__text">将文件拖到这里，或<em>点击选择文件</em></div>
+        <div class="el-upload__tip">单个附件最大 1GB</div>
+      </el-upload>
+      <div class="attachment-dialog__hint">
+        <Icon icon="material-symbols:shield-outline-rounded" />
+        上传过程中请保持页面开启，完成后附件会自动加入文章
+      </div>
+    </div>
     <template #footer>
-      <div class="dialog-footer">
-        <el-button type="primary" @click="uploadAttachment">确定并上传</el-button>
+      <div class="attachment-dialog__footer app-dialog-footer">
         <el-button @click="cancelAttachmentUpload">取消</el-button>
+        <el-button type="primary" :loading="uploadLoading" @click="uploadAttachment">
+          <Icon icon="material-symbols:cloud-upload-outline-rounded" />
+          确定并上传
+        </el-button>
       </div>
     </template>
   </el-dialog>
   <!-- 悬浮显示正在上传的文件 -->
   <div v-if="attachList.length > 0 && !isShowAttachment" class="attachment-uploading">
-    <div class="font-weight-bold mb-2">正在上传的附件</div>
-    <el-row v-for="attach in attachList" :key="attach.uid" class="mb-2">
-      <el-col :span="18" class="ellipsis">
-        <el-tooltip :content="`${attach.name}(${transformSize(attach.size)})`" placement="top" effect="light">
-          <span class="cursor">{{ attach.name }}({{ transformSize(attach.size) }})</span>
-        </el-tooltip>
-      </el-col>
-      <el-col :span="6">
-        <el-progress :percentage="attach.progress" :color="customColors" />
-      </el-col>
-    </el-row>
+    <div class="attachment-uploading__header">
+      <div>
+        <strong>正在上传附件</strong>
+        <span>{{ attachList.length }} 个文件</span>
+      </div>
+      <Icon icon="material-symbols:cloud-upload-outline-rounded" />
+    </div>
+    <div class="attachment-uploading__list">
+      <div v-for="attach in attachList" :key="attach.uid" class="attachment-uploading__item">
+        <div class="attachment-uploading__file-icon">
+          <Icon icon="material-symbols:draft-outline-rounded" />
+        </div>
+        <div class="attachment-uploading__body">
+          <div class="attachment-uploading__meta">
+            <el-tooltip :content="`${attach.name}(${transformSize(attach.size)})`" placement="top" effect="light">
+              <span class="attachment-uploading__name">{{ attach.name }}</span>
+            </el-tooltip>
+            <span class="attachment-uploading__size">{{ transformSize(attach.size) }}</span>
+          </div>
+          <div class="attachment-uploading__progress">
+            <el-progress
+              :percentage="attach.progress"
+              :color="customColors"
+              :show-text="false"
+            />
+            <span>{{ attach.progress }}%</span>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -228,6 +355,7 @@ import { computed, onMounted, onUnmounted, ref, nextTick } from 'vue'
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 import { useCommonStore } from '@/stores/common'
 import articleApi from '@/api/article'
+import tagApi from '@/api/tag'
 import ossApi from '@/api/oss-api'
 import {
   checkFileSize,
@@ -288,6 +416,8 @@ const CoverPreviewUrl = ref<string | null>(null)
 const oldCover = ref('')
 const tabActiveName = ref('tag_0')
 const searchTagKeyword = ref('')
+const isTagPopoverVisible = ref(false)
+const customTagCreating = ref(false)
 const isSuccess = ref(false)
 const submitDisabled = ref(false)
 const tips = ref('🍀 在这里填写标题，想写点什么呢~')
@@ -333,7 +463,23 @@ const categoryList = computed(() => {
 })
 
 const tagList = computed(() => {
-  return commonStore.tagList
+  const groups = [...commonStore.tagList]
+  const customTags = commonStore.choiceTagList.filter((item: any) => item.level === 2 && !item.parentId)
+  if (customTags.length > 0) {
+    groups.push({
+      id: 'custom',
+      name: '自定义',
+      children: customTags
+    })
+  }
+  return groups
+})
+const customTagName = computed<string>(() => searchTagKeyword.value.trim().replace(/\s+/g, ' '))
+const canCreateCustomTag = computed<boolean>(() => {
+  if (!customTagName.value || customTagName.value.length > 20) return false
+  return !commonStore.choiceTagList.some((item: any) => {
+    return item.name.trim().toLowerCase() === customTagName.value.toLowerCase()
+  })
 })
 const tagMap = computed(() => {
   return commonStore.tagMap
@@ -591,15 +737,23 @@ function handleCoverRemove() {
 }
 
 
-function handleAddTag(tag: ITag) {
+/**
+ * 切换文章标签的选中状态。
+ *
+ * :param tag: 待切换的标签。
+ * :return: 无返回值。
+ */
+function handleAddTag(tag: ITag): void {
+  const selectedIndex = postForm.value.tagList.indexOf(tag.id)
+  if (selectedIndex > -1) {
+    postForm.value.tagList.splice(selectedIndex, 1)
+    return
+  }
   if (postForm.value.tagList.length >= 5) {
     ElMessage({
       message: '最多只能添加5个标签',
       type: 'warning'
     })
-    return
-  }
-  if (postForm.value.tagList.includes(tag.id)) {
     return
   }
   postForm.value.tagList.push(tag.id)
@@ -609,14 +763,41 @@ function handleCloseTag(tagId: string) {
   postForm.value.tagList.splice(postForm.value.tagList.indexOf(tagId), 1)
 }
 
-function searchTag(queryString: string, cb: (data: any) => void) {
+/**
+ * 按名称搜索可选标签。
+ *
+ * :param queryString: 搜索关键词。
+ * :param cb: 搜索结果回调。
+ * :return: 无返回值。
+ */
+function searchTag(queryString: string, cb: (data: ITag[]) => void): void {
+  const normalizedQuery = queryString.trim().toLowerCase()
   const results = commonStore.choiceTagList.filter((item: any) => {
-    return item.name.toLowerCase().indexOf(queryString.toLowerCase()) > -1
+    return item.name.toLowerCase().includes(normalizedQuery)
   })
   cb(results)
 }
 
-function handleSelectTag(item: ITag) {
+/**
+ * 处理搜索建议中的标签选择。
+ *
+ * :param item: 被选择的标签。
+ * :return: 无返回值。
+ */
+function handleSelectTag(item: ITag): void {
+  handleAddTag(item)
+  nextTick(() => {
+    isTagPopoverVisible.value = true
+  })
+}
+
+/**
+ * 创建未分组的自定义标签并立即选中。
+ *
+ * :return: 无返回值。
+ */
+async function createCustomTag(): Promise<void> {
+  if (!canCreateCustomTag.value || customTagCreating.value) return
   if (postForm.value.tagList.length >= 5) {
     ElMessage({
       message: '最多只能添加5个标签',
@@ -624,10 +805,25 @@ function handleSelectTag(item: ITag) {
     })
     return
   }
-  if (postForm.value.tagList.includes(item.id)) {
-    return
+  customTagCreating.value = true
+  try {
+    const response = await tagApi.createCustomTag({ name: customTagName.value })
+    const tag = response.data as ITag
+    commonStore.addChoiceTag(tag)
+    handleAddTag(tag)
+    searchTagKeyword.value = ''
+    const customGroupIndex = tagList.value.findIndex(group => group.id === 'custom')
+    if (customGroupIndex > -1) {
+      tabActiveName.value = 'tag_' + customGroupIndex
+    }
+    ElMessage({
+      message: '自定义标签创建成功',
+      type: 'success',
+      plain: true
+    })
+  } finally {
+    customTagCreating.value = false
   }
-  postForm.value.tagList.push(item.id)
 }
 
 function beforeAttachmentUpload(file: any) {

@@ -156,7 +156,25 @@ export const useCommonStore = defineStore('common', () => {
     Object.assign(pageCoverMap.value, val)
   }
 
-  async function setCommonInfoCache() {
+  /**
+   * 将新建或复用的展示标签加入前端标签缓存。
+   *
+   * :param tag: 标签详情。
+   * :return: 无返回值。
+   */
+  function addChoiceTag(tag: any): void {
+    tagMap.value[tag.id] = tag
+    if (tag.level === 2 && !choiceTagList.value.some(item => item.id === tag.id)) {
+      choiceTagList.value.push(tag)
+    }
+  }
+
+  /**
+   * 获取并缓存前台公共信息。
+   *
+   * :return: 无返回值。
+   */
+  async function setCommonInfoCache(): Promise<void> {
     commonApi.addWebsiteViewCount().catch(() => {
     })
     // 获取分类信息并缓存
@@ -171,7 +189,7 @@ export const useCommonStore = defineStore('common', () => {
       const choiceTagListValue = []
       for (const item of records) {
         tagMapValue[item.id] = item
-        if (item.parentId) {
+        if (item.level === 2 || item.parentId) {
           choiceTagListValue.push(item)
         }
       }
@@ -216,6 +234,7 @@ export const useCommonStore = defineStore('common', () => {
     pageCoverMap,
     theme,
     resetState,
+    addChoiceTag,
     setShowFooter,
     setCommonInfoCache,
     setTheme

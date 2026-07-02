@@ -3,7 +3,6 @@
     v-model="feedbackFlag"
     class="feedback-dialog"
     width="540px"
-    top="10vh"
     title="意见反馈"
     hero-icon="material-symbols:feedback-outline"
     hero-title="把你的想法告诉我们"

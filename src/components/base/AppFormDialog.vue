@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="visible" class="app-form-dialog">
+  <el-dialog v-model="visible" class="app-form-dialog" align-center>
     <div v-if="heroTitle || heroDescription || heroIcon" class="app-dialog-hero">
       <div v-if="heroIcon" class="app-dialog-hero__icon">
         <Icon :icon="heroIcon" />

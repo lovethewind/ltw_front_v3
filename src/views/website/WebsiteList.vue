@@ -150,7 +150,6 @@
         v-model="dialogFormVisible"
         class="website-dialog"
         width="560px"
-        top="8vh"
         center
         title="投稿网站"
         :close-on-click-modal="false"

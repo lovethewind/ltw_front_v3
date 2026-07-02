@@ -1,4 +1,7 @@
 .app-form-dialog {
+  display: flex;
+  max-height: calc(100vh - 32px);
+  flex-direction: column;
   border-radius: 8px;
   overflow: hidden;
 }
@@ -9,6 +12,8 @@
 }
 
 .app-form-dialog .el-dialog__body {
+  min-height: 0;
+  overflow-y: auto;
   padding: 18px 24px 10px;
 }
 
@@ -211,9 +216,7 @@ html.dark .app-upload-placeholder small {
 
 @media screen and (max-width: 759px) {
   .app-form-dialog {
-    margin-top: 3vh !important;
     max-height: 94vh;
-    overflow-y: auto;
     width: calc(100vw - 32px) !important;
   }
 
@@ -236,6 +239,41 @@ html.dark .app-upload-placeholder small {
 
   .app-dialog-footer .el-button {
     width: 100%;
+  }
+
+  .app-dialog-footer .el-button + .el-button {
     margin-left: 0;
+  }
+
+  .link-dialog.app-form-dialog {
+    max-height: 94vh;
+  }
+
+  .link-dialog.app-form-dialog .el-dialog__header,
+  .link-dialog.app-form-dialog .el-dialog__footer {
+    flex: 0 0 auto;
+    background: var(--el-bg-color);
+  }
+
+  .link-dialog.app-form-dialog .el-dialog__body {
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 14px 16px 8px;
+  }
+
+  .link-dialog .app-dialog-hero {
+    gap: 12px;
+    margin-bottom: 12px;
+    padding: 12px;
+  }
+
+  .link-dialog .app-dialog-tip {
+    margin-bottom: 14px;
+    padding: 9px 10px;
+  }
+
+  .link-dialog .app-dialog-form .el-form-item {
+    margin-bottom: 16px;
   }
 }

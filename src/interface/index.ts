@@ -29,7 +29,7 @@ export interface IUserDetail {
   articleCollectCount: number
   articleCommentCount: number
   articleViewCount: number
-  registerTimestamp: number
+  registerTime: string
   isMyFans: boolean
   isFollowed: boolean
   isFriend: boolean

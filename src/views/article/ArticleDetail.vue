@@ -311,7 +311,7 @@
               <el-row align="middle" justify="center" class="text-left mt-2">
                 <el-col class="d-flex align-items-center">
                   <Icon icon="mdi:leaf" class="font-16" color="green" />
-                  站龄: {{ formatRegisterTime(currentArticleUser.registerTimestamp) }}
+                  站龄: {{ formatRegisterTime(currentArticleUser.registerTime) }}
                 </el-col>
               </el-row>
               <el-row align="middle" justify="center" class="text-left mt-2">

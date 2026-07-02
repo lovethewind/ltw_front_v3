@@ -27,7 +27,7 @@
         <el-row align="middle" justify="start">
           <el-col :span="24">
             <Icon icon="mdi:leaf" class="font-16" color="green" />
-            站龄: {{ formatRegisterTime(viewUser.registerTimestamp) }}
+            站龄: {{ formatRegisterTime(viewUser.registerTime) }}
           </el-col>
         </el-row>
         <el-row align="middle" justify="start">

@@ -25,7 +25,7 @@
               <div class="more-info-meta-item">
                 <Icon icon="mdi:sprout-outline" />
                 <span>站龄</span>
-                <strong>{{ formatRegisterTime(userDetail.registerTimestamp) }}</strong>
+                <strong>{{ formatRegisterTime(userDetail.registerTime) }}</strong>
               </div>
               <div class="more-info-meta-item">
                 <Icon icon="mdi:map-marker-outline" />

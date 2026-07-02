@@ -4,11 +4,18 @@ function padZero(num: number) {
 
 /**
  * 转换注册时间
- * @param time
- * @returns {string}
+ *
+ * :param time: 注册时间戳或后端返回的注册时间字符串。
+ * :return: 格式化后的站龄文本。
  */
-export function formatRegisterTime(time: number) {
+export function formatRegisterTime(time: number | string): string {
   if (!time) {
+    return 0 + '天'
+  }
+  if (typeof time === 'string') {
+    time = new Date(time).getTime()
+  }
+  if (!time || Number.isNaN(time)) {
     return 0 + '天'
   }
   // 转换为毫秒

@@ -48,15 +48,16 @@
             <Icon icon="fluent:tag-multiple-16-regular" class="font-18" color="#2f80ed" />
             标签
           </h2>
-          <div class="web-info">
-            <a
+          <div class="tag-cloud">
+            <router-link
               v-for="tag in randomTagList.slice(0, 12)"
               :key="'tagCloud' + tag.id"
-              class="el-tag-a"
-              @click="router.push('/tag/' + tag.id)"
+              class="tag-cloud-link"
+              :style="tagCloudStyles[tag.id]"
+              :to="'/tag/' + tag.id"
             >
               {{ tag.name }}
-            </a>
+            </router-link>
           </div>
         </el-card>
         <!-- 访问统计 -->
@@ -78,6 +79,34 @@
     </el-col>
     <el-col :md="18" :cols="24">
       <div ref="articleListTopRef" class="article-list-anchor"></div>
+      <div class="mobile-category-strip d-md-none">
+        <button
+          type="button"
+          :class="['mobile-category-item', !activeCategoryId ? 'active' : '']"
+          @click="changeCategory(null)"
+        >
+          全部
+        </button>
+        <button
+          v-for="category in categoryList"
+          :key="'mobileHomeCategory' + category.id"
+          type="button"
+          :class="[
+            'mobile-category-item',
+            activeCategoryId === String(category.id) ? 'active' : ''
+          ]"
+          @click="changeCategory(String(category.id))"
+        >
+          {{ category.name }}
+        </button>
+      </div>
+      <div class="article-list-header">
+        <div>
+          <div class="article-list-eyebrow">文章列表</div>
+          <h1>{{ activeCategoryName }}</h1>
+        </div>
+        <div class="article-list-count">{{ total }} 篇文章</div>
+      </div>
       <order-bar @item-click="changeOrderField" />
       <div
         ref="articleResultPanelRef"
@@ -91,9 +120,14 @@
           :index="index"
           :category-map="categoryMap"
           :tag-map="tagMap"
-          :colors="colors"
           @category-click="changeCategory"
         />
+        <div v-if="!loading && !articleList.length" class="article-empty-state">
+          <Icon icon="tabler:notes-off" />
+          <h2>暂时没有文章</h2>
+          <p>换个分类看看，或者回到全部文章继续逛逛。</p>
+          <el-button type="primary" plain @click="changeCategory(null)">查看全部文章</el-button>
+        </div>
         <!-- 加载更多 -->
         <el-skeleton v-if="loading" :loading="loading" :rows="50" class="mt-4 box-shadow" />
         <div v-if="articleList.length" class="mt-3">
@@ -123,7 +157,7 @@ import OrderBar from '@/components/base/OrderBar.vue'
 import ArticleListItem from '@/components/article/ArticleListItem.vue'
 import articleApi from '@/api/article'
 import { useCommonStore } from '@/stores/common'
-import { genRandomColor, randomSortList, sanitizeArticleSummary } from '@/utils/common'
+import { randomSortList, sanitizeArticleSummary } from '@/utils/common'
 import type { IArticle } from '@/interface'
 import { Icon } from '@iconify/vue'
 
@@ -131,7 +165,18 @@ const router = useRouter()
 const route = useRoute()
 const commonStore = useCommonStore()
 
-const colors = ref<any>({}) // 存储颜色
+const tagCloudStyles = ref<Record<string, { fontSize: string; color: string }>>({})
+const tagCloudPalette = [
+  '#2563eb',
+  '#0f766e',
+  '#7c3aed',
+  '#c2410c',
+  '#be123c',
+  '#047857',
+  '#4f46e5',
+  '#b45309',
+  '#0891b2'
+]
 const articleList = ref<IArticle[]>([])
 const total = ref(0)
 const params = ref({
@@ -173,6 +218,13 @@ const allArticleCount = computed(() => {
   return categoryList.value.reduce((sum, category) => sum + (category.articleCount || 0), 0)
 })
 
+const activeCategoryName = computed(() => {
+  if (!activeCategoryId.value) {
+    return '全部文章'
+  }
+  return categoryMap.value[activeCategoryId.value]?.name || '全部文章'
+})
+
 onBeforeMount(() => {
   activeCategoryId.value = getRouteCategoryId()
   queryParams.value.categoryId = activeCategoryId.value
@@ -188,10 +240,15 @@ function getRouteCategoryId(): string | null {
   return categoryId || null
 }
 
-function setCommonValue() {
+/**
+ * 初始化首页侧栏展示所需的公共数据。
+ *
+ * :return: 无返回值。
+ */
+function setCommonValue(): void {
   randomTagList.value = JSON.parse(JSON.stringify(tagList.value))
   randomSortList(randomTagList.value)
-  changeColors(randomTagList.value)
+  setTagCloudStyles(randomTagList.value)
 }
 
 /**
@@ -214,14 +271,12 @@ async function pageLoadHandler(shouldJumpTop = false): Promise<void> {
   articleApi
     .getPageList(params.value.pageNo, params.value.pageSize, queryParams.value)
     .then((res) => {
-      if (res.data.records.length) {
-        // 去除html标签
-        res.data.records.forEach((item: any) => {
-          item.content = sanitizeArticleSummary(item.content)
-        })
-        articleList.value = res.data.records
-        total.value = res.data.total
-      }
+      // 去除html标签
+      articleList.value = res.data.records.map((item: any) => ({
+        ...item,
+        content: sanitizeArticleSummary(item.content)
+      }))
+      total.value = res.data.total
       noMore.value = params.value.pageSize > res.data.records.length
     })
     .finally(() => {
@@ -230,12 +285,22 @@ async function pageLoadHandler(shouldJumpTop = false): Promise<void> {
     })
 }
 
-function changeColors(tagList: any[]) {
-  // 随机变色
-  const colorList = genRandomColor(tagList.length)
-  for (const i in tagList) {
-    colors.value[tagList[i].id] = 'rgb(' + colorList[i] + ')'
-  }
+/**
+ * 生成侧栏标签云的随机字号和颜色。
+ *
+ * :param tagList: 参与展示的标签列表。
+ * :return: 无返回值。
+ */
+function setTagCloudStyles(tagList: any[]): void {
+  const nextStyles: Record<string, { fontSize: string; color: string }> = {}
+  tagList.forEach((tag) => {
+    const paletteIndex = Math.floor(Math.random() * tagCloudPalette.length)
+    nextStyles[tag.id] = {
+      fontSize: Math.floor(Math.random() * 7) + 14 + 'px',
+      color: tagCloudPalette[paletteIndex]
+    }
+  })
+  tagCloudStyles.value = nextStyles
 }
 
 /**

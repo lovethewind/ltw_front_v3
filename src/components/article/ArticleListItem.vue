@@ -1,20 +1,34 @@
 <template>
-  <el-card class="article-list-item-card" style="border-radius: 12px 8px 8px 12px">
-    <div
-      :class="[
-        'article-cover',
-        isRight(index) ? ' right-radius float-end' : 'left-radius float-start'
-      ]"
+  <el-card class="article-list-item-card">
+    <router-link
+      :to="'/article/' + article.id"
+      class="article-cover-link"
+      target="_blank"
+      rel="noopener noreferrer"
     >
       <el-image
         class="on-hover cover-img"
         :src="article.coverThumb || article.cover"
         lazy
         fit="cover"
-        @click="openArticleDetail"
       />
-    </div>
-    <div :class="['article-wrapper', !isRight(index) ? 'float-end' : 'float-start']">
+    </router-link>
+    <div class="article-wrapper">
+      <div class="article-meta-row">
+        <router-link
+          :to="'/user/' + article.user.id"
+          class="username-avatar-info"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <el-avatar :src="article.user.avatar" size="small" />
+          <span class="ms-1 a-link ellipsis username-info">{{ article.user.nickname }}</span>
+        </router-link>
+        <span class="article-date">
+          <Icon icon="solar:calendar-broken" class="font-14" />
+          {{ date(article.createTime) }}
+        </span>
+      </div>
       <h3 class="article-list-item-title">
         <router-link :to="'/article/' + article.id" target="_blank" rel="noopener noreferrer">
           {{ article.title }}
@@ -24,58 +38,41 @@
         {{ article.content }}
       </div>
       <div class="article-info">
-        <div class="first-info">
-          <router-link
-            :to="'/user/' + article.user.id"
-            class="username-avatar-info"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <el-avatar :src="article.user.avatar" size="small" />
-            <span class="ms-1 a-link ellipsis username-info">{{ article.user.nickname }}</span>
-          </router-link>
-          <span class="d-inline-flex float-end">
-            <Icon icon="solar:calendar-broken" class="font-14" />
-            <span class="me-3">{{ date(article.createTime) }}</span>
+        <div class="article-taxonomy">
+          <el-tag size="small" :type="article.isOriginal ? 'success' : 'warning'">
+            {{ article.isOriginal ? '原创' : '转载' }}
+          </el-tag>
+          <button type="button" class="article-category-button" @click="emitCategoryClick">
             <Icon icon="tabler:category" class="font-14" />
-            <a @click="emitCategoryClick">
-              {{ categoryMap[article.categoryId] ? categoryMap[article.categoryId].name : '' }}
-            </a>
+            {{ categoryMap[article.categoryId] ? categoryMap[article.categoryId].name : '' }}
+          </button>
+          <span class="article-tags">
+            <router-link
+              v-for="tagId of article.tagList.slice(0, 2)"
+              :key="'articleListItemTag' + article.id + tagId"
+              :to="'/tag/' + tagId"
+            >
+              <el-tag
+                size="small"
+                class="article-tag-pill"
+              >
+                {{ tagMap[tagId] ? tagMap[tagId].name : '' }}</el-tag
+              >
+            </router-link>
           </span>
         </div>
-        <div class="second-info">
-          <span class="me-2">
-            <el-tag size="small" :type="article.isOriginal ? 'success' : 'warning'">
-              {{ article.isOriginal ? '原创' : '转载' }}
-            </el-tag>
-          </span>
-          <span class="me-3">
+        <div class="article-stats">
+          <span>
             <Icon icon="ph:eye" class="font-14" />
             {{ covertNumberDisplay(article.viewCount) }}
           </span>
-          <span class="me-3">
+          <span>
             <Icon icon="iconamoon:comment-dots" class="font-14" />
             {{ covertNumberDisplay(article.commentCount) }}
           </span>
           <span>
             <Icon icon="tabler:thumb-up" class="font-14" />
             {{ covertNumberDisplay(article.likeCount) }}
-          </span>
-          <span class="tag-span">
-            <router-link
-              v-for="tagId of article.tagList.slice(0, isMobile() ? 2 : 3)"
-              :key="'articleListItemTag' + article.id + tagId"
-              :to="'/tag/' + tagId"
-            >
-              <el-tag
-                size="small"
-                :color="colors[tagId] || 'green'"
-                class="el-tag-btn-a"
-                :style="{ '--tag-color': colors[tagId] }"
-              >
-                {{ tagMap[tagId] ? tagMap[tagId].name : '' }}</el-tag
-              >
-            </router-link>
           </span>
         </div>
       </div>
@@ -86,7 +83,7 @@
 <script setup lang="ts">
 import { Icon } from '@iconify/vue'
 import type { IArticle } from '@/interface'
-import { covertNumberDisplay, isMobile } from '@/utils/common'
+import { covertNumberDisplay } from '@/utils/common'
 import { date } from '@/utils/date'
 
 const props = defineProps<{
@@ -94,22 +91,11 @@ const props = defineProps<{
   index: number
   categoryMap: Record<string, { name: string }>
   tagMap: Record<string, { name: string }>
-  colors: Record<string, string>
 }>()
 
 const emit = defineEmits<{
   (event: 'category-click', categoryId: string): void
 }>()
-
-/**
- * 判断当前文章封面是否展示在右侧。
- *
- * :param index: 文章在列表中的下标。
- * :return: 奇数项返回 true，偶数项返回 false。
- */
-function isRight(index: number): boolean {
-  return index % 2 !== 0
-}
 
 /**
  * 通知父组件处理文章分类点击。
@@ -119,42 +105,35 @@ function isRight(index: number): boolean {
 function emitCategoryClick(): void {
   emit('category-click', String(props.article.categoryId))
 }
-
-/**
- * 在新标签页打开文章详情。
- *
- * :return: 无返回值。
- */
-function openArticleDetail(): void {
-  window.open('/article/' + props.article.id, '_blank', 'noopener,noreferrer')
-}
 </script>
 
 <style lang="scss" scoped>
 :deep(.el-card__body) {
+  display: flex;
   height: 100%;
   width: 100%;
   --el-card-padding: 0;
 }
 
-.left-radius {
-  border-radius: 8px 0 0 8px !important;
-  order: 0;
-}
-
-.right-radius {
-  border-radius: 0 8px 8px 0 !important;
-  order: 1;
-}
-
 .article-list-item-card {
-  border: 1px solid rgba(125, 125, 125, 0.12);
-  box-shadow: 0 0.5rem 1.5rem rgba(31, 45, 61, 0.06);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 10px 26px rgba(31, 45, 61, 0.05);
   overflow: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .article-list-item-card:hover {
-  box-shadow: 0 0.75rem 1.8rem rgba(31, 45, 61, 0.1);
+  border-color: rgba(47, 128, 237, 0.2);
+  box-shadow: 0 16px 34px rgba(31, 45, 61, 0.09);
+  transform: translateY(-2px);
+}
+
+.article-cover-link {
+  display: block;
+  overflow: hidden;
+  background: #e2e8f0;
 }
 
 .cover-img {
@@ -169,96 +148,157 @@ function openArticleDetail(): void {
 }
 
 .article-wrapper {
+  display: flex;
+  flex-direction: column;
   font-size: 14px;
   height: 100%;
-  padding: 1.25rem;
+  min-width: 0;
+  padding: 0.9rem 1.1rem;
+}
+
+.article-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  color: #64748b;
+  font-size: 0.82rem;
+}
+
+.username-avatar-info {
+  display: inline-flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.username-info {
+  max-width: calc(100% - 30px);
+}
+
+.article-date {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+
+  :deep(svg) {
+    margin-right: 5px;
+  }
+}
+
+.article-list-item-title {
+  margin: 0.55rem 0 0.35rem;
+  font-size: 1.18rem;
+  font-weight: 700;
+  line-height: 1.42;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+
+  a {
+    color: #1f2937;
+  }
 }
 
 .article-content {
-  line-height: 1.8rem;
+  color: #4b5563;
+  line-height: 1.65;
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
 }
 
 .article-info {
-  font-size: 95%;
-  color: #858585;
-  line-height: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: auto;
+  padding-top: 0.62rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.14);
+  color: #64748b;
+  font-size: 0.82rem;
+  line-height: 1.6;
 
   :deep(a) {
-    font-size: 12px;
-    color: #858585;
+    color: #64748b;
   }
 
   :deep(svg) {
     margin-right: 5px;
   }
+}
 
-  .first-info {
-    height: 50%;
+.article-taxonomy,
+.article-stats,
+.article-tags {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+}
 
-    :deep(span) {
-      display: inline-flex;
-      align-items: center;
-    }
-  }
+.article-taxonomy {
+  flex: 1;
+  flex-wrap: wrap;
+}
 
-  .second-info {
-    display: flex;
-    align-items: center;
-    position: relative;
+.article-stats {
+  flex-shrink: 0;
+  gap: 0.75rem;
 
-    a {
-      display: inline-flex;
-      align-items: center;
-    }
-
-    .tag-span {
-      position: absolute;
-      right: 0;
-    }
-
-    :deep(span) {
-      display: inline-flex;
-      align-items: center;
-    }
-  }
-
-  .username-avatar-info {
+  span {
     display: inline-flex;
-    width: 50%;
-  }
-
-  .username-info {
-    max-width: calc(100% - 30px);
+    align-items: center;
   }
 }
 
-.el-tag-btn-a {
-  margin-left: 5px;
-  color: #fff;
+.article-category-button {
+  display: inline-flex;
+  align-items: center;
+  max-width: 130px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #64748b;
+  font-size: 0.82rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 
   &:hover {
-    opacity: 0.8;
+    color: #2f80ed;
+  }
+}
+
+.article-tag-pill {
+  border-color: rgba(47, 128, 237, 0.16);
+  background: rgba(47, 128, 237, 0.08);
+  color: #2f6fcb;
+  font-weight: 500;
+
+  &:hover {
+    border-color: rgba(47, 128, 237, 0.28);
+    background: rgba(47, 128, 237, 0.13);
+    color: #1d5fbf;
   }
 }
 
 @media (min-width: 760px) {
   .article-list-item-card {
     display: flex;
-    align-items: center;
-    height: 210px;
+    height: 196px;
     width: 100%;
-    margin-top: 10px;
+    margin-top: 0.75rem;
   }
 
-  .article-cover {
-    overflow: hidden;
+  .article-cover-link {
     height: 100%;
-    width: 35%;
+    width: 34%;
+    flex: 0 0 34%;
   }
 
   .on-hover {
@@ -270,48 +310,28 @@ function openArticleDetail(): void {
   }
 
   .article-wrapper {
-    padding: 0 1rem;
-    width: 65%;
-  }
-
-  .article-list-item-title {
-    overflow: hidden;
-    margin: 0;
-    height: 30%;
-    font-size: 1.25rem;
-    font-weight: 600;
-    line-height: 2rem;
-    display: flex;
-    align-items: center;
-  }
-
-  .article-content {
-    height: 43%;
-    opacity: 0.8;
-  }
-
-  .article-info {
-    height: 27%;
+    width: 66%;
   }
 }
 
 @media (max-width: 759px) {
+  :deep(.el-card__body) {
+    display: block;
+  }
+
   .article-list-item-title {
-    overflow: hidden;
-    margin: 0;
-    max-height: 4rem;
-    font-size: 1.25rem;
-    font-weight: 600;
-    line-height: 2rem;
+    font-size: 1.12rem;
   }
 
   .article-info {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.55rem;
     font-size: 12px;
-    margin-top: 5px;
+    margin-top: 0;
 
     a {
-      margin-bottom: 5px;
-      display: inline-block;
+      display: inline-flex;
     }
   }
 
@@ -319,18 +339,21 @@ function openArticleDetail(): void {
     margin-top: 0.75rem;
   }
 
-  .article-cover {
-    border-radius: 8px 8px 0 0 !important;
-    height: 190px !important;
+  .article-cover-link {
+    height: 190px;
     width: 100%;
-
-    div {
-      border-radius: 8px 8px 0 0 !important;
-    }
   }
 
   .article-wrapper {
-    padding: 0.5rem 1.25rem;
+    padding: 0.85rem 1rem 1rem;
+  }
+
+  .article-meta-row {
+    font-size: 0.78rem;
+  }
+
+  .article-stats {
+    gap: 0.9rem;
   }
 }
 </style>

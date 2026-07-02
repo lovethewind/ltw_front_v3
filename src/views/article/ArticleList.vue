@@ -21,7 +21,6 @@
           :index="index"
           :category-map="categoryMap"
           :tag-map="tagMap"
-          :colors="colors"
           @category-click="goHomeCategory"
         />
         <el-skeleton v-if="loading" :loading="loading" :rows="40" class="mt-4 box-shadow" />
@@ -48,7 +47,7 @@ import OrderBar from '@/components/base/OrderBar.vue'
 import ArticleListItem from '@/components/article/ArticleListItem.vue'
 import articleApi from '@/api/article'
 import { useCommonStore } from '@/stores/common'
-import { genRandomColor, getObjKeyCount, sanitizeArticleSummary } from '@/utils/common'
+import { sanitizeArticleSummary } from '@/utils/common'
 import { OrderTypeEnum } from '@/enums'
 import type { IArticle } from '@/interface'
 
@@ -69,7 +68,6 @@ const categoryId = ref<string | null>(null)
 const tagId = ref<string | null>(null)
 const loading = ref(false)
 const orderType = ref(OrderTypeEnum.NEWEST)
-const colors = ref<Record<string, string>>({})
 const articleListTopRef = ref<HTMLElement | null>(null)
 const articleResultPanelRef = ref<HTMLElement | null>(null)
 const articleResultMinHeight = ref(0)
@@ -103,7 +101,6 @@ onMounted(() => {
   }
   document.title = title.value + ' - ' + nameObj.value.name
   fetchData()
-  changeColors(getObjKeyCount(tagMap.value))
 })
 
 /**
@@ -142,14 +139,6 @@ async function fetchData(shouldJumpTop = false): Promise<void> {
     loading.value = false
     articleResultMinHeight.value = 0
   })
-}
-
-function changeColors(n: number) { // 随机变色
-  const colorList = genRandomColor(n)
-  const tagIds = Object.keys(tagMap.value)
-  for (let i = 0; i < n; i++) {
-    colors.value[tagIds[i]] = 'rgb(' + colorList[i] + ')'
-  }
 }
 
 function orderTypeChange(val: OrderTypeEnum) {

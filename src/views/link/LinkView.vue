@@ -1,7 +1,14 @@
 <template>
   <!-- banner -->
-  <div class="banner" :style="cover">
-    <h1 class="banner-title">友链</h1>
+  <div class="banner link-banner" :style="cover">
+    <div class="link-banner__content">
+      <span class="link-banner__eyebrow">LINKS</span>
+      <h1 class="banner-title">友链</h1>
+      <p class="link-banner__desc">一些值得顺手打开的朋友站点，也欢迎你把自己的角落递过来。</p>
+      <div class="link-banner__meta">
+        <span>{{ linkList.length || '-' }} 个站点</span>
+      </div>
+    </div>
   </div>
   <!-- 链接列表 -->
   <el-card class="blog-container">
@@ -276,6 +283,86 @@ function closeModal() {
 
 <style src="@/assets/css/about.scss" scoped />
 <style lang="scss" scoped>
+.link-banner {
+  position: relative;
+  height: 300px;
+  overflow: hidden;
+
+  &::before {
+    height: 300px;
+    background:
+      linear-gradient(180deg, rgba(10, 18, 30, 0.32), rgba(10, 18, 30, 0.62)),
+      rgba(0, 0, 0, 0.22);
+    filter: none;
+  }
+}
+
+.link-banner__content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: min(800px, calc(100% - 32px));
+  height: 100%;
+  margin: 0 auto;
+  flex-direction: column;
+  justify-content: center;
+  padding-top: 42px;
+  color: #fff;
+}
+
+.link-banner__eyebrow {
+  margin-bottom: 10px;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.link-banner .banner-title {
+  position: static;
+  width: auto;
+  margin: 0;
+  color: #fff;
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: left;
+}
+
+.link-banner__desc {
+  max-width: 520px;
+  margin: 14px 0 0;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.link-banner__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    height: 30px;
+    padding: 0 12px;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.88);
+    font-size: 12px;
+    backdrop-filter: blur(8px);
+  }
+}
+
+.blog-container {
+  border: 1px solid #edf2f7;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(47, 84, 112, 0.08);
+}
+
 .link-section-header {
   display: flex;
   align-items: center;
@@ -491,50 +578,118 @@ function closeModal() {
   min-width: 112px;
 }
 
-:global(html.dark) {
-  .link-title {
-    color: #71b4ff;
-  }
+html.dark .link-banner::before {
+  background:
+    linear-gradient(180deg, rgba(8, 13, 22, 0.48), rgba(8, 13, 22, 0.78)),
+    rgba(0, 0, 0, 0.34);
+}
 
-  .link-sort-note {
-    border-color: #39434f;
-    background: #242a31;
-    color: #b8c3cf;
-  }
+html.dark .blog-container {
+  border-color: #2f3b4f;
+  background: #181b20;
+  color: #d6dbe5;
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.22);
+}
 
-  .link-card,
-  .link-apply-panel {
-    border-color: #343d47;
-    background: linear-gradient(145deg, #23282f 0%, #1f242a 100%);
-  }
+html.dark .blog-container :deep(.el-card__body) {
+  background: transparent;
+}
 
-  .link-name,
-  .link-apply-copy strong {
-    color: #f4f6f8;
-  }
+html.dark .link-title {
+  color: #71b4ff;
+}
 
-  .link-intro,
-  .link-apply-copy span {
-    color: #b7c0ca;
-  }
+html.dark .link-sort-note {
+  border-color: #39434f;
+  background: #242a31;
+  color: #b8c3cf;
+}
 
-  .site-info-panel {
-    border-color: #364652;
-    border-left-color: #49b1f5;
-    background: #20262c;
-  }
+html.dark .link-card,
+html.dark .link-apply-panel {
+  border-color: #2f3b4f;
+  background: linear-gradient(145deg, #1f2633 0%, #171d26 100%);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
+}
 
-  .site-info-row {
-    border-color: #35404a;
-  }
+html.dark .link-card {
+  color: #d6dbe5;
 
-  .site-info-label,
-  .site-info-value {
-    color: #d6dde5;
+  &:hover {
+    border-color: #4d6f9f;
+    color: #f5f7fb !important;
+    box-shadow: 0 14px 30px rgba(47, 128, 237, 0.18);
   }
 }
 
+html.dark .link-avatar {
+  background: #121821;
+  color: #9fb1c7;
+}
+
+html.dark .link-name,
+html.dark .link-apply-copy strong {
+  color: #f4f6f8;
+}
+
+html.dark .link-intro,
+html.dark .link-apply-copy span {
+  color: #b7c0ca;
+}
+
+html.dark .site-info-panel {
+  border-color: #2f3b4f;
+  border-left-color: #2f80ed;
+  background: #121821;
+}
+
+html.dark .site-info-row {
+  border-color: #2f3b4f;
+}
+
+html.dark .site-info-label {
+  color: #9fb1c7;
+}
+
+html.dark .site-info-value {
+  color: #d6dbe5;
+}
+
+html.dark .site-info-copy-button {
+  color: #8e98a8;
+
+  &:hover {
+    border-color: #4d6f9f;
+    background: #182131;
+    color: #79bbff;
+  }
+}
+
+html.dark .link-apply-copy small {
+  color: #f3b36b;
+}
+
 @media (max-width: 759px) {
+  .link-banner {
+    height: 260px;
+
+    &::before {
+      height: 260px;
+    }
+  }
+
+  .link-banner__content {
+    padding-top: 34px;
+  }
+
+  .link-banner .banner-title {
+    font-size: 28px;
+  }
+
+  .link-banner__desc {
+    font-size: 14px;
+  }
+
   .link-card {
     min-height: 104px;
     padding: 14px;

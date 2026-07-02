@@ -32,3 +32,5 @@ coverage
 # Local agent configuration
 .agents/
 .claude/
+AGENTS.md
+CLAUDE.md

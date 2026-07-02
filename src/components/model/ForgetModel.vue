@@ -1,7 +1,29 @@
 <template>
-  <el-dialog title="找回密码" v-model="forgetFlag" class="login-container" width="452" @close="closeModal">
-    <div class="login-wrapper">
-      <el-form ref="forgetFormRef" :model="postForm" :rules="rules" label-position="top" hide-required-asterisk>
+  <el-dialog
+    v-model="forgetFlag"
+    class="login-container auth-container"
+    width="452"
+    align-center
+    @close="closeModal"
+  >
+    <div class="login-wrapper auth-wrapper">
+      <div class="auth-hero">
+        <div class="auth-hero__icon">
+          <Icon icon="solar:key-minimalistic-bold-duotone" />
+        </div>
+        <div>
+          <h3>找回密码</h3>
+          <p>验证账号归属后，即可设置一个新的登录密码</p>
+        </div>
+      </div>
+      <el-form
+        ref="forgetFormRef"
+        :model="postForm"
+        :rules="rules"
+        class="auth-form"
+        label-position="top"
+        hide-required-asterisk
+      >
         <!-- 用户名 -->
         <el-form-item label="邮箱/手机号" prop="username">
           <el-input v-model="postForm.username" placeholder="请输入您的邮箱/手机号">
@@ -12,14 +34,16 @@
         </el-form-item>
         <!-- 验证码 -->
         <el-form-item label="验证码" prop="code">
-          <el-input v-model="postForm.code" class="underline vw-50 me-2" placeholder="请输入6位验证码">
-            <template #prefix>
-              <Icon icon="material-symbols:shield-outline" />
-            </template>
-          </el-input>
-          <el-button :disabled="sendCodeDisabled" type="primary" small @click="sendCode()">
-            {{ codeMsg }}
-          </el-button>
+          <div class="auth-send-wrapper">
+            <el-input v-model="postForm.code" class="auth-code-input" placeholder="请输入6位验证码">
+              <template #prefix>
+                <Icon icon="material-symbols:shield-outline" />
+              </template>
+            </el-input>
+            <el-button class="auth-send-btn" :disabled="sendCodeDisabled" type="primary" @click="sendCode()">
+              {{ codeMsg }}
+            </el-button>
+          </div>
         </el-form-item>
         <el-form-item label="密码" prop="password">
           <el-input v-model="postForm.password" show-password placeholder="请输入您的新密码">
@@ -36,14 +60,14 @@
           </el-input>
         </el-form-item>
         <el-form-item>
-          <el-button type="success" class="vw-100 register-btn" :disabled="forgetDisabled" @click="updatePassword()">
+          <el-button type="success" class="auth-submit" :disabled="forgetDisabled" @click="updatePassword()">
             确定
           </el-button>
         </el-form-item>
       </el-form>
       <!-- 登录 -->
-      <div class="login-tip">
-        已有账号？<span style="color: #00a1d6" class="a-link" @click="openLogin">登录</span>
+      <div class="login-tip auth-tip">
+        想起密码了？<span class="a-link" @click="openLogin">返回登录</span>
       </div>
     </div>
   </el-dialog>

@@ -1,9 +1,31 @@
 <template>
-  <el-dialog title="用户注册" v-model="registerFlag" class="login-container" width="452" @close="closeModal()">
-    <div class="login-wrapper">
-      <el-form ref="registerFormRef" :model="postForm" :rules="rules" label-position="top" hide-required-asterisk>
+  <el-dialog
+    v-model="registerFlag"
+    class="login-container auth-container"
+    width="452"
+    align-center
+    @close="closeModal()"
+  >
+    <div class="login-wrapper auth-wrapper">
+      <div class="auth-hero">
+        <div class="auth-hero__icon">
+          <Icon icon="solar:user-plus-rounded-bold-duotone" />
+        </div>
+        <div>
+          <h3>创建账号</h3>
+          <p>填写基础信息，开启你的浏览与创作空间</p>
+        </div>
+      </div>
+      <el-form
+        ref="registerFormRef"
+        :model="postForm"
+        :rules="rules"
+        class="auth-form"
+        label-position="top"
+        hide-required-asterisk
+      >
         <el-form-item label="用户名" prop="username">
-          <el-input v-model="postForm.username" placeholder="用户名，注册完成后不可更改，可用于登录" clearable>
+          <el-input v-model="postForm.username" placeholder="请输入用户名" clearable>
             <template #prefix>
               <Icon icon="line-md:account" />
             </template>
@@ -26,14 +48,22 @@
         </el-form-item>
         <el-form-item label="验证码" prop="code">
           <!-- 验证码 -->
-          <el-input v-model="postForm.code" :maxlength="6" label="验证码" placeholder="请输入6位验证码" class="me-2 w-50">
-            <template #prefix>
-              <Icon icon="material-symbols:shield-outline" />
-            </template>
-          </el-input>
-          <el-button type="primary" small :disabled="postForm.flag" @click="sendCode">
-            {{ codeMsg }}
-          </el-button>
+          <div class="auth-send-wrapper">
+            <el-input
+              v-model="postForm.code"
+              :maxlength="6"
+              label="验证码"
+              placeholder="请输入6位验证码"
+              class="auth-code-input"
+            >
+              <template #prefix>
+                <Icon icon="material-symbols:shield-outline" />
+              </template>
+            </el-input>
+            <el-button class="auth-send-btn" type="primary" :disabled="postForm.flag" @click="sendCode">
+              {{ codeMsg }}
+            </el-button>
+          </div>
         </el-form-item>
         <el-form-item label="密码" prop="password">
           <!-- 密码 -->
@@ -47,7 +77,7 @@
           <!-- 注册按钮 -->
           <el-button
             type="success"
-            class="mt-3 register-btn vw-100"
+            class="auth-submit"
             block
             :disabled="registerDisabled"
             @click="register"
@@ -57,8 +87,8 @@
         </el-form-item>
       </el-form>
       <!-- 登录 -->
-      <div class="login-tip">
-        已有账号？<span style="color: #00a1d6" class="a-link" @click="openLogin">登录</span>
+      <div class="login-tip auth-tip">
+        已有账号？<span class="a-link" @click="openLogin">去登录</span>
       </div>
     </div>
   </el-dialog>
@@ -267,4 +297,3 @@ function closeModal() {
 }
 
 </script>
-

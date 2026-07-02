@@ -19,7 +19,7 @@ html {
 }
 
 body {
-  padding: 0 !important;;
+  padding: 0;
   margin: 0 !important;;
   background: #f5f7fb;
   overflow-x: hidden;
@@ -29,6 +29,14 @@ body {
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
   font-size: 14px !important;
   --bs-link-color-rgb: #4c4948
+}
+
+body.el-popup-parent--hidden[style*="calc(100% -"] .rightside {
+  right: calc(var(--rightside-offset) + 15px);
+}
+
+body.el-popup-parent--hidden[style*="calc(100% -"] .nav-fixed {
+  width: calc(100% - 15px);
 }
 
 .el-main {

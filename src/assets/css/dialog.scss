@@ -2,19 +2,42 @@
   display: flex;
   max-height: calc(100vh - 32px);
   flex-direction: column;
-  border-radius: 8px;
+  border-radius: 8px !important;
+  background: linear-gradient(180deg, #f6faff 0%, #ffffff 34%) !important;
+  box-shadow: 0 18px 60px rgb(31 41 55 / 18%) !important;
   overflow: hidden;
 }
 
 .app-form-dialog .el-dialog__header {
-  padding-bottom: 12px;
-  border-bottom: 1px solid #edf0f5;
+  padding: 18px 24px 12px;
+  border-bottom: 0;
+}
+
+.app-form-dialog .el-dialog__title {
+  color: #20242a;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.app-form-dialog .el-dialog__headerbtn {
+  top: 14px;
+  right: 14px;
+  z-index: 2;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.app-form-dialog .el-dialog__headerbtn:hover {
+  background: #ecf5ff;
 }
 
 .app-form-dialog .el-dialog__body {
   min-height: 0;
   overflow-y: auto;
-  padding: 18px 24px 10px;
+  padding: 10px 24px 10px;
 }
 
 .app-form-dialog .el-dialog__footer {
@@ -28,9 +51,9 @@
   gap: 14px;
   margin: -2px 0 18px;
   padding: 16px;
-  border: 1px solid #dbeeea;
+  border: 1px solid #dbeafe;
   border-radius: 8px;
-  background: #f4fbf9;
+  background: #f6faff;
 }
 
 .app-dialog-hero__icon {
@@ -41,9 +64,10 @@
   width: 38px;
   height: 38px;
   border-radius: 8px;
-  background: #2c7a7b;
+  background: #2f80ed;
   color: #fff;
   font-size: 20px;
+  box-shadow: 0 10px 22px rgb(47 128 237 / 24%);
 }
 
 .app-dialog-hero__content {
@@ -93,7 +117,13 @@
 .app-dialog-form .el-input__wrapper:hover,
 .app-dialog-form .el-select__wrapper:hover,
 .app-dialog-form .el-textarea__inner:hover {
-  box-shadow: 0 0 0 1px #9ec5bd inset;
+  box-shadow: 0 0 0 1px #9ec5fe inset;
+}
+
+.app-dialog-form .el-input__wrapper.is-focus,
+.app-dialog-form .el-select__wrapper.is-focused,
+.app-dialog-form .el-textarea__inner:focus {
+  box-shadow: 0 0 0 1px #2f80ed inset, 0 0 0 3px rgb(47 128 237 / 12%);
 }
 
 .app-dialog-form .avatar-uploader {
@@ -115,9 +145,9 @@
 }
 
 .app-dialog-form .avatar-uploader .el-upload:hover {
-  border-color: #2c7a7b;
-  background: #f4fbf9;
-  color: #2c7a7b;
+  border-color: #2f80ed;
+  background: #f6faff;
+  color: #2f80ed;
 }
 
 .app-dialog-form .picture-album-add-cover {
@@ -163,6 +193,22 @@
   min-width: 92px;
 }
 
+.app-dialog-footer .el-button--primary {
+  border-color: #2f80ed;
+  background: #2f80ed;
+  box-shadow: 0 10px 20px rgb(47 128 237 / 18%);
+  font-weight: 700;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.app-dialog-footer .el-button--primary:hover,
+.app-dialog-footer .el-button--primary:focus {
+  border-color: #1f6fd8;
+  background: #1f6fd8;
+  box-shadow: 0 12px 24px rgb(47 128 237 / 24%);
+  transform: translateY(-1px);
+}
+
 .app-dialog-segmented {
   width: 100%;
 }
@@ -176,9 +222,15 @@
   border-color: #d7dde8;
 }
 
+.app-dialog-segmented .el-radio-button__original-radio:checked + .el-radio-button__inner {
+  border-color: #2f80ed !important;
+  background: #2f80ed !important;
+  box-shadow: -1px 0 0 0 #2f80ed !important;
+}
+
 html.dark .app-dialog-hero {
-  border-color: #343941;
-  background: #1f2329;
+  border-color: #2f3b4f;
+  background: #1f2633;
 }
 
 html.dark .app-dialog-hero h3 {
@@ -197,13 +249,89 @@ html.dark .app-dialog-tip {
 
 html.dark .app-form-dialog .el-dialog__header,
 html.dark .app-form-dialog .el-dialog__footer {
-  border-color: #343941;
+  border-color: #2f3b4f;
+}
+
+html.dark .app-form-dialog {
+  background: linear-gradient(180deg, #1f2633 0%, #181b20 38%) !important;
+}
+
+html.dark .app-form-dialog .el-dialog__title {
+  color: #f5f7fb;
+}
+
+html.dark .app-dialog-form .el-form-item__label {
+  color: #d6dbe5;
+}
+
+html.dark .app-dialog-form .el-input__wrapper,
+html.dark .app-dialog-form .el-select__wrapper,
+html.dark .app-dialog-form .el-textarea__inner {
+  border-color: transparent;
+  background: #121821;
+  color: #f5f7fb;
+  box-shadow: 0 0 0 1px #2f3b4f inset !important;
+}
+
+html.dark .app-dialog-form .el-input__wrapper:hover,
+html.dark .app-dialog-form .el-select__wrapper:hover,
+html.dark .app-dialog-form .el-textarea__inner:hover {
+  box-shadow: 0 0 0 1px #4d6f9f inset !important;
+}
+
+html.dark .app-dialog-form .el-input__wrapper.is-focus,
+html.dark .app-dialog-form .el-select__wrapper.is-focused,
+html.dark .app-dialog-form .el-textarea__inner:focus {
+  box-shadow: 0 0 0 1px #2f80ed inset, 0 0 0 3px rgb(47 128 237 / 18%) !important;
+}
+
+html.dark .app-dialog-form .el-input__inner,
+html.dark .app-dialog-form .el-textarea__inner {
+  color: #f5f7fb;
+}
+
+html.dark .app-dialog-form .el-input__inner::placeholder,
+html.dark .app-dialog-form .el-textarea__inner::placeholder {
+  color: #8e98a8;
+}
+
+html.dark .app-dialog-form .el-input__prefix {
+  color: #8e98a8;
+}
+
+html.dark .app-dialog-segmented .el-radio-button__inner {
+  border-color: #2f3b4f !important;
+  background: #121821;
+  color: #d6dbe5;
+}
+
+html.dark .app-dialog-segmented .el-radio-button__inner:hover {
+  color: #79bbff;
 }
 
 html.dark .app-dialog-form .avatar-uploader .el-upload {
-  border-color: #3f4650;
-  background: #20242a;
+  border-color: #2f3b4f;
+  background: #121821;
   color: #b9c0cc;
+}
+
+html.dark .app-dialog-form .avatar-uploader .el-upload:hover {
+  border-color: #4d6f9f;
+  background: #182131;
+  color: #79bbff;
+}
+
+html.dark .app-dialog-footer .el-button:not(.el-button--primary) {
+  border-color: #3f4650;
+  background: transparent;
+  color: #d6dbe5;
+}
+
+html.dark .app-dialog-footer .el-button:not(.el-button--primary):hover,
+html.dark .app-dialog-footer .el-button:not(.el-button--primary):focus {
+  border-color: #4d6f9f;
+  background: #121821;
+  color: #79bbff;
 }
 
 html.dark .app-upload-placeholder span {

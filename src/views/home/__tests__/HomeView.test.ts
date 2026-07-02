@@ -63,6 +63,18 @@ describe('HomeView 文章首页语义', () => {
     expect(style).toContain('line-height: 1.8;')
     expect(style).not.toContain('.web-info .el-tag-a')
   })
+
+  it('首页新增结构提供夜间模式样式覆盖', () => {
+    const style = readFileSync(new URL('../../../assets/css/home.scss', import.meta.url), 'utf8')
+
+    expect(style).toContain('html.dark {')
+    expect(style).toContain('.blog-card,')
+    expect(style).toContain('.article-list-header,')
+    expect(style).toContain('.article-empty-state')
+    expect(style).toContain('.category-nav-item')
+    expect(style).toContain('.mobile-category-item')
+    expect(style).toContain('.article-list-count')
+  })
 })
 
 describe('ArticleListItem 首页文章卡片语义', () => {
@@ -87,5 +99,15 @@ describe('ArticleListItem 首页文章卡片语义', () => {
     expect(source).not.toContain('height: 214px;')
     expect(source).not.toContain('min-height: 248px;')
     expect(source).not.toContain('isRight(index)')
+  })
+
+  it('文章卡片提供夜间模式样式覆盖', () => {
+    const source = readArticleListItemSource()
+
+    expect(source).toContain('html.dark {')
+    expect(source).toContain('.article-list-item-card')
+    expect(source).toContain('.article-list-item-title')
+    expect(source).toContain('.article-content')
+    expect(source).toContain('.article-tag-pill')
   })
 })

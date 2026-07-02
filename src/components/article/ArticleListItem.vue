@@ -356,4 +356,56 @@ function emitCategoryClick(): void {
     gap: 0.9rem;
   }
 }
+
+html.dark {
+  .article-list-item-card {
+    border-color: #343941;
+    background: rgba(31, 35, 41, 0.94);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.24);
+
+    &:hover {
+      border-color: rgba(117, 167, 255, 0.38);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.34);
+    }
+  }
+
+  .article-cover-link {
+    background: #15181d;
+  }
+
+  .article-meta-row,
+  .article-info,
+  .article-info :deep(a),
+  .article-category-button {
+    color: #9ca8b8;
+  }
+
+  .article-list-item-title a {
+    color: #f5f7fb;
+  }
+
+  .article-content {
+    color: #c8d2df;
+  }
+
+  .article-info {
+    border-top-color: #343941;
+  }
+
+  .article-category-button:hover {
+    color: #8ab4ff;
+  }
+
+  .article-tag-pill {
+    border-color: rgba(117, 167, 255, 0.24);
+    background: rgba(117, 167, 255, 0.12);
+    color: #9ec0ff;
+
+    &:hover {
+      border-color: rgba(117, 167, 255, 0.38);
+      background: rgba(117, 167, 255, 0.18);
+      color: #c7dbff;
+    }
+  }
+}
 </style>

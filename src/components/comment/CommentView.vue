@@ -59,7 +59,7 @@
             <div v-dompurify-html="item.content.replace('\n', '<br/>')" class="comment-content" />
             <!-- 二级回复列表 -->
             <div
-              v-for="(childItem, childrenIndex) of item.children"
+              v-for="(childItem) of item.children"
               :key="childItem.id"
               class="d-flex children-comment"
             >

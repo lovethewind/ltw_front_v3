@@ -865,4 +865,87 @@ html.dark {
   .picture-preview-meta span {
     background: #1d1e1f;
   }
+
+  .picture-preview-dialog {
+    background: #151719;
+  }
+
+  .picture-preview-sidebar {
+    border-left-color: #303030;
+    color: #d6dbe5;
+  }
+
+  .picture-preview-author a,
+  .picture-preview-author span {
+    color: #e5eaf3;
+  }
+
+  .picture-preview-time,
+  .picture-preview-meta {
+    color: #a8abb2;
+  }
+
+  .picture-preview-meta span {
+    border: 1px solid #303030;
+  }
+
+  .picture-preview-comments .picture-preview-reply {
+    background: transparent;
+  }
+
+  .picture-preview-comments .empty-reply-div {
+    border-color: #3a3a3a;
+    background: #242526;
+    color: #a8abb2;
+  }
+
+  .picture-preview-comments :deep(.reply-input-wrapper) {
+    border-color: #303030 !important;
+    background: #1d1e1f !important;
+  }
+
+  .picture-preview-comments :deep(.wl-header) {
+    border-color: #303030;
+  }
+
+  .picture-preview-comments :deep(.wl-header label) {
+    color: #d6dbe5;
+  }
+
+  .picture-preview-comments :deep(.wl-input),
+  .picture-preview-comments :deep(.comment-textarea) {
+    background: #1d1e1f !important;
+    color: #e5eaf3;
+  }
+
+  .picture-preview-comments :deep(.wl-input::placeholder),
+  .picture-preview-comments :deep(.comment-textarea::placeholder) {
+    color: #8e98a8;
+  }
+
+  .picture-preview-comments :deep(.comment-div),
+  .picture-preview-comments :deep(.count) {
+    color: #d6dbe5;
+  }
+
+  .picture-preview-comments :deep(.comment-item) {
+    border-bottom-color: #303030;
+  }
+
+  .picture-preview-comments :deep(.comment-nickname) {
+    color: #d6dbe5;
+  }
+
+  .picture-preview-comments :deep(.comment-info),
+  .picture-preview-comments :deep(.reply-btn) {
+    color: #a8abb2;
+  }
+
+  .picture-preview-comments :deep(.comment-content) {
+    color: #cfd3dc;
+  }
+
+  .picture-preview-comments :deep(.children-comment) {
+    border-top-color: #303030;
+  }
 }

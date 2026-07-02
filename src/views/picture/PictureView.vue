@@ -1282,6 +1282,7 @@ function downloadPicture(): void {
  * :return: 无返回值。
  */
 function thumbPicture(_id?: any): void {
+  if (!checkIsLogin()) return
   if (pictureActionDisabled.value) {
     return
   }

@@ -4,41 +4,46 @@
     <div v-if="article" class="banner" :style="articleCover">
       <div class="article-info-container">
         <!-- 文章标题 -->
-        <div class="article-title"><h1>{{ article.title }}</h1></div>
+        <div class="article-title">
+          <h1>{{ article.title }}</h1>
+        </div>
         <div class="article-info">
-          <div class="first-line d-flex align-items-center">
-            <Icon icon="bx:user" class="font-14" />
-            <router-link :to="'/user/' + article.userId" target="_blank" rel="noopener noreferrer">{{ article.user.nickname }}</router-link>
-            <span class="separator">|</span>
+          <div class="article-meta-row">
             <!-- 发表时间 -->
-            <Icon icon="solar:calendar-broken" class="font-14" />
-            <span title="发表时间">{{ minute(article.createTime) }}</span>
-            <span class="separator">|</span>
+            <span class="article-meta-pill">
+              <Icon icon="solar:calendar-broken" class="font-14" />
+              <span title="发表时间">{{ minute(article.createTime) }}</span>
+            </span>
             <!-- 更新时间 -->
-            <Icon icon="mage:edit" class="font-14" />
-            <el-tooltip placement="top" :content="'最后编辑时间:' + minute(article.editTime || article.createTime)"
-                        effect="light">
-              {{ minute(article.editTime || article.createTime) }}
-            </el-tooltip>
-            <span class="separator">|</span>
+            <span class="article-meta-pill">
+              <Icon icon="mage:edit" class="font-14" />
+              <el-tooltip placement="top" :content="'最后编辑时间:' + minute(article.editTime || article.createTime)"
+                          effect="light">
+                {{ minute(article.editTime || article.createTime) }}
+              </el-tooltip>
+            </span>
             <!-- 文章分类 -->
-            <Icon icon="tabler:category" class="font-14" />
-            <router-link :to="'/category/' + article.categoryId" class="a-link color-white" target="_blank" rel="noopener noreferrer">
-              {{ categoryMap[article.categoryId] ? categoryMap[article.categoryId].name : '' }}
-            </router-link>
-          </div>
-          <div class="second-line justify-content-center d-flex align-items-center">
+            <span class="article-meta-pill">
+              <Icon icon="tabler:category" class="font-14" />
+              <router-link :to="'/category/' + article.categoryId" class="a-link color-white" target="_blank" rel="noopener noreferrer">
+                {{ categoryMap[article.categoryId] ? categoryMap[article.categoryId].name : '' }}
+              </router-link>
+            </span>
             <!-- 字数统计 -->
-            <Icon icon="fluent:text-word-count-20-filled" class="font-14" />
-            <span>字数统计: {{ covertNumberDisplay(wordNum) }}</span>
-            <span class="separator">|</span>
+            <span class="article-meta-pill">
+              <Icon icon="fluent:text-word-count-20-filled" class="font-14" />
+              <span>字数统计: {{ covertNumberDisplay(wordNum) }}</span>
+            </span>
             <!-- 阅读时长 -->
-            <Icon icon="mingcute:time-line" class="font-14" />
-            <span>阅读时长: {{ readTime }}</span>
-            <span class="separator">|</span>
+            <span class="article-meta-pill">
+              <Icon icon="mingcute:time-line" class="font-14" />
+              <span>阅读时长: {{ readTime || '计算中' }}</span>
+            </span>
             <!-- 阅读量 -->
-            <Icon icon="ph:eye" class="font-14" />
-            <span>阅读量: {{ article.viewCount }}</span>
+            <span class="article-meta-pill">
+              <Icon icon="ph:eye" class="font-14" />
+              <span>阅读量: {{ article.viewCount }}</span>
+            </span>
           </div>
         </div>
       </div>
@@ -56,7 +61,7 @@
           <!-- 评论跳转按钮 -->
           <a @click="toCommentList">
             <div class="a-hover" title="跳转至评论">
-              <el-badge :value="covertNumberDisplay(article.commentCount)" :offset="[-10, 5]" class="item">
+              <el-badge :value="covertNumberDisplay(article.commentCount)" :offset="[2, 2]" class="item">
                 <Icon icon="mdi:comment-outline" class="font-20" color="#e91e63" />
               </el-badge>
             </div>
@@ -66,7 +71,7 @@
           <!-- 点赞按钮 -->
           <a @click="like()">
             <div title="点赞" class="a-hover">
-              <el-badge :value="covertNumberDisplay(article.likeCount)" :offset="[-10, 5]" :class="isLike">
+              <el-badge :value="covertNumberDisplay(article.likeCount)" :offset="[2, 2]" :class="isLike">
                 <Icon icon="tabler:thumb-up" class="font-20" color="#2196f3" />
               </el-badge>
             </div>
@@ -76,7 +81,7 @@
           <!-- 收藏按钮 -->
           <a @click="collect()">
             <div title="收藏" class="a-hover">
-              <el-badge :value="covertNumberDisplay(article.collectCount)" :offset="[-10, 5]" :class="isCollect">
+              <el-badge :value="covertNumberDisplay(article.collectCount)" :offset="[2, 2]" :class="isCollect">
                 <Icon icon="ph:star" color="green" class="font-20" />
               </el-badge>
             </div>
@@ -87,15 +92,13 @@
     <!-- 内容 -->
     <el-row v-if="article" class="article-container">
       <el-col :xs="24" :md="17" class="me-2">
-        <el-card class="article-wrapper">
-          <el-row v-if="user && article.userId === user.id" align="top" justify="start" class="mb-2">
-            <el-col class="text-right">
-              <el-button size="small" type="primary" @click="router.push('/article/edit/' + article.id)">
-                <Icon icon="mage:edit" class="font-14" />
-                编辑
-              </el-button>
-            </el-col>
-          </el-row>
+        <el-card class="article-wrapper article-reading-card">
+          <div v-if="user && article.userId === user.id" class="article-edit-action-row">
+            <el-button size="small" type="primary" class="article-edit-button" @click="router.push('/article/edit/' + article.id)">
+              <Icon icon="mage:edit" class="font-14" />
+              编辑
+            </el-button>
+          </div>
           <div
             v-if="!isCheck"
             ref="articleRef"
@@ -276,90 +279,72 @@
         </el-card>
       </el-col>
       <!-- 侧边功能 -->
-      <el-col :xs="24" :md="6" class="d-md-block d-none">
+      <el-col :xs="24" :md="6" class="d-md-block d-none article-aside-col">
         <div class="sticky-top-70">
           <!-- 本文作者信息 -->
-          <el-card v-if="currentArticleUser" class="right-container">
+          <el-card v-if="currentArticleUser" class="right-container article-author-card">
             <div class="right-title">
               <Icon icon="bx:user" class="font-18" color="#0d6efd" />
               <span>作者信息</span>
             </div>
-            <div class="mt-2">
-              <el-row align="middle">
-                <el-col :span="6">
-                  <el-avatar :size="60" :src="currentArticleUser.avatar" @click="toUserCenter()" />
-                </el-col>
-                <el-col :span="18">
-                  <el-row align="middle">
-                    <el-col :span="24">
-                      <span class="article-author-name">
-                        <router-link :to="'/user/' + currentArticleUser.id"
-                                     class="a-link"
-                                     target="_blank"
-                                     rel="noopener noreferrer">{{ currentArticleUser.nickname }}</router-link>
-                        <GenderBadge :gender="currentArticleUser.gender" />
-                      </span>
-                    </el-col>
-                    <el-col :span="24">
-                      <span class="font-12">
-                        {{ currentArticleUser.summary }}
-                      </span>
-                    </el-col>
-                  </el-row>
-                </el-col>
-              </el-row>
-              <el-row align="middle" justify="center" class="text-left mt-2">
-                <el-col class="d-flex align-items-center">
-                  <Icon icon="mdi:leaf" class="font-16" color="green" />
-                  站龄: {{ formatRegisterTime(currentArticleUser.registerTime) }}
-                </el-col>
-              </el-row>
-              <el-row align="middle" justify="center" class="text-left mt-2">
-                <el-col class="d-flex align-items-center">
-                  <Icon icon="tdesign:location" color="red" class="font-16" />
-                  IP属地: {{ currentArticleUser.address }}
-                </el-col>
-              </el-row>
-              <el-row align="middle" justify="center" class="text-center mt-4">
-                <el-col :span="6">
-                  <el-statistic :value="currentArticleUser.articleCount" />
-                </el-col>
-                <el-col :span="6">
-                  <el-statistic :value="currentArticleUser.commentCount" />
-                </el-col>
-                <el-col :span="6">
-                  <el-statistic :value="currentArticleUser.fansCount" />
-                </el-col>
-                <el-col :span="6">
-                  <el-statistic :value="currentArticleUser.viewCount" />
-                </el-col>
-              </el-row>
-              <el-row align="middle" justify="center" class="text-center">
-                <el-col :span="6"> 文章</el-col>
-                <el-col :span="6"> 评论</el-col>
-                <el-col :span="6"> 粉丝</el-col>
-                <el-col :span="6"> 访问量</el-col>
-              </el-row>
-              <el-row v-if="!user || currentArticleUser.id !== user.id" align="middle" justify="center"
-                      class="text-center mt-4 mb-2">
-                <el-col :span="12">
-                  <el-button round :color="currentArticleUser.isFollowed ? 'green' : '#2196f3'" @click="followUser()">
-                    <Icon icon="ph:star" class="font-16" />
-                    {{ currentArticleUser.isFollowed && currentArticleUser.isMyFans ? '互相关注' : (currentArticleUser.isFollowed ? '已关注' : '关注')
-                    }}
-                  </el-button>
-                </el-col>
-                <el-col :span="12">
-                  <el-button round color="#e91e63" @click="chat()">
-                    <Icon icon="lets-icons:message" class="font-16" />
-                    私信
-                  </el-button>
-                </el-col>
-              </el-row>
+            <div class="article-author-panel">
+              <div class="article-author-profile">
+                <el-avatar :size="64" :src="currentArticleUser.avatar" @click="toUserCenter()" />
+                <div class="article-author-main">
+                  <div class="article-author-name">
+                    <router-link :to="'/user/' + currentArticleUser.id"
+                                 class="a-link"
+                                 target="_blank"
+                                 rel="noopener noreferrer">{{ currentArticleUser.nickname }}</router-link>
+                    <GenderBadge :gender="currentArticleUser.gender" />
+                  </div>
+                  <p class="article-author-summary">
+                    {{ currentArticleUser.summary || '这个人暂时还没有留下简介' }}
+                  </p>
+                </div>
+              </div>
+              <div class="article-author-meta">
+                <span>
+                  <Icon icon="mdi:leaf" class="font-16" />
+                  {{ formatRegisterTime(currentArticleUser.registerTime) }}
+                </span>
+                <span>
+                  <Icon icon="tdesign:location" class="font-16" />
+                  {{ currentArticleUser.address || '未知' }}
+                </span>
+              </div>
+              <div class="article-author-stats">
+                <div>
+                  <strong>{{ covertNumberDisplay(currentArticleUser.articleCount) }}</strong>
+                  <span>文章</span>
+                </div>
+                <div>
+                  <strong>{{ covertNumberDisplay(currentArticleUser.articleLikeMeCount || 0) }}</strong>
+                  <span>获赞</span>
+                </div>
+                <div>
+                  <strong>{{ covertNumberDisplay(currentArticleUser.fansCount) }}</strong>
+                  <span>粉丝</span>
+                </div>
+                <div>
+                  <strong>{{ covertNumberDisplay(currentArticleUser.viewCount) }}</strong>
+                  <span>访问量</span>
+                </div>
+              </div>
+              <div v-if="!user || currentArticleUser.id !== user.id" class="article-author-actions">
+                <el-button round class="article-author-follow-btn" :class="{ 'is-followed': currentArticleUser.isFollowed }" @click="followUser()">
+                  <Icon icon="ph:star" class="font-16" />
+                  {{ currentArticleUser.isFollowed && currentArticleUser.isMyFans ? '互相关注' : (currentArticleUser.isFollowed ? '已关注' : '关注') }}
+                </el-button>
+                <el-button round class="article-author-message-btn" @click="chat()">
+                  <Icon icon="lets-icons:message" class="font-16" />
+                  私信
+                </el-button>
+              </div>
             </div>
           </el-card>
           <!-- 文章目录 -->
-          <el-card class="right-container">
+          <el-card class="right-container article-toc-card">
             <div class="right-title">
               <Icon icon="carbon:catalog" color="#00c4b6" class="font-16" />
               <span>目录</span>
@@ -367,7 +352,7 @@
             <div id="toc" @click="expandContent" />
           </el-card>
           <!-- 推荐文章 -->
-          <el-card class="right-container">
+          <el-card class="right-container article-recommend-card">
             <div class="right-title">
               <Icon icon="tabler:thumb-up" class="font-16" color="pink" />
               <span>相关推荐</span>
@@ -393,7 +378,7 @@
             </div>
           </el-card>
           <!-- 最新文章 -->
-          <el-card class="right-container">
+          <el-card class="right-container article-newest-card">
             <div class="right-title">
               <Icon icon="icon-park-outline:agreement" color="#e67e23" class="font-16" />
               <span>最新文章</span>

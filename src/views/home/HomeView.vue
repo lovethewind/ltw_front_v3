@@ -55,6 +55,8 @@
               class="tag-cloud-link"
               :style="tagCloudStyles[tag.id]"
               :to="'/tag/' + tag.id"
+              target="_blank"
+              rel="noopener noreferrer"
             >
               {{ tag.name }}
             </router-link>

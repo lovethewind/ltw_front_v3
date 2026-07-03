@@ -14,66 +14,66 @@
       />
     </router-link>
     <div class="article-wrapper">
-      <div class="article-meta-row">
-        <router-link
-          :to="'/user/' + article.user.id"
-          class="username-avatar-info"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <el-avatar :src="article.user.avatar" size="small" />
-          <span class="ms-1 a-link ellipsis username-info">{{ article.user.nickname }}</span>
-        </router-link>
-        <span class="article-date">
-          <Icon icon="solar:calendar-broken" class="font-14" />
-          {{ date(article.createTime) }}
-        </span>
-      </div>
-      <h3 class="article-list-item-title">
-        <router-link :to="'/article/' + article.id" target="_blank" rel="noopener noreferrer">
+      <router-link
+        :to="'/article/' + article.id"
+        class="article-main-link"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <h3 class="article-list-item-title">
           {{ article.title }}
-        </router-link>
-      </h3>
-      <div class="article-content">
-        {{ article.content }}
-      </div>
-      <div class="article-info">
-        <div class="article-taxonomy">
-          <el-tag size="small" :type="article.isOriginal ? 'success' : 'warning'">
-            {{ article.isOriginal ? '原创' : '转载' }}
-          </el-tag>
-          <button type="button" class="article-category-button" @click="emitCategoryClick">
-            <Icon icon="tabler:category" class="font-14" />
-            {{ categoryMap[article.categoryId] ? categoryMap[article.categoryId].name : '' }}
-          </button>
-          <span class="article-tags">
-            <router-link
-              v-for="tagId of article.tagList.slice(0, 2)"
-              :key="'articleListItemTag' + article.id + tagId"
-              :to="'/tag/' + tagId"
-            >
-              <el-tag
-                size="small"
-                class="article-tag-pill"
-              >
-                {{ tagMap[tagId] ? tagMap[tagId].name : '' }}</el-tag
-              >
-            </router-link>
-          </span>
+        </h3>
+        <div class="article-content">
+          {{ article.content }}
         </div>
-        <div class="article-stats">
-          <span>
-            <Icon icon="ph:eye" class="font-14" />
-            {{ covertNumberDisplay(article.viewCount) }}
+      </router-link>
+      <div class="article-info">
+        <div class="article-meta-row">
+          <router-link
+            :to="'/user/' + article.user.id"
+            class="article-author-chip"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <el-avatar :src="article.user.avatar" size="small" />
+            <span class="ms-1 a-link ellipsis username-info">{{ article.user.nickname }}</span>
+          </router-link>
+          <span class="article-date">
+            <Icon icon="mingcute:time-line" class="font-14" />
+            {{ covertTimeHowLongAgo(article.createTime) }}
           </span>
-          <span>
-            <Icon icon="iconamoon:comment-dots" class="font-14" />
-            {{ covertNumberDisplay(article.commentCount) }}
-          </span>
-          <span>
-            <Icon icon="tabler:thumb-up" class="font-14" />
-            {{ covertNumberDisplay(article.likeCount) }}
-          </span>
+          <div class="article-taxonomy">
+            <el-tag size="small" :type="article.isOriginal ? 'success' : 'warning'">
+              {{ article.isOriginal ? '原创' : '转载' }}
+            </el-tag>
+            <span class="article-tags">
+              <router-link
+                v-for="tagId of article.tagList.slice(0, 1)"
+                :key="'articleListItemTag' + article.id + tagId"
+                :to="'/tag/' + tagId"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <el-tag size="small" class="article-tag-pill">
+                  {{ tagMap[tagId] ? tagMap[tagId].name : '' }}</el-tag
+                >
+              </router-link>
+            </span>
+          </div>
+          <div class="article-stats">
+            <span>
+              <Icon icon="ph:eye" class="font-14" />
+              {{ covertNumberDisplay(article.viewCount) }}
+            </span>
+            <span>
+              <Icon icon="iconamoon:comment-dots" class="font-14" />
+              {{ covertNumberDisplay(article.commentCount) }}
+            </span>
+            <span>
+              <Icon icon="tabler:thumb-up" class="font-14" />
+              {{ covertNumberDisplay(article.likeCount) }}
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -84,27 +84,18 @@
 import { Icon } from '@iconify/vue'
 import type { IArticle } from '@/interface'
 import { covertNumberDisplay } from '@/utils/common'
-import { date } from '@/utils/date'
+import { covertTimeHowLongAgo } from '@/utils/date'
 
-const props = defineProps<{
+defineProps<{
   article: IArticle
   index: number
   categoryMap: Record<string, { name: string }>
   tagMap: Record<string, { name: string }>
 }>()
 
-const emit = defineEmits<{
+defineEmits<{
   (event: 'category-click', categoryId: string): void
 }>()
-
-/**
- * 通知父组件处理文章分类点击。
- *
- * :return: 无返回值。
- */
-function emitCategoryClick(): void {
-  emit('category-click', String(props.article.categoryId))
-}
 </script>
 
 <style lang="scss" scoped>
@@ -121,7 +112,10 @@ function emitCategoryClick(): void {
   background: rgba(255, 255, 255, 0.92);
   box-shadow: 0 10px 26px rgba(31, 45, 61, 0.05);
   overflow: hidden;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 }
 
 .article-list-item-card:hover {
@@ -156,23 +150,31 @@ function emitCategoryClick(): void {
   padding: 0.9rem 1.1rem;
 }
 
-.article-meta-row {
+.article-main-link {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  color: #64748b;
-  font-size: 0.82rem;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  color: inherit;
 }
 
-.username-avatar-info {
+.article-main-link:hover {
+  .article-list-item-title {
+    color: #2f80ed;
+  }
+}
+
+.article-author-chip {
   display: inline-flex;
   align-items: center;
-  flex: 1;
-  min-width: 0;
+  flex: 0 1 auto;
+  min-width: 80px;
+  max-width: 120px;
 }
 
 .username-info {
+  min-width: 0;
   max-width: calc(100% - 30px);
 }
 
@@ -187,18 +189,16 @@ function emitCategoryClick(): void {
 }
 
 .article-list-item-title {
-  margin: 0.55rem 0 0.35rem;
+  margin: 0 0 0.35rem;
+  color: #1f2937;
   font-size: 1.18rem;
   font-weight: 700;
   line-height: 1.42;
   display: -webkit-box;
   overflow: hidden;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
-
-  a {
-    color: #1f2937;
-  }
+  transition: color 0.18s ease;
 }
 
 .article-content {
@@ -207,15 +207,13 @@ function emitCategoryClick(): void {
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
 }
 
 .article-info {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
   margin-top: auto;
   padding-top: 0.62rem;
   border-top: 1px solid rgba(148, 163, 184, 0.14);
@@ -232,6 +230,16 @@ function emitCategoryClick(): void {
   }
 }
 
+.article-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  min-width: 0;
+  color: #64748b;
+  font-size: 0.82rem;
+}
+
 .article-taxonomy,
 .article-stats,
 .article-tags {
@@ -242,35 +250,19 @@ function emitCategoryClick(): void {
 }
 
 .article-taxonomy {
-  flex: 1;
-  flex-wrap: wrap;
+  flex: 1 1 auto;
+  flex-wrap: nowrap;
+  overflow: hidden;
 }
 
 .article-stats {
+  margin-left: auto;
   flex-shrink: 0;
-  gap: 0.75rem;
+  gap: 0.48rem;
 
   span {
     display: inline-flex;
     align-items: center;
-  }
-}
-
-.article-category-button {
-  display: inline-flex;
-  align-items: center;
-  max-width: 130px;
-  border: 0;
-  padding: 0;
-  background: transparent;
-  color: #64748b;
-  font-size: 0.82rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-
-  &:hover {
-    color: #2f80ed;
   }
 }
 
@@ -290,15 +282,15 @@ function emitCategoryClick(): void {
 @media (min-width: 760px) {
   .article-list-item-card {
     display: flex;
-    height: 196px;
+    height: 180px;
     width: 100%;
     margin-top: 0.75rem;
   }
 
   .article-cover-link {
     height: 100%;
-    width: 34%;
-    flex: 0 0 34%;
+    width: 30%;
+    flex: 0 0 30%;
   }
 
   .on-hover {
@@ -310,7 +302,7 @@ function emitCategoryClick(): void {
   }
 
   .article-wrapper {
-    width: 66%;
+    width: 100%;
   }
 }
 
@@ -324,9 +316,6 @@ function emitCategoryClick(): void {
   }
 
   .article-info {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 0.55rem;
     font-size: 12px;
     margin-top: 0;
 
@@ -350,10 +339,20 @@ function emitCategoryClick(): void {
 
   .article-meta-row {
     font-size: 0.78rem;
+    flex-wrap: wrap;
+  }
+
+  .article-taxonomy {
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    order: 3;
   }
 
   .article-stats {
+    width: 100%;
+    margin-left: 0;
     gap: 0.9rem;
+    order: 2;
   }
 }
 
@@ -375,13 +374,16 @@ html.dark {
 
   .article-meta-row,
   .article-info,
-  .article-info :deep(a),
-  .article-category-button {
+  .article-info :deep(a) {
     color: #9ca8b8;
   }
 
-  .article-list-item-title a {
+  .article-list-item-title {
     color: #f5f7fb;
+  }
+
+  .article-main-link:hover .article-list-item-title {
+    color: #8ab4ff;
   }
 
   .article-content {
@@ -390,10 +392,6 @@ html.dark {
 
   .article-info {
     border-top-color: #343941;
-  }
-
-  .article-category-button:hover {
-    color: #8ab4ff;
   }
 
   .article-tag-pill {

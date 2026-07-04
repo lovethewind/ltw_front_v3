@@ -1,71 +1,175 @@
 <template>
-  <el-card class="change-pwd-card">
-    <el-form label-width="100px" class="change-pwd-form">
-      <el-form-item label="验证方式">
-        <el-select v-model="changePasswordForm.changePasswordVerifyType">
-          <el-option label="原密码验证" :value="ValidTypeEnum.ORIGINAL_PASSWORD" />
-          <el-option v-if="user?.email" label="邮箱验证" :value="ValidTypeEnum.EMAIL" />
-          <el-option v-if="user?.mobile" label="手机验证" :value="ValidTypeEnum.MOBILE" />
-          <el-option v-if="user?.wechat" label="微信验证" :value="ValidTypeEnum.WECHAT" />
-        </el-select>
-      </el-form-item>
-      <el-form-item v-if="changePasswordForm.changePasswordVerifyType === ValidTypeEnum.ORIGINAL_PASSWORD"
-                    label="原密码">
-        <el-input v-model="changePasswordForm.oldPassword" type="password" placeholder="请输入原密码" show-password />
-      </el-form-item>
-      <el-form-item v-if="changePasswordForm.changePasswordVerifyType === ValidTypeEnum.EMAIL" label="验证码">
-        <el-input v-model="changePasswordForm.code" placeholder="请输入邮箱验证码" class="w-50">
-          <template #prefix>
-            <Icon icon="material-symbols:shield-outline" />
-          </template>
-        </el-input>
-        <el-button
-          type="primary"
-          :disabled="sendCodeBtnDisabled"
-          @click="sendEmailMobileCode(SendChangeCodeTypeEnum.CHANGE_PASSWORD_EMAIL)"
-          class="ms-2"
-        >
-          {{ codeMsg }}
-        </el-button>
-      </el-form-item>
-      <el-form-item v-if="changePasswordForm.changePasswordVerifyType === ValidTypeEnum.MOBILE" label="验证码">
-        <el-input v-model="changePasswordForm.code" placeholder="请输入手机验证码" class="w-50">
-          <template #prefix>
-            <Icon icon="material-symbols:shield-outline" />
-          </template>
-        </el-input>
-        <el-button
-          type="primary"
-          :disabled="sendCodeBtnDisabled"
-          @click="sendEmailMobileCode(SendChangeCodeTypeEnum.CHANGE_PASSWORD_MOBILE)"
-          class="ms-2"
-        >
-          {{ codeMsg }}
-        </el-button>
-      </el-form-item>
-      <el-form-item label="新密码">
-        <el-input v-model="changePasswordForm.password" type="password" placeholder="请输入新密码" show-password />
-      </el-form-item>
-      <el-form-item v-if="changePasswordForm.changePasswordVerifyType === ValidTypeEnum.WECHAT">
-        <div class="wechat-login pa-0">
-          <el-image v-if="!changePasswordForm.randomCodeVerifySuccess && changePasswordForm.randomCode && !isExpired"
-                    class="wechat-loading" :src="changePasswordForm.wechatAppletImg" alt="" />
-          <div v-if="!changePasswordForm.randomCodeVerifySuccess && !changePasswordForm.randomCode && !isExpired"
-               class="wechat-loading">加载中...
-          </div>
-          <div v-if="changePasswordForm.randomCodeVerifySuccess" class="wechat-loading">验证成功</div>
-          <div v-if="isExpired" class="wechat-loading cursor"
-               @click="getWechatAppletCode(WechatAppletCodeTypeEnum.MODIFY_PASSWORD)">
-            该二维码已过期，请点击重新获取
-          </div>
-          <div v-if="!changePasswordForm.randomCodeVerifySuccess" class="mt-3">请使用微信进行扫码验证</div>
+  <el-card class="password-panel user-container">
+    <section class="password-hero">
+      <div class="password-hero__liquid"></div>
+      <div class="password-hero__content">
+        <div class="password-hero__icon">
+          <Icon icon="ph:keyhole" />
         </div>
-      </el-form-item>
-      <el-form-item>
-        <el-button type="success" :disabled="updateBtnDisabled" @click="changePassword()">确认修改
-        </el-button>
-        <el-button type="info" @click="cancelChangePassword()">取消</el-button>
-      </el-form-item>
+        <div>
+          <div class="password-hero__label">安全中心</div>
+          <h3>修改登录密码</h3>
+          <p>先完成身份验证，再设置一个更可靠的新密码。</p>
+        </div>
+      </div>
+      <div class="password-hero__meta">
+        <strong>{{ getVerifyTypeText(changePasswordForm.changePasswordVerifyType) }}</strong>
+        <span>当前验证方式</span>
+      </div>
+    </section>
+
+    <div class="password-step-list">
+      <div class="password-step-item">
+        <span>1</span>
+        <strong>选择验证方式</strong>
+      </div>
+      <div class="password-step-item">
+        <span>2</span>
+        <strong>完成身份确认</strong>
+      </div>
+      <div class="password-step-item">
+        <span>3</span>
+        <strong>提交新密码</strong>
+      </div>
+    </div>
+
+    <el-form class="password-form-card" label-position="top">
+      <section class="password-field-card">
+        <div class="password-field-card__title">
+          <Icon icon="ph:shield-check" />
+          <span>验证方式</span>
+        </div>
+        <div class="password-verify-tabs">
+          <button
+            class="password-verify-tab"
+            :class="{ 'is-active': changePasswordForm.changePasswordVerifyType === ValidTypeEnum.ORIGINAL_PASSWORD }"
+            type="button"
+            @click="changePasswordForm.changePasswordVerifyType = ValidTypeEnum.ORIGINAL_PASSWORD"
+          >
+            <Icon icon="ph:lock-key" />
+            原密码
+          </button>
+          <button
+            v-if="user?.email"
+            class="password-verify-tab"
+            :class="{ 'is-active': changePasswordForm.changePasswordVerifyType === ValidTypeEnum.EMAIL }"
+            type="button"
+            @click="changePasswordForm.changePasswordVerifyType = ValidTypeEnum.EMAIL"
+          >
+            <Icon icon="ph:envelope-simple" />
+            邮箱
+          </button>
+          <button
+            v-if="user?.mobile"
+            class="password-verify-tab"
+            :class="{ 'is-active': changePasswordForm.changePasswordVerifyType === ValidTypeEnum.MOBILE }"
+            type="button"
+            @click="changePasswordForm.changePasswordVerifyType = ValidTypeEnum.MOBILE"
+          >
+            <Icon icon="ph:device-mobile" />
+            手机
+          </button>
+          <button
+            v-if="user?.wechat"
+            class="password-verify-tab"
+            :class="{ 'is-active': changePasswordForm.changePasswordVerifyType === ValidTypeEnum.WECHAT }"
+            type="button"
+            @click="changePasswordForm.changePasswordVerifyType = ValidTypeEnum.WECHAT"
+          >
+            <Icon icon="mdi:wechat" />
+            微信
+          </button>
+        </div>
+        <el-form-item v-if="changePasswordForm.changePasswordVerifyType === ValidTypeEnum.ORIGINAL_PASSWORD" label="原密码">
+          <el-input v-model="changePasswordForm.oldPassword" type="password" placeholder="请输入原密码" show-password>
+            <template #prefix>
+              <Icon icon="ph:lock-key" />
+            </template>
+          </el-input>
+        </el-form-item>
+        <el-form-item v-if="changePasswordForm.changePasswordVerifyType === ValidTypeEnum.EMAIL" label="邮箱验证码">
+          <div class="password-code-row">
+            <el-input v-model="changePasswordForm.code" placeholder="请输入邮箱验证码">
+              <template #prefix>
+                <Icon icon="material-symbols:shield-outline" />
+              </template>
+            </el-input>
+            <button
+              class="password-code-button"
+              type="button"
+              :disabled="sendCodeBtnDisabled"
+              @click="sendEmailMobileCode(SendChangeCodeTypeEnum.CHANGE_PASSWORD_EMAIL)"
+            >
+              {{ codeMsg }}
+            </button>
+          </div>
+        </el-form-item>
+        <el-form-item v-if="changePasswordForm.changePasswordVerifyType === ValidTypeEnum.MOBILE" label="手机验证码">
+          <div class="password-code-row">
+            <el-input v-model="changePasswordForm.code" placeholder="请输入手机验证码">
+              <template #prefix>
+                <Icon icon="material-symbols:shield-outline" />
+              </template>
+            </el-input>
+            <button
+              class="password-code-button"
+              type="button"
+              :disabled="sendCodeBtnDisabled"
+              @click="sendEmailMobileCode(SendChangeCodeTypeEnum.CHANGE_PASSWORD_MOBILE)"
+            >
+              {{ codeMsg }}
+            </button>
+          </div>
+        </el-form-item>
+        <div v-if="changePasswordForm.changePasswordVerifyType === ValidTypeEnum.WECHAT" class="password-wechat-panel">
+          <div class="password-wechat-qr">
+            <el-image
+              v-if="!changePasswordForm.randomCodeVerifySuccess && changePasswordForm.randomCode && !isExpired"
+              :src="changePasswordForm.wechatAppletImg"
+              alt=""
+            />
+            <div v-if="!changePasswordForm.randomCodeVerifySuccess && !changePasswordForm.randomCode && !isExpired" class="password-wechat-state">
+              加载中...
+            </div>
+            <div v-if="changePasswordForm.randomCodeVerifySuccess" class="password-wechat-state is-success">验证成功</div>
+            <button
+              v-if="isExpired"
+              class="password-wechat-retry"
+              type="button"
+              @click="getWechatAppletCode(WechatAppletCodeTypeEnum.MODIFY_PASSWORD)"
+            >
+              二维码已过期，重新获取
+            </button>
+          </div>
+          <p v-if="!changePasswordForm.randomCodeVerifySuccess">请使用微信扫码完成身份验证。</p>
+        </div>
+      </section>
+
+      <section class="password-field-card">
+        <div class="password-field-card__title">
+          <Icon icon="ph:password" />
+          <span>新密码</span>
+        </div>
+        <el-form-item label="新密码">
+          <el-input v-model="changePasswordForm.password" type="password" placeholder="请输入新密码" show-password>
+            <template #prefix>
+              <Icon icon="ph:key" />
+            </template>
+          </el-input>
+        </el-form-item>
+        <div class="password-rule-list">
+          <span><Icon icon="ph:check-circle" />6-30 位字符</span>
+          <span><Icon icon="ph:check-circle" />不能全为字母或数字</span>
+        </div>
+      </section>
+
+      <div class="password-actions">
+        <button class="password-submit-button" type="button" :disabled="updateBtnDisabled" @click="changePassword()">
+          <Icon icon="ph:check-circle" />
+          确认修改
+        </button>
+        <button class="password-ghost-button" type="button" @click="cancelChangePassword()">取消</button>
+      </div>
     </el-form>
   </el-card>
 </template>
@@ -124,7 +228,30 @@ onUnmounted(() => {
   codeTimer.value && clearInterval(codeTimer.value)
 })
 
-async function getWechatAppletCode(_type?: WechatAppletCodeTypeEnum) {
+/**
+ * 获取当前验证方式的展示文案。
+ *
+ * :param type: 验证方式枚举值。
+ * :return: 验证方式展示文案。
+ */
+function getVerifyTypeText(type: ValidTypeEnum): string {
+  const verifyTypeMap: Record<number, string> = {
+    [ValidTypeEnum.ORIGINAL_PASSWORD]: '原密码',
+    [ValidTypeEnum.EMAIL]: '邮箱',
+    [ValidTypeEnum.MOBILE]: '手机',
+    [ValidTypeEnum.WECHAT]: '微信'
+  }
+
+  return verifyTypeMap[type] || '验证'
+}
+
+/**
+ * 获取微信小程序验证二维码并轮询扫码状态。
+ *
+ * :param _type: 微信二维码业务类型。
+ * :return: 无返回值。
+ */
+async function getWechatAppletCode(_type?: WechatAppletCodeTypeEnum): Promise<void> {
   const res = await userApi.getWechatAppletCode(WechatAppletCodeTypeEnum.MODIFY_PASSWORD)
   isExpired.value = false
   changePasswordForm.value.randomCode = res.data.code
@@ -165,7 +292,13 @@ async function getWechatAppletCode(_type?: WechatAppletCodeTypeEnum) {
   }, 1500)
 }
 
-function sendEmailMobileCode(type: SendChangeCodeTypeEnum) {
+/**
+ * 发送邮箱或手机修改密码验证码。
+ *
+ * :param type: 验证码发送类型。
+ * :return: 无返回值。
+ */
+function sendEmailMobileCode(type: SendChangeCodeTypeEnum): void {
   // 发送邮件
   countDown()
   let func: ((params: any) => Promise<any>) | undefined
@@ -195,7 +328,12 @@ function sendEmailMobileCode(type: SendChangeCodeTypeEnum) {
   })
 }
 
-function countDown() {
+/**
+ * 启动验证码发送按钮倒计时。
+ *
+ * :return: 无返回值。
+ */
+function countDown(): void {
   sendCodeBtnDisabled.value = true
   codeTimer.value = setInterval(() => {
     time.value--
@@ -209,7 +347,12 @@ function countDown() {
   }, 1000)
 }
 
-function changePassword() {
+/**
+ * 校验并提交修改密码表单。
+ *
+ * :return: 无返回值。
+ */
+function changePassword(): void {
   if (!changePasswordForm.value.password) {
     ElMessage({
       message: '请输入新密码',
@@ -272,7 +415,12 @@ function changePassword() {
 }
 
 
-function cancelChangePassword() {
+/**
+ * 重置修改密码表单。
+ *
+ * :return: 无返回值。
+ */
+function cancelChangePassword(): void {
   changePasswordForm.value = Object.assign({}, defaultChangePasswordForm)
   updateBtnDisabled.value = false
 }

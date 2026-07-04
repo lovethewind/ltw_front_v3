@@ -1,179 +1,159 @@
 <template>
-  <div v-if="viewUser">
-    <el-card class="user-container">
-      <el-row v-if="user?.id === viewUser.id" class="search-bar" justify="center" align="middle">
-        <el-col :xs="24" :sm="11" class="hidden-xs-only">
-          <el-date-picker
-            v-model="searchDates"
-            type="daterange"
-            value-format="YYYY-MM-DD"
-            range-separator="至"
-            start-placeholder="开始日期"
-            end-placeholder="结束日期"
-            placeholder="请选择发布时间"
-          />
-        </el-col>
-        <el-col :xs="8" :sm="4">
-          <el-select v-model="queryDict.isOriginal" placeholder="文章类型">
-            <el-option label="---" value="" />
-            <el-option label="原创" :value="true" />
-            <el-option label="转载" :value="false" />
-          </el-select>
-        </el-col>
-        <el-col :xs="11" :sm="7">
-          <el-input v-model="queryDict.keyword" placeholder="请输入关键字" clearable />
-        </el-col>
-        <el-col :xs="5" :sm="2">
-          <el-button type="primary" @click="resetAndFetchArticleList()">搜索</el-button>
-        </el-col>
-      </el-row>
-      <el-row v-if="user?.id === viewUser.id" class="search-bar" :gutter="12" justify="center" align="middle">
-        <el-col :xs="24" :sm="9">
+  <el-card class="article-manager-card user-container">
+    <div class="article-toolbar">
+      <div class="article-filter-row">
+        <el-date-picker
+          v-if="viewUser && user?.id === viewUser.id"
+          v-model="searchDates"
+          type="daterange"
+          value-format="YYYY-MM-DD"
+          range-separator="至"
+          start-placeholder="开始日期"
+          end-placeholder="结束日期"
+          placeholder="请选择发布时间"
+        />
+        <el-select
+          v-if="viewUser && user?.id === viewUser.id"
+          v-model="queryDict.isOriginal"
+          placeholder="文章类型"
+        >
+          <el-option label="全部类型" value="" />
+          <el-option label="原创" :value="true" />
+          <el-option label="转载" :value="false" />
+        </el-select>
+        <el-input v-model="queryDict.keyword" placeholder="请输入关键字" clearable />
+        <el-button type="primary" @click="resetAndFetchArticleList()">
+          <Icon icon="material-symbols:search-rounded" />
+          搜索
+        </el-button>
+      </div>
+      <div v-if="viewUser && user?.id === viewUser.id" class="article-toolbar__footer">
+        <div class="article-order-wrap">
           <order-bar :use-card="false" :bar-list="searchOrderList" @item-click="orderTypeChange" />
-        </el-col>
-        <el-col :xs="24" :sm="15" class="text-end">
-          <a :class="!queryDict.status ? 'active': ''" @click="changeArticleStatus()">全部({{ countAll(articleInfo)
-            }})</a>
-          <el-divider direction="vertical" />
-          <a :class="queryDict.status === ArticleStatusEnum.PUBLISHED ? 'active': ''"
-             @click="changeArticleStatus(ArticleStatusEnum.PUBLISHED)">已发布({{ articleInfo[ArticleStatusEnum.PUBLISHED] || 0
-            }})</a>
-          <el-divider direction="vertical" />
-          <a :class="queryDict.status === ArticleStatusEnum.DRAFT ? 'active': ''"
-             @click="changeArticleStatus(ArticleStatusEnum.DRAFT)">草稿箱({{ articleInfo[ArticleStatusEnum.DRAFT] || 0
-            }})</a>
-          <el-divider direction="vertical" />
-          <a :class="queryDict.status === ArticleStatusEnum.CHECKING ? 'active': ''"
-             @click="changeArticleStatus(ArticleStatusEnum.CHECKING)">审核中({{ articleInfo[ArticleStatusEnum.CHECKING] || 0
-            }})</a>
-          <el-divider direction="vertical" />
-          <a :class="queryDict.status === ArticleStatusEnum.DELETED ? 'active': ''"
-             @click="changeArticleStatus(ArticleStatusEnum.DELETED)">回收站({{ articleInfo[ArticleStatusEnum.DELETED] || 0
-            }})</a>
-        </el-col>
-      </el-row>
-      <el-divider v-if="user?.id === viewUser.id" />
-      <div v-if="articleList.length > 0">
-        <div v-for="article in articleList" :key="article.id" class="user-article-div article-item">
-          <el-row justify="center" align="middle">
-            <el-col :xs="24" :sm="6" class="article-cover-col">
-              <div class="article-cover"
-                   :style="'background: url(' + (article.coverThumb || article.cover) + ') center center / cover no-repeat'"
-                   @click="toArticleDetail(article)" />
-            </el-col>
-            <el-col :xs="24" :sm="18" class="ps-4">
-              <el-row>
-                <el-col class="article-title">
-                  <router-link v-if="!article.status || article.status === ArticleStatusEnum.PUBLISHED"
-                               :to="'/article/' + article.id" class="a-link">{{ article.title }}
-                  </router-link>
-                  <span v-else>{{ article.title }}</span>
-                </el-col>
-              </el-row>
-              <el-row>
-                <el-col class="article-content">{{ deleteHTMLTag(article.content) }}</el-col>
-              </el-row>
-              <el-row class="bottom-bar">
-                <el-col :xs="24" :sm="6">
-                  <Icon icon="solar:calendar-broken" />
-                  {{ minute(article.createTime) }}
-                </el-col>
-                <el-col :xs="12" :sm="6" class="justify-content-center">
-                  <span class="count-span">
-                    <Icon icon="ph:eye" />
-                    {{ article.viewCount }}
-                  </span>
-                  <span class="count-span">
-                    <Icon icon="tabler:thumb-up" />
-                    {{ article.likeCount }}
-                  </span>
-                  <span class="count-span">
-                    <Icon icon="iconamoon:comment-dots" />
-                    {{ article.commentCount }}
-                  </span>
-                </el-col>
-                <el-col :xs="12" :sm="6" class="hidden-xs-only">
-                  <span class="article-origin">
-                    <el-tag size="small" :type="article.isOriginal ? 'success' : 'warning'">
-                      {{ article.isOriginal ? '原创' : '转载' }}
-                    </el-tag>
-                  </span>
-                  <span v-if="article.status !== ArticleStatusEnum.PUBLISHED" class="article-status">
-                    <el-tag size="small" :color="(articleStatusTypeMap as any)[article.status]">
-                      {{ (articleStatusMap as any)[article.status] }}
-                    </el-tag>
-                  </span>
-                </el-col>
-                <el-col v-if="user?.id === viewUser.id && article.status !== ArticleStatusEnum.DELETED" :xs="12" :sm="6"
-                        class="justify-content-end">
-                  <router-link :to="'/article/edit/' + article.id" class="me-2">
-                    <Icon icon="mage:edit" />
-                    编辑
-                  </router-link>
-                  <el-dropdown>
-                    <span class="el-dropdown-link cursor-pointer">
-                      <Icon icon="mingcute:more-1-line" />
-                    </span>
-                    <template #dropdown>
-                      <el-dropdown-menu class="user-article-more">
-                        <el-dropdown-item>
-                          <a @click="removeToRecycle(article)">
-                            <Icon icon="material-symbols:delete-outline" />
-                            删除</a>
-                        </el-dropdown-item>
-                      </el-dropdown-menu>
-                    </template>
-                  </el-dropdown>
-                </el-col>
-                <el-col v-if="user?.id === viewUser.id && article.status === ArticleStatusEnum.DELETED" :xs="12"
-                        :sm="6" class="justify-content-end cursor-pointer">
-                  <el-dropdown>
-                    <span class="el-dropdown-link">
-                      <Icon icon="mingcute:more-1-line" />
-                    </span>
-                    <template #dropdown>
-                      <el-dropdown-menu class="user-article-more">
-                        <el-dropdown-item>
-                          <a @click="recoveryRecycleArticle(article)">
-                            <Icon icon="la:trash-restore" />
-                            恢复至草稿</a>
-                        </el-dropdown-item>
-                        <el-dropdown-item>
-                          <a @click="deleteRecycleArticle(article)">
-                            <Icon icon="material-symbols:delete-outline" />
-                            从回收站删除</a>
-                        </el-dropdown-item>
-                      </el-dropdown-menu>
-                    </template>
-                  </el-dropdown>
-                </el-col>
-              </el-row>
-            </el-col>
-          </el-row>
+        </div>
+        <div class="article-status-tabs">
+          <button
+            type="button"
+            class="article-status-tab"
+            :class="{ 'is-active': !queryDict.status }"
+            @click="changeArticleStatus()"
+          >
+            全部 <strong>{{ countAll(articleInfo) }}</strong>
+          </button>
+          <button
+            type="button"
+            class="article-status-tab"
+            :class="{ 'is-active': queryDict.status === ArticleStatusEnum.PUBLISHED }"
+            @click="changeArticleStatus(ArticleStatusEnum.PUBLISHED)"
+          >
+            已发布 <strong>{{ articleInfo[ArticleStatusEnum.PUBLISHED] || 0 }}</strong>
+          </button>
+          <button
+            type="button"
+            class="article-status-tab"
+            :class="{ 'is-active': queryDict.status === ArticleStatusEnum.DRAFT }"
+            @click="changeArticleStatus(ArticleStatusEnum.DRAFT)"
+          >
+            草稿箱 <strong>{{ articleInfo[ArticleStatusEnum.DRAFT] || 0 }}</strong>
+          </button>
+          <button
+            type="button"
+            class="article-status-tab"
+            :class="{ 'is-active': queryDict.status === ArticleStatusEnum.CHECKING }"
+            @click="changeArticleStatus(ArticleStatusEnum.CHECKING)"
+          >
+            审核中 <strong>{{ articleInfo[ArticleStatusEnum.CHECKING] || 0 }}</strong>
+          </button>
+          <button
+            type="button"
+            class="article-status-tab"
+            :class="{ 'is-active': queryDict.status === ArticleStatusEnum.DELETED }"
+            @click="changeArticleStatus(ArticleStatusEnum.DELETED)"
+          >
+            回收站 <strong>{{ articleInfo[ArticleStatusEnum.DELETED] || 0 }}</strong>
+          </button>
         </div>
       </div>
-      <!-- 加载更多 -->
-      <load-more :loading="loading" :no-more="noMore" :total="total" @load="infiniteHandler" />
-    </el-card>
-  </div>
+    </div>
+
+    <div v-if="articleList.length > 0" class="article-list">
+      <ArticleListItem
+        v-for="(article, index) in articleList"
+        :key="article.id"
+        class="profile-article-card"
+        :article="normalizeArticleForCard(article)"
+        :index="index"
+        :tag-map="tagMap"
+        :show-avatar="false"
+        mode="manage"
+        :clickable="article.status === ArticleStatusEnum.PUBLISHED"
+      >
+        <template #badges>
+          <el-tag
+            v-if="article.status !== ArticleStatusEnum.PUBLISHED"
+            size="small"
+            :color="(articleStatusTypeMap as any)[article.status]"
+          >
+            {{ (articleStatusMap as any)[article.status] }}
+          </el-tag>
+        </template>
+        <template #actions>
+          <div
+            v-if="user?.id === viewUser.id && article.status !== ArticleStatusEnum.DELETED"
+            class="article-card__actions"
+          >
+            <router-link :to="'/article/edit/' + article.id" class="article-action-link">
+              <Icon icon="mage:edit" />
+              编辑
+            </router-link>
+            <button type="button" class="article-danger-button" @click="removeToRecycle(article)">
+              <Icon icon="material-symbols:delete-outline" />
+              删除
+            </button>
+          </div>
+          <div
+            v-if="user?.id === viewUser.id && article.status === ArticleStatusEnum.DELETED"
+            class="article-card__actions"
+          >
+            <button type="button" class="article-restore-button" @click="recoveryRecycleArticle(article)">
+              <Icon icon="la:trash-restore" />
+              恢复至草稿
+            </button>
+            <button type="button" class="article-danger-button" @click="deleteRecycleArticle(article)">
+              <Icon icon="material-symbols:delete-outline" />
+              从回收站删除
+            </button>
+          </div>
+        </template>
+      </ArticleListItem>
+    </div>
+    <!-- 加载更多 -->
+    <load-more
+      :loading="loading"
+      :no-more="noMore"
+      :total="total"
+      :loadingRows="20"
+      @load="infiniteHandler"
+    />
+  </el-card>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref, toRefs } from 'vue'
-import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import { useCommonStore } from '@/stores/common'
 import OrderBar from '@/components/base/OrderBar.vue'
 import LoadMore from '@/components/base/LoadMore.vue'
+import ArticleListItem from '@/components/article/ArticleListItem.vue'
 import articleApi from '@/api/article'
 import { deleteHTMLTag, removeEmptyValues } from '@/utils/common'
 import { articleStatusMap, articleStatusTypeMap } from '@/utils/constant'
 import { ArticleStatusEnum } from '@/enums'
-import { minute } from '@/utils/date'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Icon } from '@iconify/vue'
 
-const router = useRouter()
 const userStore = useUserStore()
+const commonStore = useCommonStore()
 
 const props = defineProps<{
   viewUser: any
@@ -192,7 +172,8 @@ const searchOrderList = [
   {
     type: 3,
     name: '按阅读量'
-  }]
+  }
+]
 const searchDates = ref<any>(null)
 const loading = ref(false)
 const articleList = ref<any>([])
@@ -208,6 +189,9 @@ const user = computed(() => {
 const noMore = computed(() => {
   return articleList.value.length >= total.value
 })
+const tagMap = computed(() => {
+  return commonStore.tagMap
+})
 
 onMounted(() => {
   infiniteHandler()
@@ -222,23 +206,29 @@ function infiniteHandler() {
     queryDict.value.dateFrom = ''
     queryDict.value.dateTo = ''
   }
-  const queryParams = Object.assign({ userId: viewUser.value.id }, removeEmptyValues(queryDict.value))
-  articleApi.getPageList(currentPage.value, pageSize.value, queryParams).then(res => {
-    if (res.data.records.length) {
-      currentPage.value++
-      articleList.value.push(...res.data.records)
-      total.value = res.data.total
+  const queryParams = Object.assign(
+    { userId: viewUser.value.id },
+    removeEmptyValues(queryDict.value)
+  )
+  articleApi
+    .getPageList(currentPage.value, pageSize.value, queryParams)
+    .then((res) => {
+      if (res.data.records.length) {
+        currentPage.value++
+        articleList.value.push(...res.data.records)
+        total.value = res.data.total
+        loading.value = false
+      }
+    })
+    .finally(() => {
       loading.value = false
-    }
-  }).finally(() => {
-    loading.value = false
-  })
+    })
   fetchUserArticleInfo(queryParams)
 }
 
 function fetchUserArticleInfo(query: object) {
   if (user.value?.id !== viewUser.value.id) return
-  articleApi.getUserArticleCountInfo(query).then(res => {
+  articleApi.getUserArticleCountInfo(query).then((res) => {
     articleInfo.value = res.data
   })
 }
@@ -254,35 +244,39 @@ function removeToRecycle(article: any) {
     cancelButtonText: '取消',
     type: 'warning'
   }).then(() => {
-    articleApi.removeToRecycle({
-      ids: [article.id]
-    }).then(() => {
-      ElMessage({
-        message: '删除成功，可在回收站查看和恢复',
-        type: 'success',
-        plain: true
+    articleApi
+      .removeToRecycle({
+        ids: [article.id]
       })
-      articleList.value.splice(articleList.value.indexOf(article), 1)
-      articleInfo.value[article.status]--
-      articleInfo.value[ArticleStatusEnum.DELETED]++
-    }).catch(() => {
-    })
+      .then(() => {
+        ElMessage({
+          message: '删除成功，可在回收站查看和恢复',
+          type: 'success',
+          plain: true
+        })
+        articleList.value.splice(articleList.value.indexOf(article), 1)
+        articleInfo.value[article.status]--
+        articleInfo.value[ArticleStatusEnum.DELETED]++
+      })
+      .catch(() => {})
   })
 }
 
 function recoveryRecycleArticle(article: any) {
-  articleApi.moveToDraft({
-    ids: [article.id]
-  }).then(() => {
-    ElMessage({
-      message: '已恢复至草稿',
-      type: 'success',
-      plain: true
+  articleApi
+    .moveToDraft({
+      ids: [article.id]
     })
-    articleList.value.splice(articleList.value.indexOf(article), 1)
-    articleInfo.value[ArticleStatusEnum.DELETED]--
-    articleInfo.value[ArticleStatusEnum.DRAFT]++
-  })
+    .then(() => {
+      ElMessage({
+        message: '已恢复至草稿',
+        type: 'success',
+        plain: true
+      })
+      articleList.value.splice(articleList.value.indexOf(article), 1)
+      articleInfo.value[ArticleStatusEnum.DELETED]--
+      articleInfo.value[ArticleStatusEnum.DRAFT]++
+    })
 }
 
 function deleteRecycleArticle(article: any) {
@@ -291,26 +285,21 @@ function deleteRecycleArticle(article: any) {
     cancelButtonText: '取消',
     type: 'warning'
   }).then(() => {
-    articleApi.removeFromRecycle({
-      ids: [article.id]
-    }).then(() => {
-      ElMessage({
-        message: '删除成功',
-        type: 'success',
-        plain: true
+    articleApi
+      .removeFromRecycle({
+        ids: [article.id]
       })
-      articleList.value.splice(articleList.value.indexOf(article), 1)
-      articleInfo.value[ArticleStatusEnum.DELETED]--
-    }).catch(() => {
-    })
+      .then(() => {
+        ElMessage({
+          message: '删除成功',
+          type: 'success',
+          plain: true
+        })
+        articleList.value.splice(articleList.value.indexOf(article), 1)
+        articleInfo.value[ArticleStatusEnum.DELETED]--
+      })
+      .catch(() => {})
   })
-}
-
-function toArticleDetail(article: any) {
-  if (article.status !== ArticleStatusEnum.PUBLISHED) {
-    return
-  }
-  router.push('/article/' + article.id)
 }
 
 function changeArticleStatus(val?: any) {
@@ -333,14 +322,20 @@ function countAll(obj: any) {
   return count
 }
 
+/**
+ * 将个人中心文章数据适配为公共文章卡片需要的展示结构。
+ *
+ * :param article: 原始文章数据。
+ * :return: 适配后的文章展示数据。
+ */
+function normalizeArticleForCard(article: any): any {
+  return {
+    ...article,
+    content: deleteHTMLTag(article.content || ''),
+    user: article.user || viewUser.value,
+    tagList: article.tagList || []
+  }
+}
 </script>
 
 <style src="@/assets/css/user-center.scss" scoped />
-<style lang="scss">
-.user-article-more {
-  a {
-    display: inline-flex;
-    align-items: center;
-  }
-}
-</style>

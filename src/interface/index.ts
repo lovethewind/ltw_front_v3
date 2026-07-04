@@ -142,6 +142,7 @@ export interface IArticle {
   createTime: string
   updateTime: string
   editTime: string
+  collectTime: string
   collectCount: number
   commentCount: number
   likeCount: number

@@ -1,60 +1,84 @@
 <template>
-  <div v-if="viewUser">
-    <div class="banner" :style="cover">
-      <div class="user-summary">{{ viewUser.summary }}</div>
-      <div class="user-nickname">一 {{ viewUser.nickname }}</div>
-      <div v-if="user?.id === viewUser.id" class="read-info">
+  <div v-if="viewUser" class="user-center-page">
+    <section class="profile-hero" :style="cover">
+      <div class="profile-hero__shade"></div>
+      <div v-if="user?.id === viewUser.id" class="profile-hero__actions">
         <el-upload
           v-if="!newBackgroundImage"
-          class="avatar-upload"
+          class="profile-cover-upload"
           action=""
           :before-upload="beforeBackgroundUpload"
           accept="image/*"
           :show-file-list="false"
           placeholder="更改个人中心背景"
         >
-          <el-button type="success" size="small">更改背景</el-button>
+          <button class="profile-hero__action" type="button">
+            <Icon icon="tabler:photo-edit" />
+            更换背景
+          </button>
         </el-upload>
-        <span v-if="newBackgroundImage">
-          <el-button type="success" size="small" :disabled="changDisabled"
-                     @click="changBackgroundImage()">确认修改</el-button>
-          <el-button type="info" size="small" @click="cancelBackgroundEdit()">取消</el-button>
-        </span>
+        <div v-if="newBackgroundImage" class="profile-hero__confirm">
+          <button
+            class="profile-hero__action is-primary"
+            type="button"
+            :disabled="changDisabled"
+            @click="changBackgroundImage()"
+          >
+            确认修改
+          </button>
+          <button class="profile-hero__action" type="button" @click="cancelBackgroundEdit()">取消</button>
+        </div>
       </div>
-    </div>
-    <div class="tabs-container">
-      <el-row>
-        <el-col :md="4" class="user-menu pe-2">
-          <el-card>
-            <el-menu :default-active="currentActiveMenu.index">
-              <el-menu-item v-for="menu in menuList" :key="'menuItem' + menu.index" :index="menu.index"
-                            @click="selectMenu(menu)">
-                <template #title>
-                  <Icon :icon="menu.icon" class="me-1" />
-                  {{ menu.name }}
-                </template>
-              </el-menu-item>
-            </el-menu>
-          </el-card>
-        </el-col>
-        <el-col :md="15">
-          <el-card class="mb-1">
-            <div class="font-18 font-500 p-2 d-flex align-items-center">
-              <Icon :icon="currentActiveMenu.icon" class="me-1" />
-              {{ currentActiveMenu.name }}
+      <div class="profile-hero__content">
+        <div class="profile-hero__summary">{{ viewUser.summary || '这个人很神秘，还没有写签名' }}</div>
+        <div class="profile-hero__nickname">一 {{ viewUser.nickname }}</div>
+      </div>
+    </section>
+    <div class="profile-shell">
+      <aside class="profile-sidebar">
+        <nav class="profile-menu-card">
+          <button
+            v-for="menu in menuList"
+            :key="'menuItem' + menu.index"
+            class="profile-menu-item"
+            :class="{ 'is-active': currentActiveMenu.index === menu.index }"
+            type="button"
+            @click="selectMenu(menu)"
+          >
+            <span class="profile-menu-item__icon">
+              <Icon :icon="menu.icon" />
+            </span>
+            <span>{{ menu.name }}</span>
+          </button>
+        </nav>
+      </aside>
+      <main class="profile-main">
+        <div class="profile-content-card">
+          <div class="profile-section-title">
+            <span class="profile-section-title__icon">
+              <Icon :icon="currentActiveMenu.icon" />
+            </span>
+            <div>
+              <div class="profile-section-title__label">当前栏目</div>
+              <h2>{{ currentActiveMenu.name }}</h2>
             </div>
-          </el-card>
-          <user-base-info v-if="currentActiveMenu.index === UserSettingMenuTypeEnum.BASE_INFO" :view-user="viewUser" />
-          <user-article v-if="currentActiveMenu.index === UserSettingMenuTypeEnum.ARTICLE" :view-user="viewUser" />
-          <user-follow v-if="currentActiveMenu.index === UserSettingMenuTypeEnum.FOLLOW" :view-user="viewUser" />
-          <user-collect v-if="currentActiveMenu.index === UserSettingMenuTypeEnum.COLLECT" :view-user="viewUser" />
-          <user-settings v-if="currentActiveMenu.index === UserSettingMenuTypeEnum.SETTINGS" />
-          <change-password v-if="currentActiveMenu.index === UserSettingMenuTypeEnum.CHANGE_PASSWORD" />
-        </el-col>
-        <el-col :md="5" class="ps-2">
-          <user-detail :view-user="viewUser" />
-        </el-col>
-      </el-row>
+          </div>
+          <div class="profile-section-body">
+            <user-base-info
+              v-if="isSelfProfile && currentActiveMenu.index === UserSettingMenuTypeEnum.BASE_INFO"
+              :view-user="viewUser"
+            />
+            <user-article v-if="currentActiveMenu.index === UserSettingMenuTypeEnum.ARTICLE" :view-user="viewUser" />
+            <user-follow v-if="currentActiveMenu.index === UserSettingMenuTypeEnum.FOLLOW" :view-user="viewUser" />
+            <user-collect v-if="currentActiveMenu.index === UserSettingMenuTypeEnum.COLLECT" :view-user="viewUser" />
+            <user-settings v-if="currentActiveMenu.index === UserSettingMenuTypeEnum.SETTINGS" />
+            <change-password v-if="currentActiveMenu.index === UserSettingMenuTypeEnum.CHANGE_PASSWORD" />
+          </div>
+        </div>
+      </main>
+      <aside class="profile-aside">
+        <user-detail :view-user="viewUser" />
+      </aside>
     </div>
   </div>
 </template>
@@ -86,7 +110,7 @@ const menuListAll = [
     index: UserSettingMenuTypeEnum.BASE_INFO,
     name: '基本信息',
     icon: 'mi:user',
-    needLogin: false
+    needLogin: true
   },
   {
     index: UserSettingMenuTypeEnum.ARTICLE,
@@ -126,7 +150,7 @@ const currentActiveMenu = ref<any>({
   index: UserSettingMenuTypeEnum.BASE_INFO,
   name: '基本信息',
   icon: 'mi:user',
-  needLogin: false
+  needLogin: true
 })
 const isEdit = ref(false)
 const tempCover = ref<any>(null)
@@ -140,15 +164,18 @@ const cover = computed(() => {
 const user = computed(() => {
   return userStore.user
 })
+const isSelfProfile = computed(() => {
+  return !!user.value?.id && !!viewUser.value?.id && user.value.id === viewUser.value.id
+})
 const menuList = computed(() => {
   return menuListAll.filter(menu => {
-    return !menu.needLogin || user.value?.id === viewUser.value.id
+    return !menu.needLogin || isSelfProfile.value
   })
 })
 
-watch(user, (val) => {
-  if (!val && currentActiveMenu.value.needLogin) {
-    currentActiveMenu.value = menuListAll.find(menu => menu.index === UserSettingMenuTypeEnum.BASE_INFO) || menuListAll[0]
+watch([user, viewUser], () => {
+  if (!menuList.value.some(menu => menu.index === currentActiveMenu.value.index)) {
+    currentActiveMenu.value = menuList.value[0] || menuListAll[0]
   }
 })
 

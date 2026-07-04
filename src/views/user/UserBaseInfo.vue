@@ -1,127 +1,190 @@
 <template>
-  <el-card v-if="user?.id === viewUser.id && loginUser" class="user-container">
-    <el-form
-      ref="formRef"
-      :model="loginUser"
-      label-width="80px"
-      class="pt-4 pb-2"
-    >
-      <el-form-item label="头像" prop="avatar">
-        <el-upload
-          v-if="isEdit && !avatarPreviewUrl"
-          ref="upload"
-          accept="image/*"
-          class="avatar-uploader"
-          :show-file-list="false"
-          action=""
-          :before-upload="beforeAvatarUpload"
-        >
-          <el-avatar v-if="loginUser.avatar" :src="loginUser.avatar" class="imgAvatar" />
-          <Icon v-else icon="ic:round-plus" />
-        </el-upload>
-        <el-avatar v-if="!isEdit && !avatarPreviewUrl" :src="loginUser.avatar" />
-        <div v-if="avatarPreviewUrl">
-          <el-avatar :src="avatarPreviewUrl" class="cover-img" />
-          <div><a @click="handleAvatarRemove()">取消</a></div>
+  <el-card v-if="user?.id === viewUser.id && loginUser" class="profile-edit-card user-container" :class="{ 'is-editing': isEdit }">
+    <el-form ref="formRef" :model="loginUser" label-position="top" class="profile-edit-form">
+      <div class="profile-edit-hero">
+        <div class="profile-edit-avatar-wrap">
+          <el-upload
+            v-if="isEdit && !avatarPreviewUrl"
+            ref="upload"
+            accept="image/*"
+            class="avatar-uploader"
+            :show-file-list="false"
+            action=""
+            :before-upload="beforeAvatarUpload"
+          >
+            <div class="profile-avatar-uploader">
+              <el-avatar v-if="loginUser.avatar" :src="loginUser.avatar" class="profile-edit-avatar" />
+              <Icon v-else icon="ic:round-plus" />
+              <div class="profile-avatar-edit-mask">
+                <Icon icon="material-symbols:add-a-photo-outline-rounded" />
+                <span>更换头像</span>
+              </div>
+            </div>
+          </el-upload>
+          <el-avatar v-if="!isEdit && !avatarPreviewUrl" :src="loginUser.avatar" class="profile-edit-avatar" />
+          <div v-if="avatarPreviewUrl" class="profile-avatar-preview">
+            <el-avatar :src="avatarPreviewUrl" class="profile-edit-avatar" />
+            <button type="button" @click="handleAvatarRemove()">取消</button>
+          </div>
         </div>
-      </el-form-item>
-      <el-form-item label="用户名">
-        {{ loginUser.username }}
-      </el-form-item>
-      <el-form-item label="昵称">
-        <el-input v-if="isEdit" v-model="loginUser.nickname" maxlength="20" show-word-limit placeholder="请输入您的昵称"
-        />
-        <span v-else>{{ loginUser.nickname }}</span>
-      </el-form-item>
-      <el-form-item label="性别" prop="sex">
-        <el-radio-group v-if="isEdit" v-model="loginUser.gender">
-          <el-radio :value="0">保密</el-radio>
-          <el-radio :value="1">男</el-radio>
-          <el-radio :value="2">女</el-radio>
-        </el-radio-group>
-        <span v-else>{{ genderMap[loginUser.gender].name }}</span>
-      </el-form-item>
-      <el-form-item label="签名">
-        <el-input
-          v-if="isEdit"
-          v-model="loginUser.summary"
-          maxlength="100"
-          show-word-limit
+        <div class="profile-edit-hero__content">
+          <div class="profile-overview-eyebrow">我的资料</div>
+          <h3>{{ loginUser.nickname || loginUser.username }}</h3>
+          <p>{{ loginUser.summary || '这个人很神秘，还没有写签名' }}</p>
+        </div>
+        <div class="profile-edit-actions">
+          <button v-if="isEdit" class="profile-save-button" type="button" :disabled="changDisabled" @click="update()">
+            <Icon icon="material-symbols:check-rounded" />
+            确认修改
+          </button>
+          <button v-if="isEdit" class="profile-ghost-button" type="button" @click="cancelEdit()">
+            取消
+          </button>
+          <button v-else class="profile-save-button" type="button" @click="isEdit = !isEdit">
+            <Icon icon="material-symbols:edit-outline-rounded" />
+            修改资料
+          </button>
+        </div>
+      </div>
 
-          placeholder="既然选择了远方，便要风雨兼程"
-          clearable
-        />
-        <span v-else>{{ loginUser.summary }}</span>
-      </el-form-item>
-      <el-form-item label="邮箱">
-        {{ loginUser.email }}
-        <el-button type="primary" size="small" class="ms-2" @click="openEmailModel()">
-          {{ loginUser.email ? '修改绑定' : '绑定邮箱' }}
-        </el-button>
-      </el-form-item>
-      <el-form-item label="手机号">
-        {{ loginUser.mobile }}
-        <el-button type="primary" size="small" class="ms-2" @click="openMobileModel()">
-          {{ loginUser.mobile ? '修改绑定' : '绑定手机号' }}
-        </el-button>
-      </el-form-item>
-      <el-form-item label="微信号">
-        {{ loginUser.wechat }}
-        <el-button type="primary" size="small" class="ms-2" @click="openWeChatModel()">
-          {{ loginUser.wechat ? '修改绑定' : '绑定微信号' }}
-        </el-button>
-      </el-form-item>
-      <el-form-item>
-        <el-button v-if="isEdit" type="success" :disabled="changDisabled" @click="update()">确认修改</el-button>
-        <el-button v-if="isEdit" type="info" @click="cancelEdit()">取消</el-button>
-        <el-button v-else type="success" @click="isEdit = !isEdit">修改</el-button>
-      </el-form-item>
+      <section class="profile-edit-section">
+        <div class="profile-edit-section__title">
+          <Icon icon="solar:user-id-linear" />
+          <span>公开资料</span>
+        </div>
+        <div class="profile-field-grid">
+          <div class="profile-field-card">
+            <span>用户名</span>
+            <strong>{{ loginUser.username }}</strong>
+          </div>
+          <div class="profile-field-card" :class="{ 'is-editing': isEdit }">
+            <span>昵称</span>
+            <el-input v-if="isEdit" v-model="loginUser.nickname" maxlength="20" show-word-limit placeholder="请输入您的昵称" />
+            <strong v-else>{{ loginUser.nickname }}</strong>
+          </div>
+          <div class="profile-field-card" :class="{ 'is-editing': isEdit }">
+            <span>性别</span>
+            <el-radio-group v-if="isEdit" v-model="loginUser.gender">
+              <el-radio :value="0">保密</el-radio>
+              <el-radio :value="1">男</el-radio>
+              <el-radio :value="2">女</el-radio>
+            </el-radio-group>
+            <strong v-else>{{ genderMap[loginUser.gender].name }}</strong>
+          </div>
+          <div class="profile-field-card is-wide" :class="{ 'is-editing': isEdit }">
+            <span>签名</span>
+            <el-input
+              v-if="isEdit"
+              v-model="loginUser.summary"
+              maxlength="100"
+              show-word-limit
+              placeholder="既然选择了远方，便要风雨兼程"
+              clearable
+            />
+            <strong v-else>{{ loginUser.summary || '这个人很神秘，还没有写签名' }}</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="profile-edit-section">
+        <div class="profile-edit-section__title">
+          <Icon icon="material-symbols:shield-outline" />
+          <span>账号绑定</span>
+        </div>
+        <div class="profile-bind-grid">
+          <div class="profile-bind-card">
+            <div class="profile-bind-card__icon"><Icon icon="ic:outline-email" /></div>
+            <div>
+              <span>邮箱</span>
+              <strong>{{ loginUser.email || '未绑定' }}</strong>
+            </div>
+            <button type="button" @click="openEmailModel()">
+              {{ loginUser.email ? '修改绑定' : '绑定邮箱' }}
+            </button>
+          </div>
+          <div class="profile-bind-card">
+            <div class="profile-bind-card__icon"><Icon icon="mynaui:mobile" /></div>
+            <div>
+              <span>手机号</span>
+              <strong>{{ loginUser.mobile || '未绑定' }}</strong>
+            </div>
+            <button type="button" @click="openMobileModel()">
+              {{ loginUser.mobile ? '修改绑定' : '绑定手机号' }}
+            </button>
+          </div>
+          <div class="profile-bind-card">
+            <div class="profile-bind-card__icon"><Icon icon="mdi:wechat" /></div>
+            <div>
+              <span>微信号</span>
+              <strong>{{ loginUser.wechat || '未绑定' }}</strong>
+            </div>
+            <button type="button" @click="openWeChatModel()">
+              {{ loginUser.wechat ? '修改绑定' : '绑定微信号' }}
+            </button>
+          </div>
+        </div>
+      </section>
     </el-form>
     <!-- 更换邮箱 -->
     <el-dialog
       v-model="emailDialogVisible"
+      class="profile-bind-dialog"
       :title="needValidOldEmail ? '验证绑定邮箱' : '更换邮箱'"
+      append-to-body
+      align-center
       width="460"
       @close="closeEmailDialog()">
-      <div v-if="needValidOldEmail" class="info-card">
-        <div class="text-center mt-4">验证您已绑定的邮箱: {{ loginUser.email }}</div>
-        <div class="text-center mt-2 mb-2 color-red">{{ errMsg }}</div>
-        <div class="valid-code-wrapper">
-          <el-row align="middle" justify="center">
-            <el-col :span="16">
-              <el-input v-model="postForm.oldCode" :maxlength="6" :minlength="6" :disabled="inputDisabled">
-                <template #prefix>
-                  <Icon icon="material-symbols:shield-outline" />
-                </template>
-              </el-input>
-            </el-col>
-            <el-col :span="8" class="ps-2">
-              <el-button
-                type="primary"
-                :disabled="sendBtnDisabled"
-                @click="sendEmailMobileCode(SendChangeCodeTypeEnum.CHANGE_BIND_EMAIL)"
-                class="w-100"
-              >
-                {{ codeMsg }}
-              </el-button>
-            </el-col>
-          </el-row>
-          <el-row align="middle" justify="center" class="mt-2">
-            <el-button
-              type="success"
-              :disabled="!postForm.oldCode"
-              @click="validateOldCode(SendChangeCodeTypeEnum.CHANGE_BIND_EMAIL)"
-              class="w-100"
-            >
-              验证
-            </el-button>
-          </el-row>
+      <div v-if="needValidOldEmail" class="profile-dialog-panel">
+        <div class="profile-dialog-hero">
+          <div class="profile-dialog-icon">
+            <Icon icon="ic:outline-email" />
+          </div>
+          <div>
+            <h3>确认是你本人操作</h3>
+            <p>修改邮箱前，需要先验证当前已绑定邮箱。</p>
+          </div>
         </div>
+        <div class="profile-dialog-tip">
+          <span>当前邮箱</span>
+          <strong>{{ loginUser.email }}</strong>
+        </div>
+        <div class="profile-dialog-error">{{ errMsg }}</div>
+        <div class="profile-dialog-code-row">
+          <el-input v-model="postForm.oldCode" :maxlength="6" :minlength="6" :disabled="inputDisabled" placeholder="请输入6位验证码">
+            <template #prefix>
+              <Icon icon="material-symbols:shield-outline" />
+            </template>
+          </el-input>
+          <el-button
+            class="profile-dialog-secondary"
+            type="primary"
+            :disabled="sendBtnDisabled"
+            @click="sendEmailMobileCode(SendChangeCodeTypeEnum.CHANGE_BIND_EMAIL)"
+          >
+            {{ codeMsg }}
+          </el-button>
+        </div>
+        <el-button
+          class="profile-dialog-primary"
+          type="success"
+          :disabled="!postForm.oldCode"
+          @click="validateOldCode(SendChangeCodeTypeEnum.CHANGE_BIND_EMAIL)"
+        >
+          验证并继续
+        </el-button>
       </div>
-      <div v-else class="info-card">
-        <el-form ref="changeBindFormRef" :model="postForm" :rules="rules" label-position="top">
+      <div v-else class="profile-dialog-panel">
+        <div class="profile-dialog-hero">
+          <div class="profile-dialog-icon">
+            <Icon icon="ic:outline-email" />
+          </div>
+          <div>
+            <h3>绑定新的邮箱</h3>
+            <p>验证码会发送到新邮箱，请确认填写无误。</p>
+          </div>
+        </div>
+        <el-form ref="changeBindFormRef" :model="postForm" :rules="rules" label-position="top" class="profile-dialog-form">
           <el-form-item label="邮箱" prop="email">
-            <!-- 邮箱 -->
             <el-input v-model="postForm.email" placeholder="请输入您的新邮箱" clearable>
               <template #prefix>
                 <Icon icon="ic:outline-email" />
@@ -129,31 +192,26 @@
             </el-input>
           </el-form-item>
           <el-form-item label="验证码" prop="code">
-            <el-row align="middle" justify="center">
-              <el-col :span="16">
-                <el-input v-model="postForm.code" :maxlength="6" :minlength="6" label="验证码"
-                          placeholder="请输入6位验证码">
-                  <template #prefix>
-                    <Icon icon="material-symbols:shield-outline" />
-                  </template>
-                </el-input>
-              </el-col>
-              <el-col :span="8" class="ps-2">
-                <el-button
-                  type="primary"
-                  :disabled="postForm.sendBtnDisabled"
-                  @click="sendNewEmailMobileCode(SendNewBindCodeTypeEnum.BIND_EMAIL)"
-                  class="w-100"
-                >
-                  {{ codeMsg }}
-                </el-button>
-              </el-col>
-            </el-row>
+            <div class="profile-dialog-code-row">
+              <el-input v-model="postForm.code" :maxlength="6" :minlength="6" label="验证码" placeholder="请输入6位验证码">
+                <template #prefix>
+                  <Icon icon="material-symbols:shield-outline" />
+                </template>
+              </el-input>
+              <el-button
+                class="profile-dialog-secondary"
+                type="primary"
+                :disabled="postForm.sendBtnDisabled"
+                @click="sendNewEmailMobileCode(SendNewBindCodeTypeEnum.BIND_EMAIL)"
+              >
+                {{ codeMsg }}
+              </el-button>
+            </div>
           </el-form-item>
           <el-form-item>
             <el-button
+              class="profile-dialog-primary"
               type="success"
-              class="mt-4 w-100"
               :disabled="btnDisabled"
               @click="saveUserEmailMobile(SendChangeCodeTypeEnum.CHANGE_BIND_EMAIL)"
             >
@@ -166,48 +224,63 @@
     <!-- 更换手机号 -->
     <el-dialog
       v-model="mobileDialogVisible"
+      class="profile-bind-dialog"
       :title="needValidOldMobile ? '验证绑定手机号' : '更换手机号'"
+      append-to-body
+      align-center
       width="460"
       @close="closeMobileDialog()">
-      <div v-if="needValidOldMobile" class="info-card">
-        <div class="text-center mt-4">验证您已绑定的手机号: {{ loginUser.mobile }}</div>
-        <div class="text-center mt-2 mb-2 color-red">{{ errMsg }}</div>
-        <div class="valid-code-wrapper">
-          <el-row align="middle" justify="center">
-            <el-col :span="16">
-              <el-input v-model="postForm.oldCode" :maxlength="6" :minlength="6" :disabled="inputDisabled">
-                <template #prefix>
-                  <Icon icon="material-symbols:shield-outline" />
-                </template>
-              </el-input>
-            </el-col>
-            <el-col :span="8" class="ps-2">
-              <el-button
-                type="primary"
-                class="w-100"
-                :disabled="sendBtnDisabled"
-                @click="sendEmailMobileCode(SendChangeCodeTypeEnum.CHANGE_BIND_MOBILE)"
-              >
-                {{ codeMsg }}
-              </el-button>
-            </el-col>
-          </el-row>
-          <el-row align="middle" justify="center" class="mt-2">
-            <el-button
-              type="success"
-              :disabled="!postForm.oldCode"
-              @click="validateOldCode(SendChangeCodeTypeEnum.CHANGE_BIND_MOBILE)"
-              class="w-100"
-            >
-              验证
-            </el-button>
-          </el-row>
+      <div v-if="needValidOldMobile" class="profile-dialog-panel">
+        <div class="profile-dialog-hero">
+          <div class="profile-dialog-icon">
+            <Icon icon="mynaui:mobile" />
+          </div>
+          <div>
+            <h3>确认是你本人操作</h3>
+            <p>修改手机号前，需要先验证当前已绑定手机号。</p>
+          </div>
         </div>
+        <div class="profile-dialog-tip">
+          <span>当前手机号</span>
+          <strong>{{ loginUser.mobile }}</strong>
+        </div>
+        <div class="profile-dialog-error">{{ errMsg }}</div>
+        <div class="profile-dialog-code-row">
+          <el-input v-model="postForm.oldCode" :maxlength="6" :minlength="6" :disabled="inputDisabled" placeholder="请输入6位验证码">
+            <template #prefix>
+              <Icon icon="material-symbols:shield-outline" />
+            </template>
+          </el-input>
+          <el-button
+            class="profile-dialog-secondary"
+            type="primary"
+            :disabled="sendBtnDisabled"
+            @click="sendEmailMobileCode(SendChangeCodeTypeEnum.CHANGE_BIND_MOBILE)"
+          >
+            {{ codeMsg }}
+          </el-button>
+        </div>
+        <el-button
+          class="profile-dialog-primary"
+          type="success"
+          :disabled="!postForm.oldCode"
+          @click="validateOldCode(SendChangeCodeTypeEnum.CHANGE_BIND_MOBILE)"
+        >
+          验证并继续
+        </el-button>
       </div>
-      <div v-else class="info-card">
-        <el-form ref="changeBindFormRef" :model="postForm" :rules="rules" label-position="top">
+      <div v-else class="profile-dialog-panel">
+        <div class="profile-dialog-hero">
+          <div class="profile-dialog-icon">
+            <Icon icon="mynaui:mobile" />
+          </div>
+          <div>
+            <h3>绑定新的手机号</h3>
+            <p>验证码会发送到新手机号，请保持手机畅通。</p>
+          </div>
+        </div>
+        <el-form ref="changeBindFormRef" :model="postForm" :rules="rules" label-position="top" class="profile-dialog-form">
           <el-form-item label="手机号" prop="mobile">
-            <!-- 手机号 -->
             <el-input v-model="postForm.mobile" placeholder="请输入您的新手机号" clearable>
               <template #prefix>
                 <Icon icon="mynaui:mobile" />
@@ -215,29 +288,28 @@
             </el-input>
           </el-form-item>
           <el-form-item label="验证码" prop="code">
-            <!-- 验证码 -->
-            <el-input v-model="postForm.code" :maxlength="6" :minlength="6" label="验证码" placeholder="请输入6位验证码"
-                      class="w-50">
-              <template #prefix>
-                <Icon icon="material-symbols:shield-outline" />
-              </template>
-            </el-input>
-            <el-button
-              type="primary"
-              :disabled="postForm.sendBtnDisabled"
-              @click="sendNewEmailMobileCode(SendNewBindCodeTypeEnum.BIND_MOBILE)"
-              class="ms-2"
-            >
-              {{ codeMsg }}
-            </el-button>
+            <div class="profile-dialog-code-row">
+              <el-input v-model="postForm.code" :maxlength="6" :minlength="6" label="验证码" placeholder="请输入6位验证码">
+                <template #prefix>
+                  <Icon icon="material-symbols:shield-outline" />
+                </template>
+              </el-input>
+              <el-button
+                class="profile-dialog-secondary"
+                type="primary"
+                :disabled="postForm.sendBtnDisabled"
+                @click="sendNewEmailMobileCode(SendNewBindCodeTypeEnum.BIND_MOBILE)"
+              >
+                {{ codeMsg }}
+              </el-button>
+            </div>
           </el-form-item>
           <el-form-item>
-            <!-- 注册按钮 -->
             <el-button
+              class="profile-dialog-primary"
               type="success"
               :disabled="btnDisabled"
               @click="saveUserEmailMobile(SendChangeCodeTypeEnum.CHANGE_BIND_MOBILE)"
-              class="w-100"
             >
               绑定
             </el-button>
@@ -248,37 +320,67 @@
     <!-- 更换微信号 -->
     <el-dialog
       v-model="wechatDialogVisible"
+      class="profile-bind-dialog profile-wechat-dialog"
       :title="needValidOldWeChat ? '验证绑定微信号' : '更换微信绑定'"
+      append-to-body
+      align-center
       width="460"
       @close="closeWeChatDialog()">
-      <div v-if="needValidOldWeChat" class="change-bind-container">
-        <div class="wechat-login">
-          <el-image v-if="wechatOldCode && !isExpired" class="wechat-loading" :src="wechatAppletImg" alt="" />
-          <div v-if="!wechatOldCode && !isExpired" class="wechat-loading">加载中...</div>
-          <div v-if="isExpired" class="wechat-loading cursor"
-               @click="getWechatAppletCode(WechatAppletCodeTypeEnum.VALIDATE_OLD_WECHAT)">
-            该二维码已过期，请点击重新获取
+      <div v-if="needValidOldWeChat" class="profile-wechat-panel">
+        <div class="profile-dialog-hero">
+          <div class="profile-dialog-icon">
+            <Icon icon="mdi:wechat" />
           </div>
-          <div class="mt-3">请使用微信进行扫码验证</div>
+          <div>
+            <h3>验证当前微信</h3>
+            <p>请使用已绑定的微信扫码，验证通过后再绑定新微信。</p>
+          </div>
+        </div>
+        <div class="profile-wechat-qr">
+          <el-image v-if="wechatOldCode && !isExpired" :src="wechatAppletImg" alt="" />
+          <div v-if="!wechatOldCode && !isExpired" class="profile-wechat-loading">加载中...</div>
+          <button
+            v-if="isExpired"
+            type="button"
+            class="profile-wechat-retry"
+            @click="getWechatAppletCode(WechatAppletCodeTypeEnum.VALIDATE_OLD_WECHAT)"
+          >
+            二维码已过期，点击重新获取
+          </button>
+        </div>
+        <div class="profile-dialog-tip">
+          <span>下一步</span>
+          <strong>扫码验证成功后，将自动进入新微信绑定</strong>
         </div>
       </div>
-      <div v-else class="change-bind-container">
-        <div class="wechat-login">
-          <el-image v-if="wechatCode && !isExpired" class="wechat-loading" :src="wechatAppletImg" alt="" />
-          <div v-if="!wechatCode && !isExpired" class="wechat-loading">加载中...</div>
-          <div v-if="isExpired" class="wechat-loading cursor"
-               @click="getWechatAppletCode(WechatAppletCodeTypeEnum.BIND_NEW_WECHAT)">
-            该二维码已过期，请点击重新获取
+      <div v-else class="profile-wechat-panel">
+        <div class="profile-dialog-hero">
+          <div class="profile-dialog-icon">
+            <Icon icon="mdi:wechat" />
           </div>
-          <div class="mt-3 color-red">请使用新微信进行扫码绑定</div>
+          <div>
+            <h3>绑定新的微信</h3>
+            <p>请使用新微信扫码完成绑定，完成后资料会自动刷新。</p>
+          </div>
+        </div>
+        <div class="profile-wechat-qr">
+          <el-image v-if="wechatCode && !isExpired" :src="wechatAppletImg" alt="" />
+          <div v-if="!wechatCode && !isExpired" class="profile-wechat-loading">加载中...</div>
+          <button
+            v-if="isExpired"
+            type="button"
+            class="profile-wechat-retry"
+            @click="getWechatAppletCode(WechatAppletCodeTypeEnum.BIND_NEW_WECHAT)"
+          >
+            二维码已过期，点击重新获取
+          </button>
+        </div>
+        <div class="profile-dialog-tip is-warning">
+          <span>微信扫码</span>
+          <strong>请确认使用的是新的微信账号</strong>
         </div>
       </div>
     </el-dialog>
-  </el-card>
-  <el-card v-else>
-    <div class="d-flex align-items-center justify-content-center font-18" style="min-height: 60vh">
-      这里是【{{ viewUser?.nickname }}】的个人空间
-    </div>
   </el-card>
 </template>
 
@@ -734,12 +836,6 @@ function saveUserEmailMobile(type: SendChangeCodeTypeEnum): void {
         })
       }).finally(() => {
         btnDisabled.value = false
-      })
-    } else {
-      ElMessage({
-        message: '信息填写不正确',
-        type: 'error',
-        plain: true
       })
     }
   })

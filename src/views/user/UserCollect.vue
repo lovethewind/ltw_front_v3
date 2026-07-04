@@ -1,8 +1,26 @@
 <template>
   <div v-if="viewUser">
-    <el-card class="user-container">
-      <el-row v-if="user?.id === viewUser.id" class="search-bar" :gutter="12" justify="center" align="middle">
-        <el-col :xs="24" :sm="11" class="hidden-xs-only">
+    <el-card class="collect-panel user-container">
+      <div class="collect-hero">
+        <div class="collect-hero__liquid"></div>
+        <div class="collect-hero__content">
+          <span class="collect-hero__icon">
+            <Icon icon="ph:star" />
+          </span>
+          <div>
+            <div class="collect-hero__label">收藏书架</div>
+            <h3>{{ collectTitle }}</h3>
+            <p>{{ collectSubtitle }}</p>
+          </div>
+        </div>
+        <div class="collect-hero__meta">
+          <strong>{{ total }}</strong>
+          <span>篇收藏</span>
+        </div>
+      </div>
+
+      <div v-if="isSelfProfile" class="collect-toolbar">
+        <div class="collect-filter-row">
           <el-date-picker
             v-model="searchDates"
             type="daterange"
@@ -12,94 +30,93 @@
             end-placeholder="结束日期"
             placeholder="请选择收藏时间"
           />
-        </el-col>
-        <el-col :xs="8" :sm="4">
           <el-select v-model="queryDict.isOriginal" placeholder="文章类型">
-            <el-option label="---" value="" />
+            <el-option label="全部类型" value="" />
             <el-option label="原创" :value="true" />
             <el-option label="转载" :value="false" />
           </el-select>
-        </el-col>
-        <el-col :xs="11" :sm="7">
           <el-input v-model="queryDict.keyword" placeholder="请输入关键字" clearable />
-        </el-col>
-        <el-col :xs="5" :sm="2">
-          <el-button type="primary" @click=" resetAndFetchArticleList">搜索</el-button>
-        </el-col>
-      </el-row>
-      <el-row v-if="user?.id === viewUser.id" class="search-bar" :gutter="12" justify="start" align="middle">
-        <el-col :xs="24" :sm="9">
+          <el-button type="primary" @click="resetAndFetchArticleList()">
+            <Icon icon="material-symbols:search-rounded" />
+            搜索
+          </el-button>
+        </div>
+        <div class="collect-toolbar__footer">
           <order-bar :use-card="false" :bar-list="searchOrderList" @item-click="orderTypeChange" />
-        </el-col>
-      </el-row>
-      <el-divider v-if="user?.id === viewUser.id" />
-      <div v-if="collectList.length > 0">
-        <div v-for="article in collectList" :key="article.id" class="user-article-div article-item">
-          <el-row justify="center" align="middle">
-            <el-col :xs="24" :sm="6" class="article-cover-col">
-              <div class="article-cover"
-                   :style="'background: url(' + (article.coverThumb || article.cover) + ') center center / cover no-repeat'"
-                   @click="toArticleDetail(article)" />
-            </el-col>
-            <el-col :xs="24" :sm="18" class="ps-4">
-              <el-row>
-                <el-col class="article-title">
-                  <router-link :to="'/article/' + article.id" class="a-link">{{ article.title }}</router-link>
-                </el-col>
-              </el-row>
-              <el-row>
-                <el-col class="article-content">{{ deleteHTMLTag(article.content) }}</el-col>
-              </el-row>
-              <el-row class="bottom-bar">
-                <el-col :xs="24" :sm="8">
-                  <el-avatar :src="article.user.avatar" size="small" class="me-1" />
-                  <router-link :to="'/user/' + article.userId" class="a-link">{{ article.user.nickname }}</router-link>
-                </el-col>
-                <el-col :xs="24" :sm="8">
-                  <Icon icon="solar:calendar-broken" />
-                  <el-tooltip effect="light" :content="'收藏时间:' + minute(article.createTime)">
-                    <span>{{ minute(article.createTime) }}</span>
-                  </el-tooltip>
-                </el-col>
-                <el-col :xs="12" :sm="8" class="hidden-xs-only">
-                  <span class="article-origin">
-                    <el-tag size="small"
-                            :type="article.isOriginal ? 'success' : 'warning'">{{ article.isOriginal ? '原创' : '转载'
-                      }}</el-tag>
-                  </span>
-                </el-col>
-              </el-row>
-            </el-col>
-          </el-row>
         </div>
       </div>
-      <!-- 加载更多 -->
-      <load-more :loading="loading" :no-more="noMore" :total="total" @load="infiniteHandler" />
+
+      <div v-if="collectList.length > 0" class="collect-list">
+        <ArticleListItem
+          v-for="(article, index) in collectList"
+          :key="article.id"
+          class="collect-card profile-article-card"
+          :article="normalizeArticleForCard(article)"
+          :index="index"
+          :tag-map="tagMap"
+          mode="manage"
+        >
+          <template #actions>
+            <div class="collect-card-badges">
+              <span class="collect-time-chip">
+                <Icon icon="solar:calendar-broken" />
+                收藏于 {{ minute(article.collectTime) }}
+              </span>
+              <button
+                v-if="isSelfProfile"
+                type="button"
+                class="collect-cancel-button"
+                @click="cancelCollect(article)"
+              >
+                <Icon icon="tabler:bookmark-minus" />
+                取消收藏
+              </button>
+            </div>
+          </template>
+        </ArticleListItem>
+      </div>
+      <div v-else-if="!loading" class="collect-empty">
+        <Icon icon="tabler:bookmark-off" />
+        <strong>{{ emptyTitle }}</strong>
+        <span>{{ emptyDescription }}</span>
+      </div>
+      <load-more
+        v-if="collectList.length > 0 || loading"
+        :loading="loading"
+        :no-more="noMore"
+        :total="total"
+        :show-no-more="false"
+        :loading-rows="8"
+        @load="infiniteHandler"
+      />
     </el-card>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref, toRefs } from 'vue'
-import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import { useCommonStore } from '@/stores/common'
 import actionApi from '@/api/action'
 import OrderBar from '@/components/base/OrderBar.vue'
 import LoadMore from '@/components/base/LoadMore.vue'
+import ArticleListItem from '@/components/article/ArticleListItem.vue'
 import { deleteHTMLTag, removeEmptyValues } from '@/utils/common'
 import { minute } from '@/utils/date'
 import { ActionTypeEnum, ObjectTypeEnum } from '@/enums'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { Icon } from '@iconify/vue'
+import type { IArticle, IUserDetail } from '@/interface'
 
-const router = useRouter()
 const userStore = useUserStore()
+const commonStore = useCommonStore()
 
 const props = defineProps<{
-  viewUser: any
+  viewUser: IUserDetail
 }>()
 const { viewUser } = toRefs(props)
 
-const searchOrderList = ref([
+const searchOrderList = [
   {
     type: 1,
     name: '按收藏时间倒序'
@@ -107,7 +124,8 @@ const searchOrderList = ref([
   {
     type: 4,
     name: '按收藏时间正序'
-  }])
+  }
+]
 
 const searchDates = ref<any>(null)
 const loading = ref(false)
@@ -123,12 +141,39 @@ const user = computed(() => {
 const noMore = computed(() => {
   return collectList.value.length >= total.value
 })
+const tagMap = computed(() => {
+  return commonStore.tagMap
+})
+const isSelfProfile = computed(() => {
+  return !!user.value?.id && user.value.id === viewUser.value.id
+})
+const collectTitle = computed(() => {
+  return isSelfProfile.value ? '我的收藏灵感库' : viewUser.value.nickname + ' 的收藏'
+})
+const collectSubtitle = computed(() => {
+  return isSelfProfile.value
+    ? '把值得回看的文章收进这里，慢慢整理成自己的知识书架。'
+    : '这些是 ' + viewUser.value.nickname + ' 留下的阅读线索。'
+})
+const emptyTitle = computed(() => {
+  return isSelfProfile.value ? '还没有收藏文章' : '暂时没有公开收藏'
+})
+const emptyDescription = computed(() => {
+  return isSelfProfile.value
+    ? '遇到值得回看的文章时，可以先收藏起来。'
+    : '等有新的收藏时，这里会亮起来。'
+})
 
 onMounted(() => {
   infiniteHandler()
 })
 
-function infiniteHandler() {
+/**
+ * 分页加载当前用户的收藏文章列表。
+ *
+ * :return: 无返回值。
+ */
+function infiniteHandler(): void {
   loading.value = true
   if (searchDates.value) {
     queryDict.value.dateFrom = searchDates.value[0]
@@ -138,36 +183,102 @@ function infiniteHandler() {
     queryDict.value.dateTo = ''
   }
   const queryParams = Object.assign({}, removeEmptyValues(queryDict.value))
-  const func = viewUser.value.id === user.value?.id ? actionApi.getUserActionList : actionApi.getActionList
-  func(currentPage.value, pageSize.value, {
-    userId: viewUser.value?.id,
-    objType: ObjectTypeEnum.ARTICLE,
-    actionType: ActionTypeEnum.COLLECT
-  }, queryParams).then(res => {
-    if (res.data.records.length) {
-      currentPage.value++
-      collectList.value.push(...res.data.records)
+  const func =
+    viewUser.value.id === user.value?.id ? actionApi.getUserActionList : actionApi.getActionList
+  func(
+    currentPage.value,
+    pageSize.value,
+    {
+      userId: viewUser.value?.id,
+      objType: ObjectTypeEnum.ARTICLE,
+      actionType: ActionTypeEnum.COLLECT
+    },
+    queryParams
+  )
+    .then((res) => {
       total.value = res.data.total
-    }
-  }).finally(() => {
-    loading.value = false
-  })
+      if (res.data.records.length) {
+        currentPage.value++
+        collectList.value.push(...res.data.records)
+      }
+    })
+    .finally(() => {
+      loading.value = false
+    })
 }
 
-function orderTypeChange(val: any) {
+/**
+ * 切换收藏列表排序并重新加载数据。
+ *
+ * :param val: 当前选择的排序类型。
+ * :return: 无返回值。
+ */
+function orderTypeChange(val: number): void {
   queryDict.value.orderType = val
   resetAndFetchArticleList()
 }
 
-function toArticleDetail(article: any) {
-  router.push('/article/' + article.id)
-}
-
-function resetAndFetchArticleList() {
+/**
+ * 重置收藏列表分页，并重新请求第一页数据。
+ *
+ * :return: 无返回值。
+ */
+function resetAndFetchArticleList(): void {
   currentPage.value = 1
   collectList.value = []
   total.value = 0
   infiniteHandler()
+}
+
+/**
+ * 取消收藏指定文章，并从当前收藏列表中移除。
+ *
+ * :param article: 当前操作的收藏文章。
+ * :return: 无返回值。
+ */
+function cancelCollect(article: any): void {
+  ElMessageBox.confirm('确定取消收藏这篇文章吗?', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  })
+    .then(() => {
+      actionApi
+        .addOrUpdate({
+          objId: article.id,
+          objType: ObjectTypeEnum.ARTICLE,
+          actionType: ActionTypeEnum.COLLECT
+        })
+        .then((res) => {
+          if (!res.data) {
+            collectList.value.splice(collectList.value.indexOf(article), 1)
+            total.value = Math.max(total.value - 1, 0)
+            ElMessage({
+              message: '已取消收藏',
+              type: 'success',
+              plain: true
+            })
+          }
+        })
+    })
+    .catch(() => {})
+}
+
+/**
+ * 将收藏文章数据适配为公共文章卡片需要的展示结构。
+ *
+ * :param article: 原始收藏文章数据。
+ * :return: 适配后的文章展示数据。
+ */
+function normalizeArticleForCard(article: any): IArticle {
+  return {
+    ...article,
+    content: deleteHTMLTag(article.content || ''),
+    user: article.user
+      ? { ...article.user, id: article.user.id || article.userId }
+      : viewUser.value,
+    tagList: article.tagList || []
+  }
 }
 </script>
 

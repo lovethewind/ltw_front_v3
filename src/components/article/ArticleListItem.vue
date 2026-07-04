@@ -1,6 +1,7 @@
 <template>
-  <el-card class="article-list-item-card">
+  <el-card class="article-list-item-card" :class="{ 'is-manage': isManageMode }">
     <router-link
+      v-if="!canOpenArticle"
       :to="'/article/' + article.id"
       class="article-cover-link"
       target="_blank"
@@ -13,8 +14,12 @@
         fit="cover"
       />
     </router-link>
+    <div v-else class="article-cover-link is-static">
+      <el-image class="cover-img" :src="article.coverThumb || article.cover" lazy fit="cover" />
+    </div>
     <div class="article-wrapper">
       <router-link
+        v-if="canOpenArticle"
         :to="'/article/' + article.id"
         class="article-main-link"
         target="_blank"
@@ -27,9 +32,18 @@
           {{ article.content }}
         </div>
       </router-link>
+      <div v-else class="article-main-link is-static">
+        <h3 class="article-list-item-title">
+          {{ article.title }}
+        </h3>
+        <div class="article-content">
+          {{ article.content }}
+        </div>
+      </div>
       <div class="article-info">
         <div class="article-meta-row">
           <router-link
+            v-if="showAvatar"
             :to="'/user/' + article.user.id"
             class="article-author-chip"
             target="_blank"
@@ -48,7 +62,7 @@
             </el-tag>
             <span class="article-tags">
               <router-link
-                v-for="tagId of article.tagList.slice(0, 1)"
+                v-for="tagId of articleTags.slice(0, 1)"
                 :key="'articleListItemTag' + article.id + tagId"
                 :to="'/tag/' + tagId"
                 target="_blank"
@@ -59,6 +73,9 @@
                 >
               </router-link>
             </span>
+          </div>
+          <div v-if="isManageMode" class="article-management-badges">
+            <slot name="badges" />
           </div>
           <div class="article-stats">
             <span>
@@ -76,22 +93,43 @@
           </div>
         </div>
       </div>
+      <div v-if="$slots.actions" class="article-list-item-actions">
+        <slot name="actions" />
+      </div>
     </div>
   </el-card>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { Icon } from '@iconify/vue'
 import type { IArticle } from '@/interface'
 import { covertNumberDisplay } from '@/utils/common'
 import { covertTimeHowLongAgo } from '@/utils/date'
 
-defineProps<{
-  article: IArticle
-  index: number
-  categoryMap: Record<string, { name: string }>
-  tagMap: Record<string, { name: string }>
-}>()
+const props = withDefaults(
+  defineProps<{
+    article: IArticle
+    index: number
+    categoryMap?: Record<string, { name: string }>
+    tagMap?: Record<string, { name: string }>
+    mode?: 'feed' | 'manage'
+    showAvatar?: boolean
+    clickable?: boolean
+  }>(),
+  {
+    categoryMap: () => ({}),
+    tagMap: () => ({}),
+    mode: 'feed',
+    showAvatar: true,
+    clickable: true
+  }
+)
+
+const isManageMode = computed(() => props.mode === 'manage')
+const showAvatar = computed(() => props.showAvatar)
+const canOpenArticle = computed(() => props.clickable)
+const articleTags = computed(() => props.article.tagList || [])
 
 defineEmits<{
   (event: 'category-click', categoryId: string): void
@@ -124,10 +162,19 @@ defineEmits<{
   transform: translateY(-2px);
 }
 
+.article-list-item-card.is-manage {
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.04);
+}
+
 .article-cover-link {
   display: block;
   overflow: hidden;
   background: #e2e8f0;
+}
+
+.article-cover-link.is-static,
+.article-main-link.is-static {
+  cursor: default;
 }
 
 .cover-img {
@@ -162,6 +209,12 @@ defineEmits<{
 .article-main-link:hover {
   .article-list-item-title {
     color: #2f80ed;
+  }
+}
+
+.article-main-link.is-static:hover {
+  .article-list-item-title {
+    color: #1f2937;
   }
 }
 
@@ -255,6 +308,13 @@ defineEmits<{
   overflow: hidden;
 }
 
+.article-management-badges {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-shrink: 0;
+}
+
 .article-stats {
   margin-left: auto;
   flex-shrink: 0;
@@ -277,6 +337,14 @@ defineEmits<{
     background: rgba(47, 128, 237, 0.13);
     color: #1d5fbf;
   }
+}
+
+.article-list-item-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.7rem;
 }
 
 @media (min-width: 760px) {
@@ -303,6 +371,11 @@ defineEmits<{
 
   .article-wrapper {
     width: 100%;
+  }
+
+  .article-list-item-card.is-manage {
+    height: auto;
+    min-height: 172px;
   }
 }
 
@@ -354,6 +427,14 @@ defineEmits<{
     gap: 0.9rem;
     order: 2;
   }
+
+  .article-management-badges {
+    order: 4;
+  }
+
+  .article-list-item-actions {
+    justify-content: flex-start;
+  }
 }
 
 html.dark {
@@ -384,6 +465,10 @@ html.dark {
 
   .article-main-link:hover .article-list-item-title {
     color: #8ab4ff;
+  }
+
+  .article-main-link.is-static:hover .article-list-item-title {
+    color: #f5f7fb;
   }
 
   .article-content {

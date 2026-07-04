@@ -1,101 +1,89 @@
 <template>
-  <div v-if="viewUser" class="sticky-top-70">
-    <el-card class="user-detail-div">
-      <div class="container-wrapper">
-        <el-row align="middle" justify="start">
-          <el-col :span="8">
-            <el-avatar :size="80" :src="viewUser.avatar" />
-          </el-col>
-          <el-col :span="16" class="username-info">
-            <el-row align="middle" justify="start">
-              <el-col :span="24" class="user-detail-name">
-                {{ viewUser.nickname }}
-                <GenderBadge :gender="viewUser.gender" />
-              </el-col>
-              <el-col :span="24" class="font-12">
-                {{ viewUser.summary }}
-              </el-col>
-            </el-row>
-          </el-col>
-        </el-row>
-        <el-row align="middle" justify="start">
-          <el-col :span="24">
-            <Icon icon="mdi:id-card" color="skyblue" />
-            uid: {{ viewUser.uid }}
-          </el-col>
-        </el-row>
-        <el-row align="middle" justify="start">
-          <el-col :span="24">
-            <Icon icon="mdi:leaf" class="font-16" color="green" />
-            站龄: {{ formatRegisterTime(viewUser.registerTime) }}
-          </el-col>
-        </el-row>
-        <el-row align="middle" justify="start">
-          <el-col>
-            <Icon icon="tdesign:location" color="red" class="font-16" />
-            IP属地: {{ viewUser.address }}
-          </el-col>
-        </el-row>
-        <el-row align="middle" justify="center">
-          <el-col :span="6" class="col-all-center">
-            <el-statistic :value="viewUser.articleCount" />
-          </el-col>
-          <el-col :span="6" class="col-all-center">
-            <el-statistic :value="viewUser.commentCount" />
-          </el-col>
-          <el-col :span="6" class="col-all-center">
-            <el-statistic :value="viewUser.fansCount" />
-          </el-col>
-          <el-col :span="6" class="col-all-center">
-            <el-statistic :value="viewUser.viewCount" />
-          </el-col>
-        </el-row>
-        <el-row align="middle" justify="center">
-          <el-col :span="6" class="col-all-center"> 文章</el-col>
-          <el-col :span="6" class="col-all-center"> 评论</el-col>
-          <el-col :span="6" class="col-all-center"> 粉丝</el-col>
-          <el-col :span="6" class="col-all-center"> 访问量</el-col>
-        </el-row>
-        <el-row v-if="!user || viewUser.id !== user.id" align="middle" justify="center" class="mt-4">
-          <el-col :span="12" class="col-all-center">
-            <el-button round :color="viewUser.isFollowed ? 'green' : '#2196f3'" @click="followUser()">
-              <Icon icon="ph:star" class="font-16" />
-              {{ viewUser.isFollowed && viewUser.isMyFans ? '互相关注' : (viewUser.isFollowed ? '已关注' : '关注') }}
-            </el-button>
-          </el-col>
-          <el-col :span="12" class="col-all-center">
-            <el-button round color="#e91e63" @click="chat">
-              <Icon icon="lets-icons:message" class="font-16" />
-              私信
-            </el-button>
-          </el-col>
-        </el-row>
+  <div v-if="viewUser" class="profile-detail-stack sticky-top-70">
+    <section class="profile-detail-card">
+      <div class="profile-detail-card__cover"></div>
+      <div class="profile-detail-card__identity">
+        <el-avatar class="profile-detail-card__avatar" :size="72" :src="viewUser.avatar" />
+        <div class="profile-detail-card__meta">
+          <div class="user-detail-name">
+            {{ viewUser.nickname }}
+            <GenderBadge :gender="viewUser.gender" />
+          </div>
+          <p>{{ viewUser.summary || '这个人很神秘，还没有写签名' }}</p>
+        </div>
       </div>
-    </el-card>
-    <el-card class="user-detail-div mt-3">
-      <div class="font-weight-bold font-16 mt-2">成就</div>
-      <el-divider />
-      <div class="pl-4">
-        <el-row align="middle" justify="center" class="text-left">
-          <el-col :span="24">
-            <Icon icon="tabler:thumb-up" class="font-18" />
-            获得 {{ viewUser.articleLikeMeCount }} 次点赞
-          </el-col>
-        </el-row>
-        <el-row align="middle" justify="center" class="text-left">
-          <el-col :span="24">
-            <Icon icon="iconamoon:comment-dots" class="font-18" />
-            获得 {{ viewUser.articleCommentCount }} 次评论
-          </el-col>
-        </el-row>
-        <el-row align="middle" justify="center" class="text-left">
-          <el-col :span="24">
-            <Icon icon="ph:star" class="font-18" />
-            获得 {{ viewUser.articleCollectCount }} 次收藏
-          </el-col>
-        </el-row>
+      <div class="profile-info-chip-list">
+        <div class="profile-info-chip">
+          <Icon icon="mdi:id-card" />
+          <span>UID {{ viewUser.uid }}</span>
+        </div>
+        <div class="profile-info-chip">
+          <Icon icon="mdi:leaf" />
+          <span>{{ formatRegisterTime(viewUser.registerTime) }}</span>
+        </div>
+        <div class="profile-info-chip">
+          <Icon icon="tdesign:location" />
+          <span>{{ viewUser.address || '未知' }}</span>
+        </div>
       </div>
-    </el-card>
+      <div class="profile-stat-grid">
+        <div class="profile-stat-item">
+          <strong>{{ viewUser.articleCount }}</strong>
+          <span>文章</span>
+        </div>
+        <div class="profile-stat-item">
+          <strong>{{ viewUser.commentCount }}</strong>
+          <span>评论</span>
+        </div>
+        <div class="profile-stat-item">
+          <strong>{{ viewUser.fansCount }}</strong>
+          <span>粉丝</span>
+        </div>
+        <div class="profile-stat-item">
+          <strong>{{ viewUser.viewCount }}</strong>
+          <span>访问</span>
+        </div>
+      </div>
+      <div v-if="!user || viewUser.id !== user.id" class="profile-action-row">
+        <button class="profile-action-button is-follow" type="button" @click="followUser()">
+          <Icon icon="ph:star" />
+          {{
+            viewUser.isFollowed && viewUser.isMyFans
+              ? '互相关注'
+              : viewUser.isFollowed
+                ? '已关注'
+                : '关注'
+          }}
+        </button>
+        <button class="profile-action-button is-message" type="button" @click="chat">
+          <Icon icon="lets-icons:message" />
+          私信
+        </button>
+      </div>
+    </section>
+    <section class="profile-achievement-card">
+      <div class="profile-card-title">
+        <Icon icon="tabler:sparkles" />
+        个人成就
+      </div>
+      <div class="profile-achievement-list">
+        <div class="profile-achievement-item">
+          <Icon icon="tabler:thumb-up" />
+          <span>文章被点赞</span>
+          <strong>{{ viewUser.articleLikeMeCount }}</strong>
+        </div>
+        <div class="profile-achievement-item">
+          <Icon icon="iconamoon:comment-dots" />
+          <span>文章被评论</span>
+          <strong>{{ viewUser.articleCommentCount }}</strong>
+        </div>
+        <div class="profile-achievement-item">
+          <Icon icon="ph:star" />
+          <span>文章被收藏</span>
+          <strong>{{ viewUser.articleCollectCount }}</strong>
+        </div>
+      </div>
+    </section>
   </div>
 </template>
 

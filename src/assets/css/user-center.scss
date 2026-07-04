@@ -3526,393 +3526,482 @@
   }
 }
 
-:global(html.dark) {
-  .user-center-page {
-    background:
-      linear-gradient(180deg, rgba(17, 24, 39, 0.1), #111827 420px),
-      linear-gradient(135deg, rgba(47, 128, 237, 0.16), rgba(34, 197, 94, 0.08));
-  }
+:global(html.dark .user-center-page){
+  background:
+    linear-gradient(180deg, rgba(17, 24, 39, 0.1), #111827 420px),
+    linear-gradient(135deg, rgba(47, 128, 237, 0.16), rgba(34, 197, 94, 0.08));
+}
 
-  .profile-menu-card,
-  .profile-content-card,
-  .profile-detail-card,
-  .profile-achievement-card,
-  :deep(.user-container) {
-    border-color: rgba(71, 85, 105, 0.54);
-    background: rgba(30, 41, 59, 0.86);
-    box-shadow: 0 16px 38px rgba(0, 0, 0, 0.26);
-  }
+:global(html.dark .profile-menu-card),
+:global(html.dark .profile-content-card),
+:global(html.dark .profile-detail-card),
+:global(html.dark .profile-achievement-card),
+:global(html.dark .user-container){
+  border-color: rgba(71, 85, 105, 0.54);
+  background: rgba(30, 41, 59, 0.86);
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.26);
+}
 
-  .profile-section-title {
-    border-color: rgba(71, 85, 105, 0.58);
+:global(html.dark .profile-section-title){
+  border-color: rgba(71, 85, 105, 0.58);
+}
 
-    h2 {
-      color: #e5e7eb;
-    }
-  }
+:global(html.dark .profile-section-title h2){
+  color: #e5e7eb;
+}
 
-  .profile-menu-item {
-    color: #cbd5e1;
+:global(html.dark .profile-menu-item){
+  color: #cbd5e1;
+}
 
-    &:hover {
-      background: rgba(96, 165, 250, 0.12);
-      color: #93c5fd;
-    }
-  }
+:global(html.dark .profile-menu-item:hover){
+  background: rgba(96, 165, 250, 0.12);
+  color: #93c5fd;
+}
 
-  .user-detail-name,
-  .profile-card-title,
-  .profile-stat-item strong {
-    color: #f8fafc;
-  }
+:global(html.dark .user-detail-name),
+:global(html.dark .profile-card-title),
+:global(html.dark .profile-stat-item strong){
+  color: #f8fafc;
+}
 
-  .profile-detail-card__meta p,
-  .profile-info-chip,
-  .profile-achievement-item span,
-  .profile-stat-item span,
-  .profile-overview-quote,
-  .profile-overview-stat span,
-  .article-content,
-  .bottom-bar {
-    color: #94a3b8;
-  }
+:global(html.dark .profile-detail-card__meta p),
+:global(html.dark .profile-info-chip),
+:global(html.dark .profile-achievement-item span),
+:global(html.dark .profile-stat-item span),
+:global(html.dark .profile-overview-quote),
+:global(html.dark .profile-overview-stat span),
+:global(html.dark .article-content),
+:global(html.dark .bottom-bar){
+  color: #94a3b8;
+}
 
-  .profile-info-chip,
-  .profile-achievement-item,
-  .profile-stat-item {
-    border-color: rgba(71, 85, 105, 0.42);
-    background: rgba(15, 23, 42, 0.28);
-  }
+:global(html.dark .profile-info-chip),
+:global(html.dark .profile-achievement-item),
+:global(html.dark .profile-stat-item){
+  border-color: rgba(71, 85, 105, 0.42);
+  background: rgba(15, 23, 42, 0.28);
+}
 
-  .profile-detail-card__cover {
-    background:
-      radial-gradient(circle at 18% 24%, rgba(96, 165, 250, 0.26), transparent 30%),
-      radial-gradient(circle at 86% 16%, rgba(34, 197, 94, 0.16), transparent 28%),
-      linear-gradient(135deg, rgba(30, 64, 175, 0.24), rgba(15, 23, 42, 0.18));
-  }
+:global(html.dark .profile-detail-card__cover){
+  background:
+    radial-gradient(circle at 18% 24%, rgba(96, 165, 250, 0.26), transparent 30%),
+    radial-gradient(circle at 86% 16%, rgba(34, 197, 94, 0.16), transparent 28%),
+    linear-gradient(135deg, rgba(30, 64, 175, 0.24), rgba(15, 23, 42, 0.18));
+}
 
-  .profile-achievement-item strong {
-    color: #f8fafc;
-  }
+:global(html.dark .profile-achievement-item strong){
+  color: #f8fafc;
+}
 
-  .profile-overview-card {
-    background:
-      radial-gradient(circle at 12% 18%, rgba(96, 165, 250, 0.18), transparent 30%),
-      radial-gradient(circle at 92% 8%, rgba(34, 197, 94, 0.12), transparent 28%),
-      linear-gradient(135deg, rgba(30, 41, 59, 0.86), rgba(15, 23, 42, 0.72));
-  }
+:global(html.dark .profile-overview-card){
+  background:
+    radial-gradient(circle at 12% 18%, rgba(96, 165, 250, 0.18), transparent 30%),
+    radial-gradient(circle at 92% 8%, rgba(34, 197, 94, 0.12), transparent 28%),
+    linear-gradient(135deg, rgba(30, 41, 59, 0.86), rgba(15, 23, 42, 0.72));
+}
 
-  .profile-overview-hero,
-  .profile-overview-stat {
-    border-color: rgba(71, 85, 105, 0.54);
-    background: rgba(15, 23, 42, 0.32);
-  }
+:global(html.dark .profile-overview-hero),
+:global(html.dark .profile-overview-stat){
+  border-color: rgba(71, 85, 105, 0.54);
+  background: rgba(15, 23, 42, 0.32);
+}
 
-  .password-hero {
-    border-color: rgba(71, 85, 105, 0.5);
-    background:
-      radial-gradient(circle at 14% 14%, rgba(248, 113, 113, 0.16), transparent 30%),
-      radial-gradient(circle at 88% 10%, rgba(96, 165, 250, 0.14), transparent 28%),
-      linear-gradient(135deg, rgba(127, 29, 29, 0.2), rgba(30, 41, 59, 0.76));
-  }
+:global(html.dark .password-hero){
+  border-color: rgba(71, 85, 105, 0.5);
+  background:
+    radial-gradient(circle at 14% 14%, rgba(248, 113, 113, 0.16), transparent 30%),
+    radial-gradient(circle at 88% 10%, rgba(96, 165, 250, 0.14), transparent 28%),
+    linear-gradient(135deg, rgba(127, 29, 29, 0.2), rgba(30, 41, 59, 0.76));
+}
 
-  .password-hero__content h3,
-  .password-hero__meta strong,
-  .password-field-card__title {
-    color: #f8fafc;
-  }
+:global(html.dark .password-hero__content h3),
+:global(html.dark .password-hero__meta strong),
+:global(html.dark .password-field-card__title){
+  color: #f8fafc;
+}
 
-  .password-hero__content p,
-  .password-hero__meta span,
-  .password-step-item,
-  .password-wechat-panel p,
-  .password-rule-list span {
-    color: #94a3b8;
-  }
+:global(html.dark .password-hero__content p),
+:global(html.dark .password-hero__meta span),
+:global(html.dark .password-step-item),
+:global(html.dark .password-wechat-panel p),
+:global(html.dark .password-rule-list span){
+  color: #94a3b8;
+}
 
-  .password-hero__meta,
-  .password-step-item,
-  .password-field-card,
-  .password-verify-tab,
-  .password-wechat-panel {
-    border-color: rgba(71, 85, 105, 0.46);
-    background: rgba(15, 23, 42, 0.3);
-  }
+:global(html.dark .password-hero__meta),
+:global(html.dark .password-step-item),
+:global(html.dark .password-field-card),
+:global(html.dark .password-verify-tab),
+:global(html.dark .password-wechat-panel){
+  border-color: rgba(71, 85, 105, 0.46);
+  background: rgba(15, 23, 42, 0.3);
+}
 
-  .password-verify-tab {
-    color: #cbd5e1;
-  }
+:global(html.dark .password-verify-tab){
+  color: #cbd5e1;
+}
 
-  .password-verify-tab:hover {
-    background: rgba(30, 41, 59, 0.74);
-  }
+:global(html.dark .password-verify-tab:hover){
+  background: rgba(30, 41, 59, 0.74);
+}
 
-  .password-verify-tab.is-active {
-    background: linear-gradient(135deg, #dc2626, #2563eb);
-    color: #fff;
-  }
+:global(html.dark .password-verify-tab.is-active){
+  background: linear-gradient(135deg, #dc2626, #2563eb);
+  color: #fff;
+}
 
-  .password-wechat-qr,
-  .password-wechat-state,
-  .password-wechat-retry,
-  .password-ghost-button,
-  .password-rule-list span {
-    background: rgba(30, 41, 59, 0.72);
-  }
+:global(html.dark .password-wechat-qr),
+:global(html.dark .password-wechat-state),
+:global(html.dark .password-wechat-retry),
+:global(html.dark .password-ghost-button),
+:global(html.dark .password-rule-list span){
+  background: rgba(30, 41, 59, 0.72);
+}
 
-  .password-ghost-button {
-    border-color: rgba(71, 85, 105, 0.54);
-    color: #cbd5e1;
-  }
+:global(html.dark .password-ghost-button){
+  border-color: rgba(71, 85, 105, 0.54);
+  color: #cbd5e1;
+}
 
-  .settings-hero {
-    border-color: rgba(71, 85, 105, 0.5);
-    background:
-      radial-gradient(circle at 14% 14%, rgba(34, 197, 94, 0.16), transparent 30%),
-      radial-gradient(circle at 88% 10%, rgba(96, 165, 250, 0.14), transparent 28%),
-      linear-gradient(135deg, rgba(21, 128, 61, 0.18), rgba(30, 41, 59, 0.76));
-  }
+:global(html.dark .settings-hero){
+  border-color: rgba(71, 85, 105, 0.5);
+  background:
+    radial-gradient(circle at 14% 14%, rgba(34, 197, 94, 0.16), transparent 30%),
+    radial-gradient(circle at 88% 10%, rgba(96, 165, 250, 0.14), transparent 28%),
+    linear-gradient(135deg, rgba(21, 128, 61, 0.18), rgba(30, 41, 59, 0.76));
+}
 
-  .settings-hero__content h3,
-  .settings-overview-item strong,
-  .settings-section__title h4,
-  .settings-item__name {
-    color: #f8fafc;
-  }
+:global(html.dark .settings-hero__content h3),
+:global(html.dark .settings-overview-item strong),
+:global(html.dark .settings-section__title h4),
+:global(html.dark .settings-item__name){
+  color: #f8fafc;
+}
 
-  .settings-hero__content p,
-  .settings-overview-item span,
-  .settings-section__title p,
-  .settings-item__main p,
-  .settings-item__state {
-    color: #94a3b8;
-  }
+:global(html.dark .settings-hero__content p),
+:global(html.dark .settings-overview-item span),
+:global(html.dark .settings-section__title p),
+:global(html.dark .settings-item__main p),
+:global(html.dark .settings-item__state){
+  color: #94a3b8;
+}
 
-  .settings-overview-item,
-  .settings-section,
-  .settings-item {
-    border-color: rgba(71, 85, 105, 0.46);
-    background: rgba(15, 23, 42, 0.3);
-  }
+:global(html.dark .settings-overview-item),
+:global(html.dark .settings-section),
+:global(html.dark .settings-item){
+  border-color: rgba(71, 85, 105, 0.46);
+  background: rgba(15, 23, 42, 0.3);
+}
 
-  .settings-section.is-privacy {
-    background:
-      radial-gradient(circle at 0% 0%, rgba(34, 197, 94, 0.1), transparent 26%),
-      rgba(15, 23, 42, 0.28);
-  }
+:global(html.dark .settings-section.is-privacy){
+  background:
+    radial-gradient(circle at 0% 0%, rgba(34, 197, 94, 0.1), transparent 26%),
+    rgba(15, 23, 42, 0.28);
+}
 
-  .settings-section.is-notice {
-    background:
-      radial-gradient(circle at 100% 0%, rgba(96, 165, 250, 0.1), transparent 26%),
-      rgba(15, 23, 42, 0.28);
-  }
+:global(html.dark .settings-section.is-notice){
+  background:
+    radial-gradient(circle at 100% 0%, rgba(96, 165, 250, 0.1), transparent 26%),
+    rgba(15, 23, 42, 0.28);
+}
 
-  .settings-item:hover {
-    background: rgba(30, 41, 59, 0.74);
-  }
+:global(html.dark .settings-item:hover){
+  background: rgba(30, 41, 59, 0.74);
+}
 
-  .profile-edit-card {
-    background:
-      radial-gradient(circle at 10% 10%, rgba(96, 165, 250, 0.16), transparent 28%),
-      radial-gradient(circle at 92% 8%, rgba(34, 197, 94, 0.12), transparent 26%),
-      linear-gradient(135deg, rgba(30, 41, 59, 0.86), rgba(15, 23, 42, 0.72));
-  }
+:global(html.dark .profile-edit-card){
+  background:
+    radial-gradient(circle at 10% 10%, rgba(96, 165, 250, 0.16), transparent 28%),
+    radial-gradient(circle at 92% 8%, rgba(34, 197, 94, 0.12), transparent 26%),
+    linear-gradient(135deg, rgba(30, 41, 59, 0.86), rgba(15, 23, 42, 0.72));
+}
 
-  .profile-edit-hero,
-  .profile-edit-section,
-  .profile-field-card,
-  .profile-bind-card {
-    border-color: rgba(71, 85, 105, 0.54);
-    background: rgba(15, 23, 42, 0.32);
-  }
+:global(html.dark .profile-edit-hero),
+:global(html.dark .profile-edit-section),
+:global(html.dark .profile-field-card),
+:global(html.dark .profile-bind-card){
+  border-color: rgba(71, 85, 105, 0.54);
+  background: rgba(15, 23, 42, 0.32);
+}
 
-  .profile-edit-hero__content h3,
-  .profile-edit-section__title,
-  .profile-field-card > strong,
-  .profile-bind-card strong {
-    color: #f8fafc;
-  }
+:global(html.dark .profile-edit-hero__content h3),
+:global(html.dark .profile-edit-section__title),
+:global(html.dark .profile-field-card > strong),
+:global(html.dark .profile-bind-card strong){
+  color: #f8fafc;
+}
 
-  .profile-edit-hero__content p,
-  .profile-field-card > span,
-  .profile-bind-card span {
-    color: #94a3b8;
-  }
+:global(html.dark .profile-edit-hero__content p),
+:global(html.dark .profile-field-card > span),
+:global(html.dark .profile-bind-card span){
+  color: #94a3b8;
+}
 
-  .profile-overview-hero h3,
-  .profile-overview-stat strong {
-    color: #f8fafc;
-  }
+:global(html.dark .profile-overview-hero h3),
+:global(html.dark .profile-overview-stat strong){
+  color: #f8fafc;
+}
 
-  .article-manager-card {
-    background:
-      radial-gradient(circle at 6% 0%, rgba(96, 165, 250, 0.16), transparent 28%),
-      radial-gradient(circle at 96% 4%, rgba(34, 197, 94, 0.1), transparent 26%),
-      rgba(30, 41, 59, 0.72);
-  }
+:global(html.dark .article-manager-card){
+  background:
+    radial-gradient(circle at 6% 0%, rgba(96, 165, 250, 0.16), transparent 28%),
+    radial-gradient(circle at 96% 4%, rgba(34, 197, 94, 0.1), transparent 26%),
+    rgba(30, 41, 59, 0.72);
+}
 
-  .article-toolbar,
-  .article-card {
-    border-color: rgba(71, 85, 105, 0.54);
-    background: rgba(15, 23, 42, 0.32);
-  }
+:global(html.dark .article-toolbar),
+:global(html.dark .article-card){
+  border-color: rgba(71, 85, 105, 0.54);
+  background: rgba(15, 23, 42, 0.32);
+}
 
-  .article-toolbar__footer {
-    border-color: rgba(71, 85, 105, 0.58);
-  }
+:global(html.dark .article-toolbar__footer){
+  border-color: rgba(71, 85, 105, 0.58);
+}
 
-  .article-card__title {
-    color: #f8fafc;
-  }
+:global(html.dark .article-card__title){
+  color: #f8fafc;
+}
 
-  .article-card__summary,
-  .article-card__meta,
-  .article-status-tab {
-    color: #94a3b8;
-  }
+:global(html.dark .article-card__summary),
+:global(html.dark .article-card__meta),
+:global(html.dark .article-status-tab){
+  color: #94a3b8;
+}
 
-  .follow-hero {
-    border-color: rgba(71, 85, 105, 0.54);
-    background:
-      radial-gradient(circle at 16% 12%, rgba(96, 165, 250, 0.18), transparent 30%),
-      radial-gradient(circle at 88% 18%, rgba(236, 72, 153, 0.12), transparent 26%),
-      linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.64));
-  }
+:global(html.dark .follow-hero){
+  border-color: rgba(71, 85, 105, 0.54);
+  background:
+    radial-gradient(circle at 16% 12%, rgba(96, 165, 250, 0.18), transparent 30%),
+    radial-gradient(circle at 88% 18%, rgba(236, 72, 153, 0.12), transparent 26%),
+    linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.64));
+}
 
-  .follow-hero__content h3,
-  .follow-hero__meta strong,
-  .follow-card__name,
-  .follow-empty strong {
-    color: #f8fafc;
-  }
+:global(html.dark .follow-hero__content h3),
+:global(html.dark .follow-hero__meta strong),
+:global(html.dark .follow-card__name),
+:global(html.dark .follow-empty strong){
+  color: #f8fafc;
+}
 
-  .follow-hero__content p,
-  .follow-hero__meta span,
-  .follow-card p,
-  .follow-card__chips span,
-  .follow-empty {
-    color: #94a3b8;
-  }
+:global(html.dark .follow-hero__content p),
+:global(html.dark .follow-hero__meta span),
+:global(html.dark .follow-card p),
+:global(html.dark .follow-card__chips span),
+:global(html.dark .follow-empty){
+  color: #94a3b8;
+}
 
-  .follow-hero__icon,
-  .follow-hero__meta,
-  .follow-tabs,
-  .follow-card,
-  .follow-card__chips span,
-  .follow-empty {
-    border-color: rgba(71, 85, 105, 0.54);
-    background: rgba(15, 23, 42, 0.32);
-  }
+:global(html.dark .follow-hero__icon),
+:global(html.dark .follow-hero__meta),
+:global(html.dark .follow-tabs),
+:global(html.dark .follow-card),
+:global(html.dark .follow-card__chips span),
+:global(html.dark .follow-empty){
+  border-color: rgba(71, 85, 105, 0.54);
+  background: rgba(15, 23, 42, 0.32);
+}
 
-  .follow-card__avatar-ring {
-    background:
-      linear-gradient(#1e293b, #1e293b) padding-box,
-      linear-gradient(135deg, #60a5fa, #22c55e, #ec4899) border-box;
-  }
+:global(html.dark .follow-card__avatar-ring){
+  background:
+    linear-gradient(#1e293b, #1e293b) padding-box,
+    linear-gradient(135deg, #60a5fa, #22c55e, #ec4899) border-box;
+}
 
-  .collect-hero {
-    border-color: rgba(71, 85, 105, 0.54);
-    background:
-      radial-gradient(circle at 15% 15%, rgba(245, 158, 11, 0.16), transparent 30%),
-      radial-gradient(circle at 86% 12%, rgba(96, 165, 250, 0.16), transparent 28%),
-      linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.64));
-  }
+:global(html.dark .collect-hero){
+  border-color: rgba(71, 85, 105, 0.54);
+  background:
+    radial-gradient(circle at 15% 15%, rgba(245, 158, 11, 0.16), transparent 30%),
+    radial-gradient(circle at 86% 12%, rgba(96, 165, 250, 0.16), transparent 28%),
+    linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.64));
+}
 
-  .collect-hero__content h3,
-  .collect-hero__meta strong,
-  .collect-empty strong {
-    color: #f8fafc;
-  }
+:global(html.dark .collect-hero__content h3),
+:global(html.dark .collect-hero__meta strong),
+:global(html.dark .collect-empty strong){
+  color: #f8fafc;
+}
 
-  .collect-hero__content p,
-  .collect-hero__meta span,
-  .collect-empty {
-    color: #94a3b8;
-  }
+:global(html.dark .collect-hero__content p),
+:global(html.dark .collect-hero__meta span),
+:global(html.dark .collect-empty){
+  color: #94a3b8;
+}
 
-  .collect-hero__icon,
-  .collect-hero__meta,
-  .collect-toolbar,
-  .collect-empty {
-    border-color: rgba(71, 85, 105, 0.54);
-    background: rgba(15, 23, 42, 0.32);
-  }
+:global(html.dark .collect-hero__icon),
+:global(html.dark .collect-hero__meta),
+:global(html.dark .collect-toolbar),
+:global(html.dark .collect-empty){
+  border-color: rgba(71, 85, 105, 0.54);
+  background: rgba(15, 23, 42, 0.32);
+}
 
-  .collect-toolbar__footer {
-    border-color: rgba(71, 85, 105, 0.58);
-  }
+:global(html.dark .collect-toolbar__footer){
+  border-color: rgba(71, 85, 105, 0.58);
+}
 
-  .collect-card {
-    :deep(.article-list-item-card) {
-      border-color: rgba(71, 85, 105, 0.54);
-      background:
-        linear-gradient(180deg, rgba(30, 41, 59, 0.72), rgba(69, 46, 12, 0.18)),
-        rgba(15, 23, 42, 0.36);
-    }
-  }
+:global(html.dark .collect-card .article-list-item-card){
+  border-color: rgba(71, 85, 105, 0.54);
+  background:
+    linear-gradient(180deg, rgba(30, 41, 59, 0.72), rgba(69, 46, 12, 0.18)),
+    rgba(15, 23, 42, 0.36);
+}
 
-  .collect-time-chip {
-    background: rgba(69, 46, 12, 0.3);
-    color: #fbbf24;
-  }
+:global(html.dark .collect-time-chip){
+  background: rgba(69, 46, 12, 0.3);
+  color: #fbbf24;
+}
 
-  .collect-cancel-button {
-    background: rgba(127, 29, 29, 0.28);
-    color: #fca5a5;
+:global(html.dark .collect-cancel-button){
+  background: rgba(127, 29, 29, 0.28);
+  color: #fca5a5;
+}
 
-    &:hover {
-      background: #ef4444;
-      color: #fff;
-    }
-  }
+:global(html.dark .collect-cancel-button:hover){
+  background: #ef4444;
+  color: #fff;
+}
 
-  .article-status-tab {
-    border-color: rgba(71, 85, 105, 0.52);
-    background: rgba(15, 23, 42, 0.26);
+:global(html.dark .article-status-tab){
+  border-color: rgba(71, 85, 105, 0.52);
+  background: rgba(15, 23, 42, 0.26);
+}
 
-    &:hover,
-    &.is-active {
-      color: #93c5fd;
-      background: rgba(37, 99, 235, 0.16);
-    }
-  }
+:global(html.dark .article-status-tab:hover),
+:global(html.dark .article-status-tab.is-active){
+  color: #93c5fd;
+  background: rgba(37, 99, 235, 0.16);
+}
 
-  :global(.profile-bind-dialog) {
-    background:
-      radial-gradient(circle at 14% 0%, rgba(96, 165, 250, 0.18), transparent 30%),
-      radial-gradient(circle at 90% 8%, rgba(34, 197, 94, 0.12), transparent 28%),
-      #1e293b;
-  }
+:global(html.dark .profile-article-card .article-list-item-title),
+:global(html.dark .collect-card .article-list-item-title){
+  color: #f8fafc;
+}
 
-  :global(.profile-bind-dialog .el-dialog__title) {
-    color: #f8fafc;
-  }
+:global(html.dark .profile-article-card .article-content),
+:global(html.dark .profile-article-card .article-meta-row),
+:global(html.dark .profile-article-card .article-info),
+:global(html.dark .profile-article-card .bottom-bar),
+:global(html.dark .collect-card .article-content),
+:global(html.dark .collect-card .article-meta-row),
+:global(html.dark .collect-card .article-info),
+:global(html.dark .collect-card .bottom-bar){
+  color: #94a3b8;
+}
 
-  .profile-dialog-hero,
-  .profile-dialog-tip,
-  .profile-wechat-qr {
-    border-color: rgba(71, 85, 105, 0.54);
-    background: rgba(15, 23, 42, 0.32);
-  }
+:global(html.dark .article-filter-row .el-input__wrapper),
+:global(html.dark .article-filter-row .el-select__wrapper),
+:global(html.dark .article-filter-row .el-date-editor),
+:global(html.dark .collect-filter-row .el-input__wrapper),
+:global(html.dark .collect-filter-row .el-select__wrapper),
+:global(html.dark .collect-filter-row .el-date-editor),
+:global(html.dark .profile-dialog-code-row .el-input__wrapper),
+:global(html.dark .profile-dialog-code-row .el-select__wrapper),
+:global(html.dark .profile-dialog-code-row .el-date-editor),
+:global(html.dark .password-field-card .el-input__wrapper),
+:global(html.dark .password-field-card .el-select__wrapper),
+:global(html.dark .password-field-card .el-date-editor),
+:global(html.dark .settings-section .el-input__wrapper),
+:global(html.dark .settings-section .el-select__wrapper),
+:global(html.dark .settings-section .el-date-editor){
+  background: rgba(15, 23, 42, 0.48);
+  box-shadow: 0 0 0 1px rgba(71, 85, 105, 0.58) inset;
+}
 
-  .profile-dialog-hero h3,
-  .profile-dialog-tip strong {
-    color: #f8fafc;
-  }
+:global(html.dark .article-filter-row .el-input__inner),
+:global(html.dark .article-filter-row .el-select__placeholder),
+:global(html.dark .article-filter-row .el-range-input),
+:global(html.dark .collect-filter-row .el-input__inner),
+:global(html.dark .collect-filter-row .el-select__placeholder),
+:global(html.dark .collect-filter-row .el-range-input),
+:global(html.dark .profile-dialog-code-row .el-input__inner),
+:global(html.dark .profile-dialog-code-row .el-select__placeholder),
+:global(html.dark .profile-dialog-code-row .el-range-input),
+:global(html.dark .password-field-card .el-input__inner),
+:global(html.dark .password-field-card .el-select__placeholder),
+:global(html.dark .password-field-card .el-range-input),
+:global(html.dark .settings-section .el-input__inner),
+:global(html.dark .settings-section .el-select__placeholder),
+:global(html.dark .settings-section .el-range-input){
+  color: #e5e7eb;
+}
 
-  .profile-dialog-hero p {
-    color: #94a3b8;
-  }
+:global(html.dark .follow-tab){
+  color: #cbd5e1;
+}
 
-  .profile-dialog-tip.is-warning {
-    border-color: rgba(245, 158, 11, 0.24);
-    background: rgba(69, 46, 12, 0.24);
-  }
+:global(html.dark .follow-tab:hover){
+  background: rgba(37, 99, 235, 0.14);
+  color: #93c5fd;
+}
 
-  .profile-wechat-loading,
-  .profile-wechat-retry {
-    border-color: rgba(96, 165, 250, 0.34);
-    background: rgba(15, 23, 42, 0.42);
-    color: #93c5fd;
-  }
+:global(html.dark .follow-tab.is-active){
+  background: linear-gradient(135deg, #2563eb, #059669);
+  color: #fff;
+  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.22);
+}
+
+:global(html.dark .profile-bind-card__action),
+:global(html.dark .profile-dialog-secondary){
+  border-color: rgba(71, 85, 105, 0.58);
+  background: rgba(15, 23, 42, 0.38);
+  color: #93c5fd;
+}
+
+:global(html.dark .profile-bind-card__action:hover),
+:global(html.dark .profile-dialog-secondary:hover){
+  background: rgba(37, 99, 235, 0.18);
+  color: #bfdbfe;
+}
+
+:global(html.dark .password-code-button:disabled),
+:global(html.dark .password-submit-button:disabled){
+  background: rgba(71, 85, 105, 0.54);
+  color: #cbd5e1;
+  box-shadow: none;
+}
+
+:global(html.dark .settings-item .el-switch__core){
+  border-color: rgba(71, 85, 105, 0.68);
+  background: rgba(51, 65, 85, 0.88);
+}
+
+:global(html.dark .profile-bind-dialog) {
+  background:
+    radial-gradient(circle at 14% 0%, rgba(96, 165, 250, 0.18), transparent 30%),
+    radial-gradient(circle at 90% 8%, rgba(34, 197, 94, 0.12), transparent 28%),
+    #1e293b;
+}
+
+:global(html.dark .profile-bind-dialog .el-dialog__title) {
+  color: #f8fafc;
+}
+
+:global(html.dark .profile-dialog-hero),
+:global(html.dark .profile-dialog-tip),
+:global(html.dark .profile-wechat-qr){
+  border-color: rgba(71, 85, 105, 0.54);
+  background: rgba(15, 23, 42, 0.32);
+}
+
+:global(html.dark .profile-dialog-hero h3),
+:global(html.dark .profile-dialog-tip strong){
+  color: #f8fafc;
+}
+
+:global(html.dark .profile-dialog-hero p){
+  color: #94a3b8;
+}
+
+:global(html.dark .profile-dialog-tip.is-warning){
+  border-color: rgba(245, 158, 11, 0.24);
+  background: rgba(69, 46, 12, 0.24);
+}
+
+:global(html.dark .profile-wechat-loading),
+:global(html.dark .profile-wechat-retry){
+  border-color: rgba(96, 165, 250, 0.34);
+  background: rgba(15, 23, 42, 0.42);
+  color: #93c5fd;
 }

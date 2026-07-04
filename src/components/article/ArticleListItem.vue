@@ -407,6 +407,7 @@ defineEmits<{
   }
 
   .article-wrapper {
+    height: auto;
     padding: 0.85rem 1rem 1rem;
   }
 

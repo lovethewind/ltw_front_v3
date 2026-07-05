@@ -1123,7 +1123,49 @@ html.dark {
   }
 
   .article-md-editor {
+    --md-bk-color: #111827;
+    --md-bk-color-outstand: #1f2937;
+    --md-bk-hover-color: #172033;
+    --md-color: #cbd5e1;
+    --md-hover-color: #f8fafc;
+    --md-border-color: rgb(255 255 255 / 10%);
+
     border-color: rgb(255 255 255 / 12%);
+
+    :deep(.md-editor-content),
+    :deep(.md-editor-input-wrapper),
+    :deep(.md-editor-preview-wrapper) {
+      background: var(--md-bk-color);
+    }
+
+    :deep(.ͼo),
+    :deep(.cm-editor),
+    :deep(.cm-scroller),
+    :deep(.cm-gutters) {
+      --md-bk-color: #111827;
+
+      background: #111827;
+    }
+
+    :deep(.md-editor-resize-operate) {
+      --md-bk-color: #1f2937;
+    }
+
+    :deep(.md-editor-toolbar-wrapper),
+    :deep(.md-editor-footer) {
+      border-color: rgb(255 255 255 / 10%);
+      background: rgb(17 24 39 / 94%);
+    }
+
+    :deep(.md-editor-toolbar-item) {
+      color: #cbd5e1;
+    }
+
+    :deep(.md-editor-toolbar-item:hover),
+    :deep(.md-editor-toolbar-active) {
+      color: #f8fafc;
+      background: rgb(59 130 246 / 18%);
+    }
   }
 
   .attachment-uploading {

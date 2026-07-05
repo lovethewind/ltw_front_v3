@@ -15,6 +15,30 @@ interface IMobileCode {
   codeType: VerifyCodeTypeEnum
 }
 
+export interface GithubCommitQuery {
+  repo: string
+  page?: number
+  size?: number
+}
+
+export interface GithubCommit {
+  message: string
+  commit_time: string
+  avatar_url: string | null
+  html_url: string
+  sha: string
+  short_sha: string
+}
+
+export interface GithubCommitPage {
+  repo: string
+  branch: string
+  page: number
+  size: number
+  has_next: boolean
+  commits: GithubCommit[]
+}
+
 export default {
   getEmailCode(data: IEmailCode) {
     return request({
@@ -47,7 +71,6 @@ export default {
       data
     })
   },
-
 
   validUserEmailCode(data: IEmailCode) {
     return request({
@@ -98,6 +121,20 @@ export default {
     return request({
       url: `${apiName}/common/addWebsiteViewCount`,
       method: 'get'
+    })
+  },
+
+  /**
+   * 分页获取 GitHub 提交动态。
+   *
+   * :param params: 仓库名和分页参数。
+   * :return: GitHub 提交动态响应。
+   */
+  getGithubCommits(params: GithubCommitQuery) {
+    return request({
+      url: `${apiName}/common/getGithubCommits`,
+      method: 'get',
+      params
     })
   }
 }

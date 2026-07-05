@@ -58,7 +58,7 @@
         >
           <template #actions>
             <div class="collect-card-badges">
-              <span class="collect-time-chip">
+              <span v-if="isSelfProfile" class="collect-time-chip">
                 <Icon icon="solar:calendar-broken" />
                 收藏于 {{ minute(article.collectTime) }}
               </span>

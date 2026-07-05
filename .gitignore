@@ -34,3 +34,4 @@ coverage
 .claude/
 AGENTS.md
 CLAUDE.md
+__tests__

@@ -184,69 +184,257 @@ a {
 .notification-div {
   cursor: pointer;
 
-  .like-comment,
-  .origin-article,
-  .origin-article a {
-    font-size: 12px;
-    color: gray;
+  .ws-notice-card {
+    min-width: 0;
+    color: #111827;
   }
 
-  .article {
-    background: #dd9d28;
-  }
-
-  .picture {
-    background: #5d5da3;
-  }
-
-  .system {
-    background: #61bdbd;
-  }
-
-  .tag-a {
-    font-size: 12px;
-    color: #fff !important;
-    padding: 2px;
-    border-radius: 2px;
-    margin-right: 2px;
-  }
-
-  .notice-content {
-    border-radius: 5px;
-    padding: 2px;
-    font-weight: 500;
-  }
-
-  .user-content {
-    margin-bottom: 5px;
+  .ws-notice-sender a,
+  .ws-notice-context,
+  .ws-notice-picture {
+    min-width: 0;
     display: flex;
+    align-items: center;
+  }
+
+  .ws-notice-sender {
+    margin-bottom: 8px;
 
     a {
-      display: inline-flex;
-      align-items: center;
-    }
-
-    img {
-      width: 24px;
-      height: 24px;
-      border-radius: 5px;
-      margin-right: 5px;
+      gap: 8px;
+      color: #1f2937;
     }
   }
 
-  .picture-content {
-    img {
-      width: 100%;
-      height: 100%;
-    }
+  .ws-notice-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    object-fit: cover;
   }
 
-  .origin-comment {
-    background: #eee;
-    border-radius: 5px;
+  .ws-notice-name {
+    min-width: 0;
+    max-width: 108px;
+    overflow: hidden;
+    color: #1f2937;
+    font-size: 13px;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .ws-notice-type {
+    flex: 0 0 auto;
+    border-radius: 999px;
+    padding: 2px 8px;
+    color: #2563eb;
+    background: #eff6ff;
     font-size: 12px;
-    padding: 2px;
+    font-weight: 700;
   }
+
+  .ws-notice-body {
+    margin: 0;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.55;
+  }
+
+  .ws-notice-context {
+    margin-top: 7px;
+    gap: 5px;
+    color: #94a3b8;
+    font-size: 12px;
+    line-height: 1.45;
+
+    span {
+      flex: 0 0 auto;
+      font-weight: 600;
+    }
+  }
+
+  .ws-notice-source {
+    min-width: 0;
+    overflow: hidden;
+    color: #2563eb !important;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .ws-notice-source:hover {
+    color: #0f766e !important;
+  }
+
+  .ws-notice-quote {
+    margin-top: 8px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 7px 9px;
+    color: #64748b;
+    background: #f8fafc;
+    font-size: 12px;
+    line-height: 1.55;
+
+    span {
+      color: #94a3b8;
+      font-weight: 600;
+    }
+  }
+
+  .ws-notice-picture {
+    margin-top: 8px;
+    gap: 8px;
+    color: #64748b;
+    font-size: 12px;
+
+    span {
+      flex: 0 0 auto;
+      font-weight: 700;
+    }
+
+    img {
+      width: 78px;
+      height: 46px;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+  }
+
+  .ws-notice-system {
+    display: grid;
+    gap: 7px;
+  }
+}
+
+.ws-notice-notification {
+  width: 360px !important;
+  padding: 14px 16px !important;
+  border-radius: 10px !important;
+
+  .el-notification__group {
+    width: 100%;
+    margin: 0;
+  }
+
+  .el-notification__content {
+    margin: 0;
+    text-align: left;
+  }
+
+  .el-notification__title {
+    display: none;
+  }
+
+  .el-notification__closeBtn {
+    top: 12px;
+    right: 12px;
+  }
+
+  .ws-notice-avatar {
+    width: 30px !important;
+    height: 30px !important;
+    max-width: 30px !important;
+    max-height: 30px !important;
+  }
+
+  .ws-notice-picture-img {
+    width: 78px !important;
+    height: 46px !important;
+    max-width: 78px !important;
+    max-height: 46px !important;
+  }
+}
+
+.ws-chat-notification {
+  width: 350px !important;
+  padding: 12px 14px !important;
+  border-radius: 10px !important;
+  cursor: pointer;
+
+  .el-notification__group {
+    width: 100%;
+    margin: 0;
+  }
+
+  .el-notification__content {
+    margin: 0;
+    text-align: left;
+  }
+
+  .el-notification__title {
+    display: none;
+  }
+
+  .el-notification__closeBtn {
+    top: 12px;
+    right: 12px;
+  }
+}
+
+.ws-chat-card {
+  display: flex;
+  min-width: 0;
+  gap: 10px;
+  color: #111827;
+  cursor: pointer;
+}
+
+.ws-chat-avatar {
+  flex: 0 0 auto;
+  width: 40px !important;
+  height: 40px !important;
+  max-width: 40px !important;
+  max-height: 40px !important;
+  border-radius: 10px;
+  object-fit: cover;
+  background: #eef2ff;
+}
+
+.ws-chat-main {
+  min-width: 0;
+  flex: 1;
+  padding-right: 18px;
+}
+
+.ws-chat-header {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 4px;
+}
+
+.ws-chat-name {
+  min-width: 0;
+  overflow: hidden;
+  color: #111827;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ws-chat-badge {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 1px 7px;
+  color: #0f766e;
+  background: #ccfbf1;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.ws-chat-preview {
+  margin: 0;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.55;
 }
 
 .like-active, .like-active-icon {
@@ -305,5 +493,69 @@ html.dark {
     pre > code {
       text-shadow: none;
     }
+  }
+
+  .notification-div {
+    .ws-notice-card {
+      color: #f8fafc;
+    }
+
+    .ws-notice-sender a,
+    .ws-notice-name,
+    .ws-notice-body {
+      color: #e5e7eb;
+    }
+
+    .ws-notice-type {
+      color: #93c5fd;
+      background: rgba(37, 99, 235, 0.2);
+    }
+
+    .ws-notice-context,
+    .ws-notice-context span,
+    .ws-notice-picture,
+    .ws-notice-quote,
+    .ws-notice-quote span {
+      color: #94a3b8;
+    }
+
+    .ws-notice-source {
+      color: #93c5fd !important;
+    }
+
+    .ws-notice-quote {
+      border-color: rgba(148, 163, 184, 0.18);
+      background: rgba(30, 41, 59, 0.72);
+    }
+  }
+
+  .ws-notice-notification {
+    border-color: rgba(148, 163, 184, 0.2);
+    background: #1c1c1c;
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.32);
+  }
+
+  .ws-chat-notification {
+    border-color: rgba(148, 163, 184, 0.2);
+    background: #1c1c1c;
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.32);
+  }
+
+  .ws-chat-card,
+  .ws-chat-name {
+    color: #e5e7eb;
+  }
+
+  .ws-chat-avatar {
+    background: rgba(30, 41, 59, 0.72);
+  }
+
+  .ws-chat-badge {
+    color: #5eead4;
+    background: rgba(20, 184, 166, 0.18);
+  }
+
+  .ws-chat-preview {
+    color: #94a3b8;
   }
 }

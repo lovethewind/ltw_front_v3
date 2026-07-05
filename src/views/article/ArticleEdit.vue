@@ -300,7 +300,7 @@
       </el-upload>
       <div class="attachment-dialog__hint">
         <Icon icon="material-symbols:shield-outline-rounded" />
-        上传过程中请保持页面开启，完成后附件会自动加入文章
+        上传过程中请不要离开文章编辑页，后台完成后附件会自动加入文章
       </div>
     </div>
     <template #footer>

@@ -75,13 +75,6 @@ const routers = [
     }
   },
   {
-    path: '/contact',
-    component: () => import('@/views/about/ContactView.vue'),
-    meta: {
-      title: '联系我们'
-    }
-  },
-  {
     path: '/message-board',
     component: () => import('@/views/message/MessageView.vue'),
     meta: {

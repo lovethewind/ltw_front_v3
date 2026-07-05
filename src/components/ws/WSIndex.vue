@@ -9,9 +9,9 @@ import { getToken } from '@/utils/auth'
 import { ElMessageBox, ElNotification } from 'element-plus'
 import { EventName } from '@/event-server/event-name'
 import { EventServer } from '@/event-server'
-import type { IChatSendMessage, IConversation, ReceiveMessage } from '@/interface/ws'
-import { ApplyStatusEnum, MessageSendStatusEnum, MessageShowTypeEnum, MessageTypeEnum } from '@/enums/ws'
-import { dealChatMessageContent, dealNoticeMessageContent } from '@/components/ws/util'
+import type { IChatMessage, IChatSendMessage, IConversation, ReceiveMessage } from '@/interface/ws'
+import { ApplyStatusEnum, ContactTypeEnum, MessageSendStatusEnum, MessageShowTypeEnum, MessageTypeEnum } from '@/enums/ws'
+import { dealChatNotificationContent, dealNoticeMessageContent } from '@/components/ws/util'
 import { useModalStore } from '@/stores/modal'
 
 const eventServer = EventServer.getInstance()
@@ -92,9 +92,11 @@ function onMessage(e: MessageEvent): void {
       && (!modalStore.chatFlag || !isCurrentConversation || (isCurrentConversation && chatStore.currentNavbar === 'contact'))
     if (shouldNotify) {
       ElNotification({
-        title: message.message.userProfile?.nickname || message.message.groupProfile?.name,
-        message: dealChatMessageContent(message.message),
+        message: dealChatNotificationContent(message.message),
         dangerouslyUseHTMLString: true,
+        customClass: 'ws-chat-notification',
+        showClose: true,
+        onClick: () => openChatNotification(message.message),
         offset: 50,
         duration: 5000
       })
@@ -124,9 +126,10 @@ function onMessage(e: MessageEvent): void {
   }
   if (message.messageType === MessageTypeEnum.NOTICE) {
     ElNotification({
-      title: '📢 ' + message.message.title,
       message: dealNoticeMessageContent(message),
       dangerouslyUseHTMLString: true,
+      customClass: 'ws-notice-notification',
+      showClose: true,
       offset: 50,
       duration: 5000
     })
@@ -142,6 +145,35 @@ function onClose(e: CloseEvent) {
 
 function disconnect() {
   websocket.value?.close()
+}
+
+/**
+ * 点击 IM 消息通知后打开对应聊天会话。
+ *
+ * :param message: WebSocket 推送的聊天消息。
+ * :return: 无返回值。
+ */
+function openChatNotification(message: IChatMessage): void {
+  modalStore.setChatFlag(true)
+  chatStore.setCurrentNavbar('message')
+  if (chatStore.currentConversation?.conversationId === message.conversationId) return
+  if (message.contactType === ContactTypeEnum.USER) {
+    chatStore.setAddConversationUserId(message.userId)
+    return
+  }
+  const conversation: IConversation = {
+    contactId: message.contactId,
+    contactType: message.contactType,
+    conversationId: message.conversationId,
+    isMuted: false,
+    isPinned: false,
+    unreadCount: 0,
+    lastMessage: message,
+    groupProfile: message.groupProfile,
+    online: false
+  }
+  chatStore.setCurrentConversation(conversation)
+  eventServer.emit(EventName.CHANGE_CURRENT_CONVERSATION, conversation)
 }
 
 function sendChatMessage(message: IChatSendMessage) {

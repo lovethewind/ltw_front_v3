@@ -24,7 +24,6 @@ interface WebSite {
   footerStyle: string
   notice: string
   aboutMe: string
-  contactMe: string
   metaInfo: {
     meta: Array<{
       name: string
@@ -63,14 +62,10 @@ export const useCommonStore = defineStore('common', () => {
     loginTypeList: [1],
     wechatQrCode: 'https://source.lovethewind.cn/media/logo/qrcode_for_gh.jpg',
     footerStyle:
-      'background:linear-gradient(-45deg, #ee7752, #ce3e75, #23a6d5, #23d5ab);animation: Gradient 10s ease infinite;background-size: 400% 400%;',
+      'background:linear-gradient(-45deg, #ee7752, #ce3e75, #23a6d5, #23d5ab);animation: Gradient 22s ease infinite;background-size: 400% 400%;',
     showFooter: true,
     notice: '网站正在快马加鞭地建设中~',
     aboutMe: '正在撰写中，请稍后~',
-    contactMe:
-      '<p>此网站是基于学习过程记录、经验分享和心得交流</p><br>' +
-      '<p>部分资源来源于网络，如若发现侵权，请联系我们立即删除</p><br>' +
-      '<p>联系方式: 1720045474@qq.com</p>',
     metaInfo: {
       meta: [
         {
@@ -211,14 +206,10 @@ export const useCommonStore = defineStore('common', () => {
       const info = { aboutMe: res.data }
       setWebInfo(info)
     })
-    const promiseConfig4 = configApi.getConfigByKey('contactMe').then(res => {
-      const info = { contactMe: res.data }
-      setWebInfo(info)
-    })
     const promiseConfig5 = commonApi.getWebsiteViewCount().then(res => {
       websiteViewCount.value = res.data
     })
-    await Promise.all([promiseCategory, promiseTag, promiseConfig1, promiseConfig2, promiseConfig3, promiseConfig4, promiseConfig5])
+    await Promise.all([promiseCategory, promiseTag, promiseConfig1, promiseConfig2, promiseConfig3, promiseConfig5])
   }
 
   return {

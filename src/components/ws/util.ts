@@ -1,9 +1,17 @@
 import type { IChatMessage, IMessage } from '@/interface/ws'
-import { ChatMessageTypeEnum } from '@/enums/ws'
+import { ChatMessageTypeEnum, ContactTypeEnum } from '@/enums/ws'
 import type { INotice } from '@/interface'
 import { NoticeTypeEnum, ObjectTypeEnum } from '@/enums'
 
-export function dealChatMessageContent(message: IChatMessage) {
+type NoticeContentType = 'article' | 'picture' | 'user' | 'content' | 'originComment' | 'likeComment'
+
+/**
+ * 获取聊天消息的列表/通知预览文案。
+ *
+ * :param message: 聊天消息对象。
+ * :return: 消息预览文案。
+ */
+export function dealChatMessageContent(message: IChatMessage): string {
   if (!message) return ''
   if (message.messageType === ChatMessageTypeEnum.IMAGE) {
     return '[图片]'
@@ -20,22 +28,41 @@ export function dealChatMessageContent(message: IChatMessage) {
   return message.content
 }
 
-export function dealNoticeMessageContent(message: IMessage<INotice>) {
+/**
+ * 生成右上角 IM 消息弹窗的 HTML 内容。
+ *
+ * :param message: WebSocket 推送的聊天消息。
+ * :return: IM 消息弹窗 HTML 字符串。
+ */
+export function dealChatNotificationContent(message: IChatMessage): string {
+  const isGroup = message.contactType === ContactTypeEnum.GROUP || !!message.groupProfile
+  const avatar = isGroup ? message.groupProfile?.avatar : message.userProfile?.avatar
+  const name = (isGroup ? message.groupProfile?.name : message.userProfile?.nickname) || '新消息'
+  const badgeText = isGroup ? '群聊' : '私信'
+  const preview = dealChatMessageContent(message)
+
+  return `<div class="ws-chat-card"><img class="ws-chat-avatar" src="${avatar || ''}" alt="" /><div class="ws-chat-main"><div class="ws-chat-header"><span class="ws-chat-name">${name}</span><span class="ws-chat-badge">${badgeText}</span></div><div class="ws-chat-preview ellipsis-2l">${preview || '收到一条新消息'}</div></div></div>`
+}
+
+/**
+ * 生成右上角通知弹窗的 HTML 内容。
+ *
+ * :param message: WebSocket 推送的通知消息。
+ * :return: 通知弹窗 HTML 字符串。
+ */
+export function dealNoticeMessageContent(message: IMessage<INotice>): string {
   const windowOpenUrl = window.location.origin + '/user-notice/' + message.message.noticeType
-  let content = `<div class="notification-div" onclick="window.open('${windowOpenUrl}', '_blank')">`
+  let content = `<div class="notification-div" onclick="window.open('${windowOpenUrl}', '_blank')"><div class="ws-notice-card">`
   if (message.message.noticeType !== NoticeTypeEnum.SYSTEM) {
     content += getNoticeTypeContent(message, 'user')
   }
   content += getNoticeTypeContent(message, 'content')
   if (message.message.noticeType !== NoticeTypeEnum.SYSTEM) {
     if (message.message.noticeType === NoticeTypeEnum.REPLY) {
-      // 回复评论，显示原评论内容
-      content += `<div class="ellipsis-3l origin-comment"><span>${message.message.detail.commentContent}</span></div>`
+      content += getNoticeTypeContent(message, 'originComment')
     }
     if (message.message.noticeType === NoticeTypeEnum.LIKE && message.message.detail.objType === ObjectTypeEnum.COMMENT) {
-      // 点赞的是评论
-      content += `<div class="like-comment ellipsis-3l">${message.message.detail.commentContent}</div>`
-      // 显示评论原对象
+      content += getNoticeTypeContent(message, 'likeComment')
       if (message.message.detail.commentType === ObjectTypeEnum.ARTICLE) {
         content += getNoticeTypeContent(message, 'article')
       } else if (message.message.detail.commentType === ObjectTypeEnum.PICTURE) {
@@ -49,7 +76,7 @@ export function dealNoticeMessageContent(message: IMessage<INotice>) {
       }
     }
   }
-  content += '</div>'
+  content += '</div></div>'
   return content
 }
 
@@ -60,21 +87,25 @@ export function dealNoticeMessageContent(message: IMessage<INotice>) {
  * :param type: 内容类型。
  * :return: 通知摘要 HTML。
  */
-function getNoticeTypeContent(message: IMessage<INotice>, type: string): string {
+function getNoticeTypeContent(message: IMessage<INotice>, type: NoticeContentType): string {
   if (type === 'article') {
-    return `<div class="origin-article"><a class="tag-a article">文章</a><a href="/article/${message.message.detail.objId}" target="_blank">${message.message.detail.objContent}</a></div>`
+    return `<div class="ws-notice-context"><span>来自文章</span><a class="ws-notice-source" href="/article/${message.message.detail.objId}" target="_blank" onclick="event.stopPropagation()">@${message.message.detail.objContent}</a></div>`
   } else if (type === 'picture') {
-    return `<div class="picture-content"><a class="tag-a picture">图片</a><img src="${message.message.detail.objContent}" alt="" /><div>`
+    return `<div class="ws-notice-picture"><span>来自图片</span><img class="ws-notice-picture-img" src="${message.message.detail.objContent}" alt="" /></div>`
   } else if (type === 'user') {
-    return `<div class="user-content"><a href="/user/${message.message.detail.fromUser.id}" target="_blank"><img src="${message.message.detail.fromUser.avatar}" alt="" /> ${message.message.detail.fromUser.nickname}</a></div>`
+    return `<div class="ws-notice-sender"><a href="/user/${message.message.detail.fromUser.id}" target="_blank" onclick="event.stopPropagation()"><img class="ws-notice-avatar" src="${message.message.detail.fromUser.avatar}" alt="" /><span class="ws-notice-name">${message.message.detail.fromUser.nickname}</span><span class="ws-notice-type">${message.message.title}</span></a></div>`
   } else if (type === 'content') {
     if (!message.message.content) {
       return ''
     }
     if (message.message.noticeType === NoticeTypeEnum.SYSTEM) {
-      return `<div class="notice-content ellipsis-3l"><a class="tag-a system">系统</a>${message.message.content}</div>`
+      return `<div class="ws-notice-system"><span class="ws-notice-type">官方</span><div class="ws-notice-body ellipsis-3l">${message.message.content}</div></div>`
     }
-    return `<div class="notice-content ellipsis-3l">${message.message.content}</div>`
+    return `<div class="ws-notice-body ellipsis-3l">${message.message.content}</div>`
+  } else if (type === 'originComment') {
+    return `<div class="ws-notice-quote ellipsis-2l"><span>原评论：</span>${message.message.detail.commentContent}</div>`
+  } else if (type === 'likeComment') {
+    return `<div class="ws-notice-quote ellipsis-2l"><span>评论：</span>${message.message.detail.commentContent}</div>`
   } else {
     return ''
   }

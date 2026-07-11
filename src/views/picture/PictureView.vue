@@ -18,7 +18,12 @@
               </a>
             </el-col>
             <el-col :sm="9" :xs="12" class="picture-album-actions">
-              <el-button type="primary" size="small" @click="openAddPictureAlbum()">
+              <el-button
+                type="primary"
+                size="small"
+                class="picture-primary-action picture-album-add-button"
+                @click="openAddPictureAlbum()"
+              >
                 <Icon icon="ic:baseline-add" />
                 添加图库
               </el-button>
@@ -165,7 +170,12 @@
               重置
             </el-button>
           </div>
-          <el-button type="primary" size="small" class="picture-list-add-button" @click="openAddPicture()">
+          <el-button
+            type="primary"
+            size="small"
+            class="picture-primary-action picture-list-add-button"
+            @click="openAddPicture()"
+          >
             <Icon icon="ic:baseline-add" />
             添加图片
           </el-button>

@@ -1,54 +1,62 @@
 <template>
   <!-- 链接列表 -->
   <main class="website-page">
-    <section class="website-hero">
-      <div>
-        <div class="website-eyebrow">Website Navigation</div>
-        <h1>网站导航</h1>
-        <p>收藏常用工具、灵感站点和好玩的角落，也欢迎你把私藏网站投递进来。</p>
+    <section class="website-command-panel">
+      <div class="website-command-main">
+        <section class="website-hero">
+          <div>
+            <div class="website-eyebrow">Website Navigation</div>
+            <h1>网站导航</h1>
+            <p>收藏常用工具、灵感站点和好玩的角落，也欢迎你把私藏网站投递进来。</p>
+          </div>
+          <el-button type="primary" class="hero-action" @click="openSubmitDialog()">
+            <Icon icon="mage:plus" />
+            投稿网站
+          </el-button>
+        </section>
+
+        <section class="website-toolbar">
+          <el-input
+            v-model="searchKeyword"
+            clearable
+            class="website-search"
+            placeholder="搜索站名、简介或网址"
+          >
+            <template #prefix>
+              <Icon icon="mage:search" />
+            </template>
+          </el-input>
+          <span class="website-total">{{ websiteCountText }}</span>
+        </section>
       </div>
-      <el-button type="primary" class="hero-action" @click="openSubmitDialog()">
-        <Icon icon="mage:plus" />
-        投稿网站
-      </el-button>
-    </section>
 
-    <section class="website-toolbar">
-      <el-input
-        v-model="searchKeyword"
-        clearable
-        class="website-search"
-        placeholder="搜索站名、简介或网址"
-      >
-        <template #prefix>
-          <Icon icon="mage:search" />
-        </template>
-      </el-input>
-      <span class="website-total">{{ websiteCountText }}</span>
-    </section>
-
-    <section class="category-filter" aria-label="网站分类筛选">
-      <button
-        type="button"
-        :class="['category-filter-item', activeCategoryId === null ? 'active' : '']"
-        @click="activeCategoryId = null"
-      >
-        全部
-      </button>
-      <button
-        v-for="row of websiteList"
-        :key="row.id || row.name || 'category-filter'"
-        type="button"
-        :class="['category-filter-item', activeCategoryId === row.id ? 'active' : '']"
-        @click="activeCategoryId = row.id || null"
-      >
-        <span>{{ row.name }}</span>
-        <span>{{ getWebsiteCategoryCount(row) }}</span>
-      </button>
+      <section class="category-filter" aria-label="网站分类筛选">
+        <button
+          type="button"
+          :class="['category-filter-item', activeCategoryId === null ? 'active' : '']"
+          @click="activeCategoryId = null"
+        >
+          全部
+        </button>
+        <button
+          v-for="row of websiteList"
+          :key="row.id || row.name || 'category-filter'"
+          type="button"
+          :class="['category-filter-item', activeCategoryId === row.id ? 'active' : '']"
+          @click="activeCategoryId = row.id || null"
+        >
+          <span>{{ row.name }}</span>
+          <span>{{ getWebsiteCategoryCount(row) }}</span>
+        </button>
+      </section>
     </section>
 
     <section class="content-container">
-      <div v-for="row of displayWebsiteList" :key="row.id || row.name || 'website-category'" class="website-section">
+      <div
+        v-for="row of displayWebsiteList"
+        :key="row.id || row.name || 'website-category'"
+        class="website-section"
+      >
         <div class="website-title">
           <div>
             <span class="title-mark"></span>
@@ -111,7 +119,12 @@
       >
         <div v-if="selectedWebsite" class="visit-preview">
           <div class="visit-header">
-            <el-avatar :src="selectedWebsite.cover || undefined" shape="square" :size="64" class="visit-avatar">
+            <el-avatar
+              :src="selectedWebsite.cover || undefined"
+              shape="square"
+              :size="64"
+              class="visit-avatar"
+            >
               {{ getWebsiteDisplayName(selectedWebsite).slice(0, 1) }}
             </el-avatar>
             <div class="visit-title-wrap">
@@ -159,9 +172,19 @@
         tip="已经申请过的或正在审核的网站无法重复申请。"
         @close="closeModal()"
       >
-        <el-form ref="postFormRef" :rules="rules" :model="postForm" label-width="92" class="app-dialog-form">
+        <el-form
+          ref="postFormRef"
+          :rules="rules"
+          :model="postForm"
+          label-width="92"
+          class="app-dialog-form"
+        >
           <el-form-item label="网站分类" prop="categoryId">
-            <el-select v-model="postForm.categoryId" placeholder="请选择网站分类" class="website-category-select">
+            <el-select
+              v-model="postForm.categoryId"
+              placeholder="请选择网站分类"
+              class="website-category-select"
+            >
               <el-option
                 v-for="row of websiteList"
                 :key="row.id || row.name || 'category-option'"
@@ -174,23 +197,33 @@
             <el-input v-model="postForm.name" placeholder="请输入网站名称" autocomplete="off" />
           </el-form-item>
           <el-form-item label="网站图标" prop="cover">
-            <el-input v-model="postForm.cover" placeholder="这里贴上网站的图标链接" autocomplete="off" />
+            <el-input
+              v-model="postForm.cover"
+              placeholder="这里贴上网站的图标链接"
+              autocomplete="off"
+            />
           </el-form-item>
           <el-form-item label="网站地址" prop="url">
-            <el-input v-model.trim="postForm.url" placeholder="请输入网站地址，以http://或https://开头"
-                      autocomplete="off" />
+            <el-input
+              v-model.trim="postForm.url"
+              placeholder="请输入网站地址，以http://或https://开头"
+              autocomplete="off"
+            />
           </el-form-item>
           <el-form-item label="网站简介" prop="introduce">
-            <el-input v-model="postForm.introduce" type="textarea" placeholder="可复制原网站介绍"
-                      :autosize="{minRows: 6}" autocomplete="off" />
+            <el-input
+              v-model="postForm.introduce"
+              type="textarea"
+              placeholder="可复制原网站介绍"
+              :autosize="{ minRows: 6 }"
+              autocomplete="off"
+            />
           </el-form-item>
         </el-form>
         <template #footer>
           <div class="app-dialog-footer">
             <el-button @click="closeModal()">取 消</el-button>
-            <el-button type="primary" :loading="btnDisabled" @click="submit">
-              提交申请
-            </el-button>
+            <el-button type="primary" :loading="btnDisabled" @click="submit"> 提交申请 </el-button>
           </div>
         </template>
       </AppFormDialog>
@@ -340,12 +373,31 @@ function closeModal() {
   animation: main 0.8s;
 }
 
+.website-command-panel {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 18px;
+  border: 1px solid rgba(215, 221, 232, 0.78);
+  border-radius: 8px;
+  padding: 22px 24px 20px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(248, 251, 255, 0.82)),
+    radial-gradient(circle at 8% 10%, rgba(44, 122, 123, 0.12), transparent 28%),
+    radial-gradient(circle at 92% 0%, rgba(47, 128, 237, 0.12), transparent 32%);
+  box-shadow: 0 18px 42px rgba(31, 45, 61, 0.08);
+  backdrop-filter: blur(18px);
+}
+
+.website-command-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
 .website-hero {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: 24px;
-  margin-bottom: 16px;
 
   h1 {
     margin: 4px 0 8px;
@@ -377,7 +429,41 @@ function closeModal() {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-width: 108px;
+  min-width: 116px;
+  min-height: 38px;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  border-radius: 999px;
+  padding: 0 18px;
+  background: linear-gradient(135deg, #2c7a7b, #2f80ed);
+  color: #fff;
+  font-weight: 800;
+  box-shadow: 0 12px 24px rgba(47, 128, 237, 0.22);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease,
+    filter 0.2s ease;
+
+  :deep(span) {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  :deep(svg) {
+    font-size: 17px;
+  }
+
+  &:hover {
+    border-color: rgba(255, 255, 255, 0.55);
+    box-shadow: 0 16px 30px rgba(47, 128, 237, 0.28);
+    filter: saturate(1.08);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
 }
 
 .website-toolbar {
@@ -385,7 +471,6 @@ function closeModal() {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 16px;
 }
 
 .website-search {
@@ -410,7 +495,7 @@ function closeModal() {
 .category-filter {
   display: flex;
   gap: 8px;
-  margin-bottom: 16px;
+  margin-top: 16px;
   overflow-x: auto;
   padding-bottom: 2px;
 }
@@ -428,7 +513,10 @@ function closeModal() {
   cursor: pointer;
   font-size: 13px;
   white-space: nowrap;
-  transition: border-color 0.2s, color 0.2s, background 0.2s;
+  transition:
+    border-color 0.2s,
+    color 0.2s,
+    background 0.2s;
 
   span + span {
     color: #8a94a6;
@@ -507,7 +595,10 @@ function closeModal() {
   background: #fff;
   color: #536471;
   cursor: pointer;
-  transition: border-color 0.2s, color 0.2s, background 0.2s;
+  transition:
+    border-color 0.2s,
+    color 0.2s,
+    background 0.2s;
 
   &:hover {
     border-color: #2c7a7b;
@@ -531,7 +622,10 @@ function closeModal() {
   border-radius: 8px;
   background: #fff;
   color: #20242a;
-  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s,
+    border-color 0.2s;
 
   &:hover {
     transform: translateY(-2px);
@@ -581,7 +675,10 @@ function closeModal() {
   color: #98a2b3;
   font-size: 15px;
   opacity: 0;
-  transition: color 0.2s, opacity 0.2s, transform 0.2s;
+  transition:
+    color 0.2s,
+    opacity 0.2s,
+    transform 0.2s;
 }
 
 .link-wrapper:hover .external-icon {
@@ -773,6 +870,14 @@ function closeModal() {
 }
 
 html.dark {
+  .website-command-panel {
+    border-color: #343941;
+    background: linear-gradient(135deg, rgba(31, 35, 41, 0.94), rgba(23, 27, 33, 0.86)),
+      radial-gradient(circle at 8% 10%, rgba(94, 234, 212, 0.1), transparent 28%),
+      radial-gradient(circle at 92% 0%, rgba(117, 167, 255, 0.12), transparent 32%);
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.24);
+  }
+
   .website-hero {
     h1 {
       color: #f5f7fb;
@@ -840,6 +945,10 @@ html.dark {
     margin: 16px auto 28px;
   }
 
+  .website-command-panel {
+    padding: 16px;
+  }
+
   .website-hero {
     align-items: stretch;
     flex-direction: column;
@@ -852,6 +961,7 @@ html.dark {
 
   .hero-action {
     width: 100%;
+    border-radius: 8px;
   }
 
   .website-toolbar {

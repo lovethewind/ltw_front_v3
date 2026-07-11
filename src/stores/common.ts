@@ -15,9 +15,7 @@ interface WebSite {
   logo: string
   webUrl: string
   name: string
-  isMusicPlayer: boolean
   isDark?: boolean
-  showMusicBar: boolean
   loginTypeList: number[]
   wechatQrCode: string
   showFooter: boolean,
@@ -57,8 +55,6 @@ export const useCommonStore = defineStore('common', () => {
     logo: 'https://source.lovethewind.cn/media/logo/default.png',
     webUrl: 'https://lovethewind.cn',
     name: '恋、晨风',
-    isMusicPlayer: false,
-    showMusicBar: false,
     loginTypeList: [1],
     wechatQrCode: 'https://source.lovethewind.cn/media/logo/qrcode_for_gh.jpg',
     footerStyle:
@@ -126,7 +122,6 @@ export const useCommonStore = defineStore('common', () => {
     choiceTagList.value = []
     tagMap.value = {}
     saveLoginUrl.value = null
-    websiteInfo.value.isMusicPlayer = false
     websiteInfo.value.isDark = false
   }
 

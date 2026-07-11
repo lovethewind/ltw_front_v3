@@ -46,6 +46,40 @@
   display: none;
 }
 
+.picture-primary-action {
+  min-height: 36px;
+  border: 1px solid rgba(255, 255, 255, .44);
+  border-radius: 999px;
+  padding: 0 16px;
+  background: linear-gradient(135deg, #2c7a7b, #409eff);
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 12px 24px rgba(64, 158, 255, .22);
+  transition: border-color .2s ease, box-shadow .2s ease, filter .2s ease, transform .2s ease;
+
+  :deep(span) {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  :deep(svg) {
+    font-size: 16px;
+  }
+
+  &:hover,
+  &:focus {
+    border-color: rgba(255, 255, 255, .58);
+    box-shadow: 0 16px 30px rgba(64, 158, 255, .28);
+    filter: saturate(1.08);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
 .picture-album-list-item {
   padding: 5px;
   text-align: center;
@@ -269,6 +303,7 @@
   line-height: 1.5;
 }
 
+.picture-album-add-button,
 .picture-list-add-button {
   flex-shrink: 0;
 }

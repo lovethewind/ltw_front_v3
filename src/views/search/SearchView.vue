@@ -79,75 +79,14 @@
 
       <!-- 搜索结果 -->
       <div v-if="searchType === SearchTypeEnum.ARTICLE" class="search-result-wrapper">
-        <el-card v-for="item of searchDataList" :key="item.id" class="article-result-card">
-          <!-- 文章封面图 -->
-          <a :href="'/article/' + item.id" target="_blank" class="article-cover">
-            <el-image class="on-hover cover-img" :src="item.coverThumb || item.cover" />
-          </a>
-          <!-- 文章信息 -->
-          <div class="article-wrapper">
-            <div class="article-meta-row">
-              <a :href="'/user/' + item.user.id" class="username-avatar-info" target="_blank">
-                <el-avatar :src="item.user.avatar" size="small" />
-                <span class="ms-1 a-link ellipsis username-info">{{ item.user.nickname }}</span>
-              </a>
-              <span class="article-date">
-                <Icon icon="solar:calendar-broken" class="font-14" />
-                {{ date(item.createTime) }}
-              </span>
-            </div>
-            <h3 class="article-title">
-              <a :href="'/article/' + item.id" target="_blank">
-                <el-tooltip placement="top" :content="deleteHTMLTag(item.title)" effect="light">
-                  <span v-dompurify-html="item.title" />
-                </el-tooltip>
-              </a>
-            </h3>
-            <!-- 文章内容 -->
-            <div class="article-content" v-dompurify-html="item.content" />
-            <div class="article-info">
-              <div class="article-taxonomy">
-                <el-tag size="small" :type="item.isOriginal ? 'success' : 'warning'">
-                  {{ item.isOriginal ? '原创' : '转载' }}
-                </el-tag>
-                <a
-                  :href="'/category/' + item.categoryId"
-                  class="article-category-link"
-                  target="_blank"
-                >
-                  <Icon icon="tabler:category" class="font-14" />
-                  {{ categoryMap[item.categoryId] ? categoryMap[item.categoryId].name : '' }}
-                </a>
-                <span class="article-tags">
-                  <a
-                    v-for="tagId of item.tagList.slice(0, 2)"
-                    :key="'searchArticleTag' + item.id + tagId"
-                    :href="'/tag/' + tagId"
-                    target="_blank"
-                  >
-                    <el-tag size="small" class="article-tag-pill">
-                      {{ tagMap[tagId] ? tagMap[tagId].name : '' }}
-                    </el-tag>
-                  </a>
-                </span>
-              </div>
-              <div class="article-stats">
-                <span>
-                  <Icon icon="ph:eye" class="font-14" />
-                  {{ covertNumberDisplay(item.viewCount) }}
-                </span>
-                <span>
-                  <Icon icon="iconamoon:comment-dots" class="font-14" />
-                  {{ covertNumberDisplay(item.commentCount) }}
-                </span>
-                <span>
-                  <Icon icon="tabler:thumb-up" class="font-14" />
-                  {{ covertNumberDisplay(item.likeCount) }}
-                </span>
-              </div>
-            </div>
-          </div>
-        </el-card>
+        <ArticleListItem
+          v-for="(item, index) of searchDataList"
+          :key="item.id"
+          :article="item"
+          :index="index"
+          :tag-map="tagMap"
+          :render-html="true"
+        />
         <!-- 无限加载 -->
         <LoadMore
           :total="total"
@@ -223,9 +162,10 @@ import searchApi from '@/api/search'
 import { debounce } from 'throttle-debounce'
 import OrderBar from '@/components/base/OrderBar.vue'
 import LoadMore from '@/components/base/LoadMore.vue'
+import ArticleListItem from '@/components/article/ArticleListItem.vue'
 import { Icon } from '@iconify/vue'
-import { date, formatRegisterTime } from '@/utils/date'
-import { covertNumberDisplay, deleteHTMLTag } from '@/utils/common'
+import { formatRegisterTime } from '@/utils/date'
+import { covertNumberDisplay } from '@/utils/common'
 import { SearchTypeEnum } from '@/enums'
 import GenderBadge from '@/components/base/GenderBadge.vue'
 
@@ -275,10 +215,6 @@ const noMore = computed(() => {
 const tagMap = computed(() => {
   return commonStore.tagMap
 })
-const categoryMap = computed(() => {
-  return commonStore.categoryMap
-})
-
 watch(searchType, () => {
   searchDataList.value = []
   searchDict.value.currentPage = 1

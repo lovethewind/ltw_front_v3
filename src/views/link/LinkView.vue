@@ -207,25 +207,27 @@ const dialogFormVisible = ref(false)
 const btnDisabled = ref(false)
 const postForm = ref(Object.assign({}, baseInfo))
 const rules = {
-  'name': [{ required: true, message: '网站名称不能为空', trigger: 'blur' },
+  name: [
+    { required: true, message: '网站名称不能为空', trigger: 'blur' },
     { max: 100, message: '网站名称不能超过100个字符', trigger: 'blur' }
   ],
-  'email': [
+  email: [
     { required: true, message: '请填写邮箱，不然无法通知到您', trigger: 'blur' },
     {
       pattern: /^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+((.[a-zA-Z0-9_-]{2,3}){1,2})$/,
       message: '请填写正确的邮箱'
     }
   ],
-  'introduce': [{ required: true, message: '简单介绍一下该网站吧', trigger: 'blur' }],
-  'url': [
+  introduce: [{ required: true, message: '简单介绍一下该网站吧', trigger: 'blur' }],
+  url: [
     { required: true, message: '网站地址不能为空', trigger: 'blur' },
     {
-      pattern: /^((https|http|ftp|rtsp|mms)?(:\/\/)?)(www\.)?(([A-Za-z0-9-]+)\.)+([A-Za-z0-9])+([A-Za-z0-9-~./])+$/,
+      pattern:
+        /^((https|http|ftp|rtsp|mms)?(:\/\/)?)(www\.)?(([A-Za-z0-9-]+)\.)+([A-Za-z0-9])+([A-Za-z0-9-~./])+$/,
       message: '请填写正确的网址'
     }
   ],
-  'cover': [{ required: true, message: '网站图标url不能为空', trigger: 'blur' }]
+  cover: [{ required: true, message: '网站图标url不能为空', trigger: 'blur' }]
 }
 
 const websiteInfo = computed(() => {
@@ -233,13 +235,17 @@ const websiteInfo = computed(() => {
 })
 
 const cover = computed(() => {
-  return 'background: url(' + commonStore.pageCoverMap['link'].pageCover + ') center center / cover no-repeat'
+  return (
+    'background: url(' +
+    commonStore.pageCoverMap['link'].pageCover +
+    ') center center / cover no-repeat'
+  )
 })
 
 fetchData()
 
 function fetchData() {
-  linkApi.getList().then(res => {
+  linkApi.getList().then((res) => {
     linkList.value = randomSortList(res.data)
   })
 }
@@ -252,16 +258,19 @@ function submit() {
   btnDisabled.value = true
   postFormRef.value?.validate((valid) => {
     if (valid) {
-      linkApi.save(postForm.value).then(() => {
-        ElMessage({
-          message: '申请成功,通过申请后将通过邮件告知您',
-          type: 'success',
-          plain: true
+      linkApi
+        .save(postForm.value)
+        .then(() => {
+          ElMessage({
+            message: '申请成功,通过申请后将通过邮件告知您',
+            type: 'success',
+            plain: true
+          })
+          dialogFormVisible.value = false
         })
-        dialogFormVisible.value = false
-      }).finally(() => {
-        btnDisabled.value = false
-      })
+        .finally(() => {
+          btnDisabled.value = false
+        })
     } else {
       btnDisabled.value = false
       ElMessage({
@@ -289,11 +298,30 @@ function closeModal() {
   overflow: hidden;
 
   &::before {
-    height: 300px;
-    background:
-      linear-gradient(180deg, rgba(10, 18, 30, 0.32), rgba(10, 18, 30, 0.62)),
-      rgba(0, 0, 0, 0.22);
+    content: '';
+    position: absolute;
+    inset: 0;
+    height: auto;
+    pointer-events: none;
+    background: linear-gradient(
+        180deg,
+        rgba(8, 18, 28, 0.08) 0%,
+        rgba(8, 18, 28, 0.34) 32%,
+        rgba(8, 18, 28, 0.64) 100%
+      ),
+      radial-gradient(circle at 34% 38%, rgba(10, 18, 30, 0.36), transparent 42%);
     filter: none;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 88px;
+    pointer-events: none;
+    background: linear-gradient(180deg, rgba(238, 244, 248, 0), #eef4f8 78%);
   }
 }
 
@@ -579,9 +607,17 @@ function closeModal() {
 }
 
 html.dark .link-banner::before {
-  background:
-    linear-gradient(180deg, rgba(8, 13, 22, 0.48), rgba(8, 13, 22, 0.78)),
-    rgba(0, 0, 0, 0.34);
+  background: linear-gradient(
+      180deg,
+      rgba(8, 13, 22, 0.12) 0%,
+      rgba(8, 13, 22, 0.46) 34%,
+      rgba(8, 13, 22, 0.82) 100%
+    ),
+    radial-gradient(circle at 34% 38%, rgba(8, 13, 22, 0.42), transparent 42%);
+}
+
+html.dark .link-banner::after {
+  background: linear-gradient(180deg, rgba(17, 24, 39, 0), #111827 78%);
 }
 
 html.dark .blog-container {
@@ -672,10 +708,6 @@ html.dark .link-apply-copy small {
 @media (max-width: 759px) {
   .link-banner {
     height: 260px;
-
-    &::before {
-      height: 260px;
-    }
   }
 
   .link-banner__content {

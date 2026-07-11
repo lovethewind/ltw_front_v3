@@ -26,17 +26,21 @@
         rel="noopener noreferrer"
       >
         <h3 class="article-list-item-title">
-          {{ article.title }}
+          <span v-if="renderHtml" v-dompurify-html="article.title" />
+          <template v-else>{{ article.title }}</template>
         </h3>
-        <div class="article-content">
+        <div v-if="renderHtml" class="article-content" v-dompurify-html="article.content" />
+        <div v-else class="article-content">
           {{ article.content }}
         </div>
       </router-link>
       <div v-else class="article-main-link is-static">
         <h3 class="article-list-item-title">
-          {{ article.title }}
+          <span v-if="renderHtml" v-dompurify-html="article.title" />
+          <template v-else>{{ article.title }}</template>
         </h3>
-        <div class="article-content">
+        <div v-if="renderHtml" class="article-content" v-dompurify-html="article.content" />
+        <div v-else class="article-content">
           {{ article.content }}
         </div>
       </div>
@@ -116,19 +120,22 @@ const props = withDefaults(
     mode?: 'feed' | 'manage'
     showAvatar?: boolean
     clickable?: boolean
+    renderHtml?: boolean
   }>(),
   {
     categoryMap: () => ({}),
     tagMap: () => ({}),
     mode: 'feed',
     showAvatar: true,
-    clickable: true
+    clickable: true,
+    renderHtml: false
   }
 )
 
 const isManageMode = computed(() => props.mode === 'manage')
 const showAvatar = computed(() => props.showAvatar)
 const canOpenArticle = computed(() => props.clickable)
+const renderHtml = computed(() => props.renderHtml)
 const articleTags = computed(() => props.article.tagList || [])
 
 defineEmits<{

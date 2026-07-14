@@ -24,6 +24,7 @@
     <FeedBack />
     <ChatView />
     <WsModel />
+    <CheckUpdates />
   </el-container>
 </template>
 
@@ -43,6 +44,7 @@ import FeedBack from '@/components/base/FeedBack.vue'
 import FooterView from '@/components/layout/FooterView.vue'
 import WsModel from '@/components/ws/WSIndex.vue'
 import ChatView from '@/components/chat/IndexView.vue'
+import CheckUpdates from '@/components/base/CheckUpdates.vue'
 
 import { useCommonStore } from '@/stores/common'
 

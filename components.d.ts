@@ -14,6 +14,7 @@ declare module 'vue' {
     BackTop: typeof import('./src/components/base/BackTop.vue')['default']
     ChatHeader: typeof import('./src/components/chat/components/TUIChat/chat-header/index.vue')['default']
     ChatIndex: typeof import('./src/components/chat/components/TUIChat/ChatIndex.vue')['default']
+    CheckUpdates: typeof import('./src/components/base/CheckUpdates.vue')['default']
     CommentView: typeof import('./src/components/comment/CommentView.vue')['default']
     ContactBlacklist: typeof import('./src/components/chat/components/TUIContact/contact-list/contact-blacklist/index.vue')['default']
     ContactFriendApply: typeof import('./src/components/chat/components/TUIContact/contact-list/contact-friend-apply/index.vue')['default']

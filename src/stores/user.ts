@@ -79,7 +79,7 @@ export const useUserStore = defineStore('user', () => {
           return reject('Verification failed, please Login again.')
         }
         user.value = data
-        if (user.value?.userRestriction.userForbidden) {
+        if (user.value?.userRestrictions?.userForbidden) {
           logout().then()
           return reject('该账号已被封禁，暂时无法使用')
         }

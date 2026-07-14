@@ -39,6 +39,14 @@ export interface IUserDetail {
 export interface IUserRestriction {
   commentForbidden: boolean
   userForbidden: boolean
+  items: IUserRestrictionItem[]
+}
+
+export interface IUserRestrictionItem {
+  restrictType: number
+  startTime: string | null
+  endTime: string | null
+  isForever: boolean
 }
 
 export interface IUserSelfInfo {
@@ -56,7 +64,7 @@ export interface IUserSelfInfo {
   articleLikeSet: string[]
   articleCollectSet: string[]
   commentLikeSet: string[]
-  userRestriction: IUserRestriction
+  userRestrictions: IUserRestriction
 }
 
 export interface IReply {

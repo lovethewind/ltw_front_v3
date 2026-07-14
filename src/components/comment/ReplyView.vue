@@ -1,5 +1,5 @@
 <template>
-  <div v-if="checkLogin && (user?.userRestriction?.commentForbidden)">
+  <div v-if="checkLogin && user?.userRestrictions?.commentForbidden">
     <div class="reply-disabled">
       <a class="reply-disabled-close" v-if="isFixed" @click="reset()">
         关闭

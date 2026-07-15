@@ -17,13 +17,13 @@
             v-if="postForm.isMarkdown"
             ref="editorRef"
             :toolbar-exclude="articleMarkdownToolbarExclude"
-            @change="contentChange"
+            @change="contentChange($event, true)"
             class="article-md-editor"
           />
           <rich-editor
             v-else
             ref="richEditorRef"
-            @change="contentChange"
+            @change="contentChange($event, false)"
             class="article-rich-editor"
           />
         </div>
@@ -551,9 +551,27 @@ onBeforeRouteLeave((to, from, next) => {
   }
 })
 
-function contentChange(data: string) {
-  postForm.value.content = data
+/**
+ * 处理编辑器内容变化，并将富文本空占位内容归一化为空字符串。
+ *
+ * :param data: 编辑器内容。
+ * :param isMarkdown: 内容是否来自 Markdown 编辑器。
+ * :return: 无返回值。
+ */
+function contentChange(data: string, isMarkdown: boolean) {
+  postForm.value.content = isMarkdown ? data : normalizeRichTextContent(data)
   setContentLength()
+}
+
+/**
+ * 将富文本编辑器生成的空段落归一化为空字符串。
+ *
+ * :param content: 富文本 HTML 内容。
+ * :return: 归一化后的内容。
+ */
+function normalizeRichTextContent(content: string): string {
+  const emptyParagraphPattern = /^(?:<p>(?:<br\s*\/?>|&nbsp;|\s)*<\/p>)+$/i
+  return emptyParagraphPattern.test(content.trim()) ? '' : content
 }
 
 function setContent() {
@@ -577,6 +595,9 @@ function setContentLength() {
 }
 
 function changeEditor() {
+  if (postForm.value.isMarkdown) {
+    postForm.value.content = normalizeRichTextContent(postForm.value.content)
+  }
   nextTick(() => {
     if (postForm.value.isMarkdown) {
       editorRef.value?.setContent(postForm.value.content)

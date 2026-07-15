@@ -187,17 +187,22 @@ defineExpose({
 
 body.article-editing-page {
   .md-editor-toolbar-wrapper {
-    overflow: visible;
+    overflow-x: auto;
+    overflow-y: hidden;
 
     .md-editor-toolbar {
-      width: 100%;
+      width: max-content;
+      min-width: 100%;
       max-width: none;
       padding: 0 8px;
       box-sizing: border-box;
       justify-content: center;
-      overflow: visible;
-      flex-wrap: wrap;
-      row-gap: 2px;
+      flex-wrap: nowrap;
+
+      .md-editor-toolbar-left,
+      .md-editor-toolbar-right {
+        flex-shrink: 0;
+      }
 
       .md-editor-toolbar-item {
         min-width: 32px;

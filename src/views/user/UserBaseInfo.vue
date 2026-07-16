@@ -148,30 +148,33 @@
           <span>当前邮箱</span>
           <strong>{{ loginUser.email }}</strong>
         </div>
-        <div class="profile-dialog-error">{{ errMsg }}</div>
-        <div class="profile-dialog-code-row">
-          <el-input v-model="postForm.oldCode" :maxlength="6" :minlength="6" :disabled="inputDisabled" placeholder="请输入6位验证码">
-            <template #prefix>
-              <Icon icon="material-symbols:shield-outline" />
-            </template>
-          </el-input>
+        <el-form ref="oldEmailFormRef" :model="postForm" :rules="oldCodeRules">
+          <el-form-item label="验证码" prop="oldCode" :error="oldCodeError">
+            <div class="profile-dialog-code-row">
+              <el-input v-model="postForm.oldCode" :maxlength="6" :minlength="6" :disabled="inputDisabled" placeholder="请输入6位验证码" @input="oldCodeError = ''">
+                <template #prefix>
+                  <Icon icon="material-symbols:shield-outline" />
+                </template>
+              </el-input>
+              <el-button
+                class="profile-dialog-secondary"
+                type="primary"
+                :disabled="sendBtnDisabled"
+                @click="sendEmailMobileCode(SendChangeCodeTypeEnum.CHANGE_BIND_EMAIL)"
+              >
+                {{ codeMsg }}
+              </el-button>
+            </div>
+          </el-form-item>
           <el-button
-            class="profile-dialog-secondary"
-            type="primary"
-            :disabled="sendBtnDisabled"
-            @click="sendEmailMobileCode(SendChangeCodeTypeEnum.CHANGE_BIND_EMAIL)"
+            class="profile-dialog-primary"
+            type="success"
+            :disabled="inputDisabled"
+            @click="validateOldCode(SendChangeCodeTypeEnum.CHANGE_BIND_EMAIL)"
           >
-            {{ codeMsg }}
+            验证并继续
           </el-button>
-        </div>
-        <el-button
-          class="profile-dialog-primary"
-          type="success"
-          :disabled="!postForm.oldCode"
-          @click="validateOldCode(SendChangeCodeTypeEnum.CHANGE_BIND_EMAIL)"
-        >
-          验证并继续
-        </el-button>
+        </el-form>
       </div>
       <div v-else class="profile-dialog-panel">
         <div class="profile-dialog-hero">
@@ -244,30 +247,33 @@
           <span>当前手机号</span>
           <strong>{{ loginUser.mobile }}</strong>
         </div>
-        <div class="profile-dialog-error">{{ errMsg }}</div>
-        <div class="profile-dialog-code-row">
-          <el-input v-model="postForm.oldCode" :maxlength="6" :minlength="6" :disabled="inputDisabled" placeholder="请输入6位验证码">
-            <template #prefix>
-              <Icon icon="material-symbols:shield-outline" />
-            </template>
-          </el-input>
+        <el-form ref="oldMobileFormRef" :model="postForm" :rules="oldCodeRules">
+          <el-form-item label="验证码" prop="oldCode" :error="oldCodeError">
+            <div class="profile-dialog-code-row">
+              <el-input v-model="postForm.oldCode" :maxlength="6" :minlength="6" :disabled="inputDisabled" placeholder="请输入6位验证码" @input="oldCodeError = ''">
+                <template #prefix>
+                  <Icon icon="material-symbols:shield-outline" />
+                </template>
+              </el-input>
+              <el-button
+                class="profile-dialog-secondary"
+                type="primary"
+                :disabled="sendBtnDisabled"
+                @click="sendEmailMobileCode(SendChangeCodeTypeEnum.CHANGE_BIND_MOBILE)"
+              >
+                {{ codeMsg }}
+              </el-button>
+            </div>
+          </el-form-item>
           <el-button
-            class="profile-dialog-secondary"
-            type="primary"
-            :disabled="sendBtnDisabled"
-            @click="sendEmailMobileCode(SendChangeCodeTypeEnum.CHANGE_BIND_MOBILE)"
+            class="profile-dialog-primary"
+            type="success"
+            :disabled="inputDisabled"
+            @click="validateOldCode(SendChangeCodeTypeEnum.CHANGE_BIND_MOBILE)"
           >
-            {{ codeMsg }}
+            验证并继续
           </el-button>
-        </div>
-        <el-button
-          class="profile-dialog-primary"
-          type="success"
-          :disabled="!postForm.oldCode"
-          @click="validateOldCode(SendChangeCodeTypeEnum.CHANGE_BIND_MOBILE)"
-        >
-          验证并继续
-        </el-button>
+        </el-form>
       </div>
       <div v-else class="profile-dialog-panel">
         <div class="profile-dialog-hero">
@@ -480,6 +486,8 @@ const validateCode = (rule: any, value: any, callback: any) => {
 }
 const formRef = ref<FormInstance | null>(null)
 const changeBindFormRef = ref<FormInstance | null>(null)
+const oldEmailFormRef = ref<FormInstance | null>(null)
+const oldMobileFormRef = ref<FormInstance | null>(null)
 const currentRow = ref<any>(null)
 const isEdit = ref(false)
 const oldAvatar = ref('')
@@ -491,7 +499,7 @@ const mobileDialogVisible = ref(false)
 const wechatDialogVisible = ref(false)
 const codeMsg = ref('发送验证码')
 const time = ref(60)
-const errMsg = ref('请在下方输入获取的验证码')
+const oldCodeError = ref('')
 const inputDisabled = ref(false)
 const sendBtnDisabled = ref(false)
 const needValidOldEmail = ref(true)
@@ -519,6 +527,12 @@ const rules = ref({
     { validator: validateCode, trigger: 'blur' }
   ]
 })
+const oldCodeRules = {
+  oldCode: [
+    { required: true, message: '请输入验证码', trigger: 'blur' },
+    { len: 6, message: '验证码长度为6位', trigger: 'blur' }
+  ]
+}
 
 const user = computed(() => {
   return userStore.user
@@ -731,7 +745,18 @@ function sendEmailMobileCode(type: SendChangeCodeTypeEnum): void {
   })
 }
 
-function validateOldCode(type: SendChangeCodeTypeEnum): void {
+/**
+ * 校验旧邮箱或手机号收到的验证码。
+ *
+ * :param type: 绑定信息变更类型。
+ * :return: 无返回值。
+ */
+async function validateOldCode(type: SendChangeCodeTypeEnum): Promise<void> {
+  const oldCodeFormRef = type === SendChangeCodeTypeEnum.CHANGE_BIND_EMAIL ? oldEmailFormRef.value : oldMobileFormRef.value
+  if (!oldCodeFormRef) return
+  const valid = await oldCodeFormRef.validate().catch(() => false)
+  if (!valid) return
+
   inputDisabled.value = true
   let func: (data: any) => Promise<any>
   if (type === SendChangeCodeTypeEnum.CHANGE_BIND_EMAIL) {
@@ -744,7 +769,7 @@ function validateOldCode(type: SendChangeCodeTypeEnum): void {
     codeType: VerifyCodeTypeEnum.CHANGE_BIND
   }).then(res => {
     if (!res.data) {
-      errMsg.value = '验证码不正确'
+      oldCodeError.value = '验证码不正确'
     } else {
       if (type === SendChangeCodeTypeEnum.CHANGE_BIND_EMAIL) {
         needValidOldEmail.value = false
@@ -757,10 +782,18 @@ function validateOldCode(type: SendChangeCodeTypeEnum): void {
   })
 }
 
-function sendNewEmailMobileCode(type: SendNewBindCodeTypeEnum): void {
-  if (!postForm.value.email && !postForm.value.mobile) {
-    return
-  }
+/**
+ * 校验新邮箱或手机号后发送验证码。
+ *
+ * :param type: 新绑定验证码发送类型。
+ * :return: 无返回值。
+ */
+async function sendNewEmailMobileCode(type: SendNewBindCodeTypeEnum): Promise<void> {
+  if (!changeBindFormRef.value) return
+  const field = type === SendNewBindCodeTypeEnum.BIND_EMAIL ? 'email' : 'mobile'
+  const valid = await changeBindFormRef.value.validateField(field).then(() => true).catch(() => false)
+  if (!valid) return
+
   let func: (data: any) => Promise<any>
   let tipMsg = ''
   const sendData: any = {
@@ -841,15 +874,25 @@ function saveUserEmailMobile(type: SendChangeCodeTypeEnum): void {
   })
 }
 
-function closeEmailDialog() {
+/**
+ * 关闭邮箱绑定弹窗并重置表单。
+ *
+ * :return: 无返回值。
+ */
+function closeEmailDialog(): void {
   postForm.value = Object.assign({}, defaultPostForm)
-  errMsg.value = '请在下方输入获取的验证码'
+  oldCodeError.value = ''
   emailDialogVisible.value = false
 }
 
-function closeMobileDialog() {
+/**
+ * 关闭手机号绑定弹窗并重置表单。
+ *
+ * :return: 无返回值。
+ */
+function closeMobileDialog(): void {
   postForm.value = Object.assign({}, defaultPostForm)
-  errMsg.value = '请在下方输入获取的验证码'
+  oldCodeError.value = ''
   mobileDialogVisible.value = false
 }
 

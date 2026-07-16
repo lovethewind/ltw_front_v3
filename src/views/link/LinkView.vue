@@ -254,31 +254,31 @@ function onclick() {
   dialogFormVisible.value = true
 }
 
-function submit() {
+/**
+ * 校验并提交友链申请。
+ *
+ * :return: 无返回值。
+ */
+function submit(): void {
   btnDisabled.value = true
   postFormRef.value?.validate((valid) => {
-    if (valid) {
-      linkApi
-        .save(postForm.value)
-        .then(() => {
-          ElMessage({
-            message: '申请成功,通过申请后将通过邮件告知您',
-            type: 'success',
-            plain: true
-          })
-          dialogFormVisible.value = false
-        })
-        .finally(() => {
-          btnDisabled.value = false
-        })
-    } else {
+    if (!valid) {
       btnDisabled.value = false
-      ElMessage({
-        message: '填写信息不正确，请确认',
-        type: 'error',
-        plain: true
-      })
+      return
     }
+    linkApi
+      .save(postForm.value)
+      .then(() => {
+        ElMessage({
+          message: '申请成功,通过申请后将通过邮件告知您',
+          type: 'success',
+          plain: true
+        })
+        dialogFormVisible.value = false
+      })
+      .finally(() => {
+        btnDisabled.value = false
+      })
   })
 }
 

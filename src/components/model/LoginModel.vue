@@ -782,9 +782,11 @@ const rules = ref({
     { validator: validatePassword, trigger: 'blur' }
   ],
   code: [
+    { required: true, message: '验证码不能为空', trigger: 'blur' },
     { validator: validateCode, trigger: 'blur' }
   ],
   mobile: [
+    { required: true, message: '手机号不能为空', trigger: 'blur' },
     { validator: validateMobile, trigger: 'blur' }
   ]
 })
@@ -822,7 +824,12 @@ function openForget() {
   modalStore.setForgetFlag(true)
 }
 
-function login() {
+/**
+ * 校验表单并登录。
+ *
+ * :return: 无返回值。
+ */
+function login(): void {
   loginFormRef.value?.validate(valid => {
     if (valid) {
       btnDisabled.value = true
@@ -881,17 +888,16 @@ function login() {
       }).finally(() => {
         btnDisabled.value = false
       })
-    } else {
-      ElMessage({
-        message: '账号信息填写不正确',
-        type: 'error',
-        plain: true
-      })
     }
   })
 }
 
-function codeRegister() {
+/**
+ * 校验首次登录的注册信息并完成注册。
+ *
+ * :return: 无返回值。
+ */
+function codeRegister(): void {
   registerFormRef.value?.validate(valid => {
     if (valid) {
       btnDisabled.value = true
@@ -914,6 +920,7 @@ function codeRegister() {
           type: 'error',
           plain: true
         })
+        btnDisabled.value = false
         return
       }
       func(user).then(res => {
@@ -929,21 +936,24 @@ function codeRegister() {
       }).finally(() => {
         btnDisabled.value = false
       })
-    } else {
-      ElMessage({
-        message: '账号信息填写不正确',
-        type: 'error',
-        plain: true
-      })
     }
   })
 }
 
-function sendCode() {
-  if (!postForm.value.mobile) {
+/**
+ * 校验手机号并发送登录验证码。
+ *
+ * :return: 无返回值。
+ */
+async function sendCode(): Promise<void> {
+  if (!loginFormRef.value) {
     return
   }
-  // 发送邮件
+  const valid = await loginFormRef.value.validateField('mobile').catch(() => false)
+  if (!valid) {
+    return
+  }
+  // 发送短信
   countDown()
   const sendData = {
     mobile: postForm.value.mobile,

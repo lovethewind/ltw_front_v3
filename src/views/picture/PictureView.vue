@@ -584,6 +584,7 @@ const pictureAlbumPreviewCover = ref('')
 const pictureAlbumForm = ref<any>(Object.assign({}, defaultPictureAlbumForm))
 const pictureAlbumRules = ref({
   name: [
+    { required: true, message: '请输入图库名称', trigger: 'blur' },
     { min: 1, max: 20, message: '长度在 1 到 20 个字符', trigger: 'blur' }
   ],
   description: [
@@ -1173,20 +1174,26 @@ function addPicture(): void {
  * :return: 无返回值。
  */
 function updatePicture(): void {
-  pictureApi.updatePicture({
-    id: pictureForm.value.id,
-    description: pictureForm.value.description
-  }).then(() => {
-    ElMessage({
-      message: '更新成功',
-      type: 'success',
-      plain: true
+  addPictureFormRef.value?.validate((valid: boolean) => {
+    if (!valid) {
+      pictureAddDisabled.value = false
+      return
+    }
+    pictureApi.updatePicture({
+      id: pictureForm.value.id,
+      description: pictureForm.value.description
+    }).then(() => {
+      ElMessage({
+        message: '更新成功',
+        type: 'success',
+        plain: true
+      })
+      previewPictureItem.value.description = pictureForm.value.description
+      cancelAddPicture()
+      changeUserOrPictureAlbum()
+    }).finally(() => {
+      pictureAddDisabled.value = false
     })
-    previewPictureItem.value.description = pictureForm.value.description
-    cancelAddPicture()
-    changeUserOrPictureAlbum()
-  }).finally(() => {
-    pictureAddDisabled.value = false
   })
 }
 

@@ -199,6 +199,7 @@ const rules = ref({
     }
   ],
   code: [
+    { required: true, message: '验证码不能为空', trigger: 'blur' },
     {
       validator: (rule: any, value: string, callback: any) => validateCode(rule, value, callback, postForm.value.email),
       trigger: 'blur'
@@ -219,8 +220,17 @@ function openLogin() {
   modalStore.setLoginFlag(true)
 }
 
-function sendCode() {
-  if (!postForm.value.email) {
+/**
+ * 校验邮箱并发送注册验证码。
+ *
+ * :return: 无返回值。
+ */
+async function sendCode(): Promise<void> {
+  if (!registerFormRef.value) {
+    return
+  }
+  const valid = await registerFormRef.value.validateField('email').catch(() => false)
+  if (!valid) {
     return
   }
   // 发送邮件
@@ -258,22 +268,20 @@ function countDown() {
   }, 1000)
 }
 
-function register() {
-  registerDisabled.value = true
-  ElMessage({
-    message: '正在注册，请稍后',
-    type: 'info',
-    plain: true
-  })
+/**
+ * 校验表单并注册账号。
+ *
+ * :return: 无返回值。
+ */
+function register(): void {
   registerFormRef.value?.validate(valid => {
-    if (!valid) {
+    if (valid) {
+      registerDisabled.value = true
       ElMessage({
-        message: '填写的数据不正确，请修改再试',
-        type: 'error',
+        message: '正在注册，请稍后',
+        type: 'info',
         plain: true
       })
-      registerDisabled.value = false
-    } else {
       userApi.emailRegister(postForm.value).then(res => {
         ElMessage({
           message: '注册成功，欢迎加入~',

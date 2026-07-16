@@ -147,6 +147,8 @@
                     :src="notice.detail.objContent"
                     class="notice-picture"
                     :preview-src-list="[notice.detail.objContent]"
+                    preview-teleported
+                    hide-on-click-modal
                     @click.stop
                   />
                 </div>

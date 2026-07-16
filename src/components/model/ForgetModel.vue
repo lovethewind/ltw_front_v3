@@ -176,7 +176,19 @@ function openLogin() {
   modalStore.setLoginFlag(true)
 }
 
-function sendCode() {
+/**
+ * 校验账号并发送找回密码验证码。
+ *
+ * :return: 无返回值。
+ */
+async function sendCode(): Promise<void> {
+  if (!forgetFormRef.value) {
+    return
+  }
+  const valid = await forgetFormRef.value.validateField('username').catch(() => false)
+  if (!valid) {
+    return
+  }
   // 发送邮件
   countDown()
   const EmailReg = /^[A-Za-z0-9_\-.]+[a-zA-Z0-9]@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/
@@ -224,17 +236,15 @@ function countDown() {
   }, 1000)
 }
 
-function updatePassword() {
-  forgetDisabled.value = true
+/**
+ * 校验表单并更新密码。
+ *
+ * :return: 无返回值。
+ */
+function updatePassword(): void {
   forgetFormRef.value?.validate(valid => {
-    if (!valid) {
-      ElMessage({
-        message: '填写的数据不正确，请修改再试',
-        type: 'error',
-        plain: true
-      })
-      forgetDisabled.value = false
-    } else {
+    if (valid) {
+      forgetDisabled.value = true
       const user: any = {
         password: postForm.value.password,
         code: postForm.value.code

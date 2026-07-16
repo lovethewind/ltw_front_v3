@@ -35,14 +35,6 @@
           <button
             type="button"
             class="article-status-tab"
-            :class="{ 'is-active': !queryDict.status }"
-            @click="changeArticleStatus()"
-          >
-            全部 <strong>{{ countAll(articleInfo) }}</strong>
-          </button>
-          <button
-            type="button"
-            class="article-status-tab"
             :class="{ 'is-active': queryDict.status === ArticleStatusEnum.PUBLISHED }"
             @click="changeArticleStatus(ArticleStatusEnum.PUBLISHED)"
           >
@@ -140,6 +132,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, toRefs } from 'vue'
+import { useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useCommonStore } from '@/stores/common'
 import OrderBar from '@/components/base/OrderBar.vue'
@@ -154,6 +147,7 @@ import { Icon } from '@iconify/vue'
 
 const userStore = useUserStore()
 const commonStore = useCommonStore()
+const route = useRoute()
 
 const props = defineProps<{
   viewUser: any
@@ -170,8 +164,12 @@ const searchOrderList = [
     name: '按时间正序'
   },
   {
+    type: 2,
+    name: '按热度'
+  },
+  {
     type: 3,
-    name: '按阅读量'
+    name: '按推荐度'
   }
 ]
 const searchDates = ref<any>(null)
@@ -180,7 +178,7 @@ const articleList = ref<any>([])
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
-const queryDict = ref<any>({})
+const queryDict = ref<any>({ status: ArticleStatusEnum.PUBLISHED })
 const articleInfo = ref<any>({})
 
 const user = computed(() => {
@@ -194,6 +192,13 @@ const tagMap = computed(() => {
 })
 
 onMounted(() => {
+  const articleStatus = Number(route.query.articleStatus)
+  if (
+    user.value?.id === viewUser.value.id &&
+    Object.values(ArticleStatusEnum).includes(articleStatus)
+  ) {
+    queryDict.value.status = articleStatus
+  }
   infiniteHandler()
 })
 
@@ -238,8 +243,14 @@ function orderTypeChange(val: any) {
   resetAndFetchArticleList()
 }
 
-function removeToRecycle(article: any) {
-  ElMessageBox.confirm('正在删除该文章, 是否继续?', '提示', {
+/**
+ * 将文章移入回收站。
+ *
+ * :param article: 待删除的文章。
+ * :return: 无返回值。
+ */
+function removeToRecycle(article: any): void {
+  ElMessageBox.confirm('删除后可在回收站恢复，是否继续？', '删除文章', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
@@ -312,14 +323,6 @@ function resetAndFetchArticleList() {
   articleList.value = []
   total.value = 0
   infiniteHandler()
-}
-
-function countAll(obj: any) {
-  let count = 0
-  Object.keys(obj).forEach((key) => {
-    count += obj[key]
-  })
-  return count
 }
 
 /**

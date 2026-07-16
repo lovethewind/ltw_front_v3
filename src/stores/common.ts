@@ -36,9 +36,12 @@ interface PageCoverMap {
   }
 }
 
+export type ThemeMode = 'light' | 'dark' | 'system'
+
 export const useCommonStore = defineStore('common', () => {
   const configLoaded = ref(false)
-  const theme = ref(window.localStorage.getItem('theme') || window.sessionStorage.getItem('theme') || 'light')
+  const storedTheme = window.localStorage.getItem('theme') || window.sessionStorage.getItem('theme')
+  const theme = ref<ThemeMode>(['light', 'dark', 'system'].includes(storedTheme || '') ? storedTheme as ThemeMode : 'light')
   const categoryList = ref<any[]>([])
   const categoryMap = ref<{ [key: string]: any }>({})
   const tagList = ref<any[]>([])
@@ -108,7 +111,13 @@ export const useCommonStore = defineStore('common', () => {
     }
   })
 
-  function setTheme(val: string) {
+  /**
+   * 保存用户选择的主题模式。
+   *
+   * :param val: 主题模式。
+   * :return: 无返回值。
+   */
+  function setTheme(val: ThemeMode): void {
     theme.value = val
     window.localStorage.setItem('theme', val)
     window.sessionStorage.removeItem('theme')

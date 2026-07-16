@@ -47,7 +47,14 @@
             @keydown.enter="searchKeywordResultDebounce()"
           >
             <template #suffix>
-              <Icon icon="mdi:magnify" class="font-18" />
+              <button
+                type="button"
+                class="search-submit-button"
+                aria-label="搜索"
+                @click="searchKeywordResultDebounce()"
+              >
+                <Icon icon="mdi:magnify" class="font-18" />
+              </button>
             </template>
           </el-input>
         </div>
@@ -173,7 +180,7 @@ const baseSearchDict = {
   currentPage: 1,
   pageSize: 10,
   keyword: '',
-  orderType: 2
+  orderType: 0
 }
 
 const commonStore = useCommonStore()
@@ -189,16 +196,16 @@ const pageCache = ref<any>({})
 const searchType = ref(SearchTypeEnum.ARTICLE)
 const searchOrderList = ref([
   {
-    type: 2,
-    name: '按时间倒序'
+    type: 0,
+    name: '综合排序'
   },
   {
-    type: 1,
-    name: '按时间正序'
+    type: 2,
+    name: '最新发布'
   },
   {
     type: 3,
-    name: '按阅读量'
+    name: '热门排序'
   }
 ])
 
@@ -216,11 +223,13 @@ const tagMap = computed(() => {
   return commonStore.tagMap
 })
 watch(searchType, () => {
+  searchDict.value.keyword = ''
   searchDataList.value = []
   searchDict.value.currentPage = 1
   pageCache.value = {}
   total.value = 0
-  infiniteHandler()
+  lastSearchWords.value = ''
+  spentTime.value = 0
 })
 
 onMounted(() => {

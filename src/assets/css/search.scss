@@ -159,8 +159,21 @@
       font-weight: 600;
     }
 
-    :deep(.el-input__suffix svg) {
+    .search-submit-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 0;
+      padding: 0.35rem;
+      background: transparent;
       color: #2f80ed;
+      cursor: pointer;
+
+      &:focus-visible {
+        border-radius: 4px;
+        outline: 2px solid rgba(47, 128, 237, 0.45);
+        outline-offset: 2px;
+      }
     }
   }
 

@@ -90,6 +90,25 @@
 }
 
 html.dark {
+  .reply-disabled {
+    border-color: rgb(255 255 255 / 12%);
+    background: rgb(31 41 55 / 88%);
+    box-shadow: 0 14px 32px rgb(0 0 0 / 18%);
+
+    .reply-disabled-text,
+    svg {
+      color: #cbd5e1;
+    }
+
+    .reply-disabled-close {
+      color: #94a3b8;
+
+      &:hover {
+        color: #93c5fd;
+      }
+    }
+  }
+
   .comment-textarea {
     background: $dark-main-color;
     color: #fff;

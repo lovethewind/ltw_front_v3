@@ -180,6 +180,11 @@ watch([user, viewUser], () => {
 })
 
 onMounted(() => {
+  const menuIndex = String(route.query.menu || '')
+  const routeMenu = menuListAll.find(menu => menu.index === menuIndex)
+  if (routeMenu) {
+    currentActiveMenu.value = routeMenu
+  }
   const viewUserId = (route.params.userId as string | undefined) || user.value?.id || ''
   userApi.getUserById(viewUserId).then(res => {
     viewUser.value = res.data

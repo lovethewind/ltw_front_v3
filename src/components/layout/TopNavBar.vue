@@ -148,7 +148,12 @@
               </button>
               <div v-else>
                 <el-dropdown popper-class="user-profile-popper" trigger="hover">
-                  <button class="user-avatar-button" type="button" aria-label="打开用户菜单">
+                  <button
+                    class="user-avatar-button"
+                    type="button"
+                    aria-label="进入个人中心"
+                    @click="router.push('/user/' + user.id)"
+                  >
                     <img class="user-avatar" :src="user.avatar" height="30" width="30" alt="">
                   </button>
                   <template #dropdown>

@@ -33,7 +33,7 @@
       </div>
     </div>
 
-    <el-form class="password-form-card" label-position="top">
+    <el-form ref="changePasswordFormRef" :model="changePasswordForm" :rules="changePasswordRules" class="password-form-card" label-position="top">
       <section class="password-field-card">
         <div class="password-field-card__title">
           <Icon icon="ph:shield-check" />
@@ -80,14 +80,14 @@
             微信
           </button>
         </div>
-        <el-form-item v-if="changePasswordForm.changePasswordVerifyType === ValidTypeEnum.ORIGINAL_PASSWORD" label="原密码">
+        <el-form-item v-if="changePasswordForm.changePasswordVerifyType === ValidTypeEnum.ORIGINAL_PASSWORD" label="原密码" prop="oldPassword">
           <el-input v-model="changePasswordForm.oldPassword" type="password" placeholder="请输入原密码" show-password>
             <template #prefix>
               <Icon icon="ph:lock-key" />
             </template>
           </el-input>
         </el-form-item>
-        <el-form-item v-if="changePasswordForm.changePasswordVerifyType === ValidTypeEnum.EMAIL" label="邮箱验证码">
+        <el-form-item v-if="changePasswordForm.changePasswordVerifyType === ValidTypeEnum.EMAIL" label="邮箱验证码" prop="code">
           <div class="password-code-row">
             <el-input v-model="changePasswordForm.code" placeholder="请输入邮箱验证码">
               <template #prefix>
@@ -104,7 +104,7 @@
             </button>
           </div>
         </el-form-item>
-        <el-form-item v-if="changePasswordForm.changePasswordVerifyType === ValidTypeEnum.MOBILE" label="手机验证码">
+        <el-form-item v-if="changePasswordForm.changePasswordVerifyType === ValidTypeEnum.MOBILE" label="手机验证码" prop="code">
           <div class="password-code-row">
             <el-input v-model="changePasswordForm.code" placeholder="请输入手机验证码">
               <template #prefix>
@@ -121,28 +121,30 @@
             </button>
           </div>
         </el-form-item>
-        <div v-if="changePasswordForm.changePasswordVerifyType === ValidTypeEnum.WECHAT" class="password-wechat-panel">
-          <div class="password-wechat-qr">
-            <el-image
-              v-if="!changePasswordForm.randomCodeVerifySuccess && changePasswordForm.randomCode && !isExpired"
-              :src="changePasswordForm.wechatAppletImg"
-              alt=""
-            />
-            <div v-if="!changePasswordForm.randomCodeVerifySuccess && !changePasswordForm.randomCode && !isExpired" class="password-wechat-state">
-              加载中...
+        <el-form-item v-if="changePasswordForm.changePasswordVerifyType === ValidTypeEnum.WECHAT" prop="randomCodeVerifySuccess">
+          <div class="password-wechat-panel">
+            <div class="password-wechat-qr">
+              <el-image
+                v-if="!changePasswordForm.randomCodeVerifySuccess && changePasswordForm.randomCode && !isExpired"
+                :src="changePasswordForm.wechatAppletImg"
+                alt=""
+              />
+              <div v-if="!changePasswordForm.randomCodeVerifySuccess && !changePasswordForm.randomCode && !isExpired" class="password-wechat-state">
+                加载中...
+              </div>
+              <div v-if="changePasswordForm.randomCodeVerifySuccess" class="password-wechat-state is-success">验证成功</div>
+              <button
+                v-if="isExpired"
+                class="password-wechat-retry"
+                type="button"
+                @click="getWechatAppletCode(WechatAppletCodeTypeEnum.MODIFY_PASSWORD)"
+              >
+                二维码已过期，重新获取
+              </button>
             </div>
-            <div v-if="changePasswordForm.randomCodeVerifySuccess" class="password-wechat-state is-success">验证成功</div>
-            <button
-              v-if="isExpired"
-              class="password-wechat-retry"
-              type="button"
-              @click="getWechatAppletCode(WechatAppletCodeTypeEnum.MODIFY_PASSWORD)"
-            >
-              二维码已过期，重新获取
-            </button>
+            <p v-if="!changePasswordForm.randomCodeVerifySuccess">请使用微信扫码完成身份验证。</p>
           </div>
-          <p v-if="!changePasswordForm.randomCodeVerifySuccess">请使用微信扫码完成身份验证。</p>
-        </div>
+        </el-form-item>
       </section>
 
       <section class="password-field-card">
@@ -150,7 +152,7 @@
           <Icon icon="ph:password" />
           <span>新密码</span>
         </div>
-        <el-form-item label="新密码">
+        <el-form-item label="新密码" prop="password">
           <el-input v-model="changePasswordForm.password" type="password" placeholder="请输入新密码" show-password>
             <template #prefix>
               <Icon icon="ph:key" />
@@ -177,7 +179,7 @@
 <style src="@/assets/css/user-center.scss" scoped />
 
 <script setup lang="ts">
-import { computed, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
 import { useUserStore } from '@/stores/user'
 import {
   WechatScanResultEnum,
@@ -186,7 +188,7 @@ import {
   VerifyCodeTypeEnum,
   WechatAppletCodeTypeEnum
 } from '@/enums'
-import { ElMessage } from 'element-plus'
+import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import userApi from '@/api/user'
 import { binaryStrToImgUrl, removeEmptyValues } from '@/utils/common'
 import commonApi from '@/api/common'
@@ -204,6 +206,23 @@ const defaultChangePasswordForm = {
   changePasswordVerifyType: 1
 }
 const changePasswordForm = ref(Object.assign({}, defaultChangePasswordForm))
+const changePasswordFormRef = ref<FormInstance>()
+const changePasswordRules: FormRules = {
+  password: [
+    { required: true, message: '请输入新密码', trigger: 'blur' },
+    {
+      pattern: /^(?![0-9]*$|[a-zA-Z]*$)[0-9a-zA-Z!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~]{6,30}$/,
+      message: '密码长度为6-30位，不能全为字母或数字',
+      trigger: 'blur'
+    }
+  ],
+  oldPassword: [{ required: true, message: '请输入原密码', trigger: 'blur' }],
+  code: [{ required: true, message: '请输入验证码', trigger: 'blur' }],
+  randomCodeVerifySuccess: [{
+    validator: (_rule, value, callback) => value ? callback() : callback(new Error('请先使用微信扫码完成身份验证')),
+    trigger: 'change'
+  }]
+}
 const updateBtnDisabled = ref(false)
 const sendCodeBtnDisabled = ref(false)
 const isExpired = ref(false)
@@ -219,6 +238,7 @@ watch(() => changePasswordForm.value.changePasswordVerifyType, (val) => {
   changePasswordForm.value.wechatAppletImg = ''
   changePasswordForm.value.randomCode = null
   clearInterval(codeTimer.value)
+  nextTick(() => changePasswordFormRef.value?.clearValidate())
   if (val === ValidTypeEnum.WECHAT) {
     getWechatAppletCode()
   }
@@ -352,48 +372,11 @@ function countDown(): void {
  *
  * :return: 无返回值。
  */
-function changePassword(): void {
-  if (!changePasswordForm.value.password) {
-    ElMessage({
-      message: '请输入新密码',
-      type: 'error',
-      plain: true
-    })
-    return
-  }
-  const reg = /^(?![0-9]*$|[a-zA-Z]*$)[0-9a-zA-Z!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~]{6,30}$/
-  if (!reg.test(changePasswordForm.value.password)) {
-    ElMessage({
-      message: '密码长度为6-30位，不能全为字母或数字',
-      type: 'error',
-      plain: true
-    })
-    return
-  }
-  if (changePasswordForm.value.changePasswordVerifyType === ValidTypeEnum.ORIGINAL_PASSWORD && !changePasswordForm.value.oldPassword) {
-    ElMessage({
-      message: '请输入原密码',
-      type: 'error',
-      plain: true
-    })
-    return
-  }
-  if (changePasswordForm.value.changePasswordVerifyType === ValidTypeEnum.EMAIL && !changePasswordForm.value.code) {
-    ElMessage({
-      message: '请输入邮箱验证码',
-      type: 'error',
-      plain: true
-    })
-    return
-  }
-  if (changePasswordForm.value.changePasswordVerifyType === ValidTypeEnum.MOBILE && !changePasswordForm.value.code) {
-    ElMessage({
-      message: '请输入手机验证码',
-      type: 'error',
-      plain: true
-    })
-    return
-  }
+async function changePassword(): Promise<void> {
+  if (!changePasswordFormRef.value) return
+  const valid = await changePasswordFormRef.value.validate().catch(() => false)
+  if (!valid) return
+
   updateBtnDisabled.value = true
   const sendData = {
     password: changePasswordForm.value.password,
@@ -423,5 +406,6 @@ function changePassword(): void {
 function cancelChangePassword(): void {
   changePasswordForm.value = Object.assign({}, defaultChangePasswordForm)
   updateBtnDisabled.value = false
+  nextTick(() => changePasswordFormRef.value?.clearValidate())
 }
 </script>

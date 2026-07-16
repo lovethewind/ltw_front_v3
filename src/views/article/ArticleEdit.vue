@@ -12,21 +12,23 @@
           <el-input v-model="postForm.title" :placeholder="tips" class="article-title-input" />
         </el-form-item>
 
-        <div class="article-editor">
-          <md-editor
-            v-if="postForm.isMarkdown"
-            ref="editorRef"
-            :toolbar-exclude="articleMarkdownToolbarExclude"
-            @change="contentChange($event, true)"
-            class="article-md-editor"
-          />
-          <rich-editor
-            v-else
-            ref="richEditorRef"
-            @change="contentChange($event, false)"
-            class="article-rich-editor"
-          />
-        </div>
+        <el-form-item prop="content" class="article-content-item">
+          <div class="article-editor">
+            <md-editor
+              v-if="postForm.isMarkdown"
+              ref="editorRef"
+              :toolbar-exclude="articleMarkdownToolbarExclude"
+              @change="contentChange($event, true)"
+              class="article-md-editor"
+            />
+            <rich-editor
+              v-else
+              ref="richEditorRef"
+              @change="contentChange($event, false)"
+              class="article-rich-editor"
+            />
+          </div>
+        </el-form-item>
       </main>
 
       <aside class="article-side-panel">
@@ -354,6 +356,7 @@
 import { computed, onMounted, onUnmounted, ref, nextTick } from 'vue'
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 import { useCommonStore } from '@/stores/common'
+import { useUserStore } from '@/stores/user'
 import articleApi from '@/api/article'
 import tagApi from '@/api/tag'
 import ossApi from '@/api/oss-api'
@@ -372,13 +375,19 @@ import { uploadFile } from '@/utils/oss-upload'
 import MdEditor from '@/components/editor/MdEditor.vue'
 import RichEditor from '@/components/editor/RichEditor.vue'
 import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
-import { ArticleStatusEnum, FileUploadStatusEnum, UploadFileTypeEnum } from '@/enums'
+import {
+  ArticleStatusEnum,
+  FileUploadStatusEnum,
+  UploadFileTypeEnum,
+  UserSettingMenuTypeEnum
+} from '@/enums'
 import { Icon } from '@iconify/vue'
 import type { ITag } from '@/interface'
 
 const route = useRoute()
 const router = useRouter()
 const commonStore = useCommonStore()
+const userStore = useUserStore()
 const formRef = ref<FormInstance | null>(null)
 const editorRef = ref<InstanceType<typeof MdEditor> | null>(null)
 const richEditorRef = ref<InstanceType<typeof RichEditor> | null>(null)
@@ -447,8 +456,7 @@ const rules = ref({
     { required: true, message: '请选择一个分类吧~', trigger: 'blur' }
   ],
   content: [
-    { required: true, message: '内容不能为空', trigger: 'blur' },
-    { min: 5, message: '内容长度不能小于5个字符', trigger: 'blur' }
+    { required: true, whitespace: true, message: '内容至少填写1个字符', trigger: 'blur' }
   ],
   originalUrl: [
     {
@@ -607,36 +615,31 @@ function changeEditor() {
   })
 }
 
-function saveOrUpdate(status: number) {
+/**
+ * 校验表单并保存或发布文章。
+ *
+ * :param status: 文章状态。
+ * :return: 无返回值。
+ */
+function saveOrUpdate(status: number): void {
   postForm.value.status = status
   formRef.value?.validate(valid => {
-    if (valid) {
-      ElMessageBox.confirm('确定要发布文章吗？', '提示').then(() => {
-        if (!postForm.value.id) {
-          save()
-        } else {
-          update()
-        }
-      }).catch(() => {
-      })
-    } else {
-      ElMessage({
-        message: '存在字段内容填写不正确，请检查后重试',
-        type: 'error',
-        plain: true
-      })
-    }
+    if (!valid) return
+    const actionName = status === ArticleStatusEnum.DRAFT ? '保存草稿' : '发布文章'
+    ElMessageBox.confirm(`确定要${actionName}吗？`, '提示').then(() => {
+      if (!postForm.value.id) {
+        save()
+      } else {
+        update()
+      }
+    }).catch(() => {
+    })
   })
 }
 
 async function save() {
   submitDisabled.value = true
   const isDraft = postForm.value.status === 1
-  ElMessage({
-    message: '正在' + (isDraft ? '保存' : '发布') + '文章，请稍候...',
-    type: 'success',
-    plain: true
-  })
   if (typeof postForm.value.cover === 'object') {
     try {
       await uploadArticleCover(postForm.value)
@@ -661,7 +664,7 @@ async function save() {
       isSuccess.value = true
       clearCacheContent()
       if (isDraft) {
-        router.push('/user')
+        goToDraftList()
       } else {
         router.push('/article/' + response.data)
       }
@@ -680,11 +683,6 @@ async function update() {
     return
   }
   const isDraft = postForm.value.status === ArticleStatusEnum.DRAFT
-  ElMessage({
-    message: '正在' + (isDraft ? '保存' : '发布') + '文章，请稍候...',
-    type: 'info',
-    plain: true
-  })
   if (typeof newData.cover === 'object') {
     try {
       await uploadArticleCover(newData)
@@ -708,12 +706,28 @@ async function update() {
       isSuccess.value = true
       clearCacheContent()
       if (isDraft) {
-        router.push('/user')
+        goToDraftList()
       } else {
         router.push('/article/' + postForm.value.id)
       }
       postForm.value = Object.assign({}, baseInfo)
     })
+}
+
+/**
+ * 跳转到当前用户个人中心的文章草稿箱。
+ *
+ * :return: 无返回值。
+ */
+function goToDraftList(): void {
+  if (!userStore.user?.id) return
+  router.push({
+    path: `/user/${userStore.user.id}`,
+    query: {
+      menu: UserSettingMenuTypeEnum.ARTICLE,
+      articleStatus: String(ArticleStatusEnum.DRAFT)
+    }
+  })
 }
 
 function beforeCoverUpload(file: File) {

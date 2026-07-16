@@ -89,34 +89,34 @@ function closeModal() {
   modalStore.setFeedbackFlag(false)
 }
 
-function submit() {
+/**
+ * 校验并提交反馈表单。
+ *
+ * :return: 无返回值。
+ */
+function submit(): void {
   feedbackDisabled.value = true
   feedbackFormRef.value?.validate((valid) => {
-    if (valid) {
-      commonApi.addFeedback(postForm.value).then(() => {
-        ElMessage({
-          message: '提交反馈成功',
-          type: 'success',
-          plain: true
-        })
-        closeModal()
-      }).catch(() => {
-        ElMessage({
-          message: '提交反馈失败',
-          type: 'error',
-          plain: true
-        })
-      }).finally(() => {
-        feedbackDisabled.value = false
-      })
-    } else {
+    if (!valid) {
+      feedbackDisabled.value = false
+      return
+    }
+    commonApi.addFeedback(postForm.value).then(() => {
       ElMessage({
-        message: '填写信息不正确，请检查',
+        message: '提交反馈成功',
+        type: 'success',
+        plain: true
+      })
+      closeModal()
+    }).catch(() => {
+      ElMessage({
+        message: '提交反馈失败',
         type: 'error',
         plain: true
       })
+    }).finally(() => {
       feedbackDisabled.value = false
-    }
+    })
   })
 }
 </script>

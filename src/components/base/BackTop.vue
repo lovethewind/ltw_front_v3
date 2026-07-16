@@ -1,9 +1,10 @@
 <template>
   <div class="rightside">
-    <el-tooltip :content="'打开' + (isDark ? '白天' : '夜间') + '模式'" placement="left" effect="light">
+    <el-tooltip :content="themeTooltip" placement="left" effect="light">
       <div class="setting-container" @click="changeTheme">
-        <Icon icon="bitcoin-icons:moon-outline" v-if="isDark" class="night" />
-        <Icon icon="ph:sun" v-else class="sunny" />
+        <Icon v-if="themeMode === 'system'" icon="ph:monitor" class="system-theme" />
+        <Icon v-else-if="themeMode === 'dark'" icon="bitcoin-icons:moon-outline" class="night" />
+        <Icon v-else icon="ph:sun" class="sunny" />
       </div>
     </el-tooltip>
     <el-tooltip content="私信聊天" placement="left" effect="light">
@@ -33,6 +34,7 @@ import { Icon } from '@iconify/vue'
 import { checkIsLogin } from '@/utils/common'
 import { EventServer } from '@/event-server'
 import { EventName } from '@/event-server/event-name'
+import type { ThemeMode } from '@/stores/common'
 
 const commonStore = useCommonStore()
 const modalStore = useModalStore()
@@ -40,9 +42,23 @@ const chatStore = useChatStore()
 const eventServer = EventServer.getInstance()
 
 const isShow = ref('display: none')
+const systemThemeMedia = window.matchMedia('(prefers-color-scheme: dark)')
+const systemPrefersDark = ref(systemThemeMedia.matches)
+const themeModeList: ThemeMode[] = ['light', 'dark', 'system']
+
+const themeMode = computed<ThemeMode>(() => commonStore.theme)
 
 const isDark = computed(() => {
-  return commonStore.theme === 'dark'
+  return themeMode.value === 'dark' || (themeMode.value === 'system' && systemPrefersDark.value)
+})
+
+const themeTooltip = computed(() => {
+  const themeNameMap: Record<ThemeMode, string> = {
+    light: '日间模式',
+    dark: '夜间模式',
+    system: '跟随系统'
+  }
+  return `当前：${themeNameMap[themeMode.value]}，点击切换`
 })
 
 watch(isDark, (newValue: boolean, oldValue: boolean) => {
@@ -53,19 +69,32 @@ watch(isDark, (newValue: boolean, oldValue: boolean) => {
 
 onMounted(() => {
   eventServer.on(EventName.START_CHAT_WITH_USER, openChatWindow)
+  systemThemeMedia.addEventListener('change', handleSystemThemeChange)
   moveOrAddHtmlClass()
   window.addEventListener('scroll', scrollToTop)
 })
 
 onUnmounted(() => {
+  systemThemeMedia.removeEventListener('change', handleSystemThemeChange)
   window.removeEventListener('scroll', scrollToTop)
 })
 
-function changeTheme() {
-  commonStore.setTheme(isDark.value ? 'light' : 'dark')
+/**
+ * 按日间、夜间、跟随系统的顺序切换主题模式。
+ *
+ * :return: 无返回值。
+ */
+function changeTheme(): void {
+  const currentIndex = themeModeList.indexOf(themeMode.value)
+  commonStore.setTheme(themeModeList[(currentIndex + 1) % themeModeList.length])
 }
 
-function moveOrAddHtmlClass() {
+/**
+ * 根据当前生效主题更新根元素主题类名。
+ *
+ * :return: 无返回值。
+ */
+function moveOrAddHtmlClass(): void {
   if (isDark.value) {
     document.documentElement.classList.add('dark')
     document.documentElement.classList.remove('light')
@@ -73,6 +102,16 @@ function moveOrAddHtmlClass() {
     document.documentElement.classList.remove('dark')
     document.documentElement.classList.add('light')
   }
+}
+
+/**
+ * 响应系统颜色模式变化。
+ *
+ * :param event: 系统颜色模式媒体查询事件。
+ * :return: 无返回值。
+ */
+function handleSystemThemeChange(event: MediaQueryListEvent): void {
+  systemPrefersDark.value = event.matches
 }
 
 function openFeedback() {
@@ -161,6 +200,10 @@ function scrollToTop() {
 
 .night {
   color: #3b4bda !important;;
+}
+
+.system-theme {
+  color: #0f9f8f !important;
 }
 
 .feedback {

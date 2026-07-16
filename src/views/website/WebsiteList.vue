@@ -333,28 +333,28 @@ function confirmVisitWebsite() {
   visitDialogVisible.value = false
 }
 
-function submit() {
+/**
+ * 校验并提交网站申请。
+ *
+ * :return: 无返回值。
+ */
+function submit(): void {
   btnDisabled.value = true
   postFormRef.value?.validate((valid) => {
-    if (valid) {
-      websiteApi.save(postForm.value).then(() => {
-        ElMessage({
-          message: '申请成功,通过申请后将通过通知告知您',
-          type: 'success',
-          plain: true
-        })
-        dialogFormVisible.value = false
-      }).finally(() => {
-        btnDisabled.value = false
-      })
-    } else {
+    if (!valid) {
       btnDisabled.value = false
+      return
+    }
+    websiteApi.save(postForm.value).then(() => {
       ElMessage({
-        message: '填写信息不正确，请确认',
-        type: 'error',
+        message: '申请成功,通过申请后将通过通知告知您',
+        type: 'success',
         plain: true
       })
-    }
+      dialogFormVisible.value = false
+    }).finally(() => {
+      btnDisabled.value = false
+    })
   })
 }
 

@@ -1,7 +1,8 @@
 <template>
   <el-dialog
     class="login-container"
-    v-model="loginFlag"
+    :model-value="loginFlag"
+    @update:model-value="modalStore.setLoginFlag"
     width="452"
     align-center
     @close="closeModal()"

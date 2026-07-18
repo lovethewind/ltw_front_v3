@@ -1,6 +1,7 @@
 <template>
   <el-dialog
-    v-model="registerFlag"
+    :model-value="registerFlag"
+    @update:model-value="modalStore.setRegisterFlag"
     class="login-container auth-container"
     width="452"
     align-center

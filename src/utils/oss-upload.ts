@@ -10,6 +10,7 @@ declare interface UploadSignatureResp {
   url: string
   contentType: string
   contentDisposition: string
+  signedHeaders?: Record<string, string>
 }
 
 /**
@@ -27,6 +28,7 @@ export async function uploadFile(
 ) {
   const requestConfig: AxiosRequestConfig = {
     headers: {
+      ...resp.signedHeaders,
       'Content-Type': resp.contentType,
       'x-oss-forbid-overwrite': 'true',
       'Content-Disposition': resp.contentDisposition

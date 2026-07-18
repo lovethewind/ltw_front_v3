@@ -9,7 +9,20 @@ NProgress.configure({ showSpinner: false }) // NProgress 配置
 
 const needLoginList = ['userNotice'] // redirect needLoginList
 
-export async function routeGuard(to: RouteLocationNormalized, from: RouteLocationNormalized, next: NavigationGuardNext) {
+/**
+ * 处理路由切换时的页面标题、登录状态与私人页面访问控制。
+ *
+ * :param to: 即将进入的目标路由。
+ * :param from: 当前离开的来源路由。
+ * :param next: Vue Router 的导航回调。
+ * :return: 路由守卫完成后的 Promise。
+ */
+export async function routeGuard(
+  to: RouteLocationNormalized,
+  from: RouteLocationNormalized,
+  next: NavigationGuardNext
+): Promise<void> {
+  void from
   const userStore = useUserStore()
   NProgress.start()
   document.title = getPageTitle(to.meta.title as string)
@@ -40,7 +53,8 @@ export async function routeGuard(to: RouteLocationNormalized, from: RouteLocatio
       next(`/404`)
     }
   } else { /* has no token*/
-    if (needLoginList.indexOf(String(to.name || '')) === -1) {
+    const requiresAuth = to.meta.requiresAuth === true || needLoginList.includes(String(to.name || ''))
+    if (!requiresAuth) {
       // in the free needLoginList need, go directly
       next()
     } else {

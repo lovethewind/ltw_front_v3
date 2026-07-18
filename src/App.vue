@@ -8,7 +8,7 @@
       <!-- 内容 -->
       <router-view v-if="isReady" :key="$route.fullPath" />
     </el-main>
-    <el-footer>
+    <el-footer v-if="commonStore.websiteInfo.showFooter">
       <!-- 页脚 -->
       <FooterView />
     </el-footer>

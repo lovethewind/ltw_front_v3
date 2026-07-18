@@ -157,12 +157,13 @@ function scrollToTop() {
 @import "@/assets/css/variables";
 
 .rightside {
-  --rightside-offset: 38px;
+  --rightside-offset: 20px;
 
-  z-index: 4;
+  z-index: 10;
   position: fixed;
   right: var(--rightside-offset);
-  top: 70%;
+  bottom: 20px;
+  top: auto;
   transition: all 0.5s;
 }
 
@@ -217,6 +218,8 @@ function scrollToTop() {
 @media screen and (max-width: 759px) {
   .rightside {
     --rightside-offset: 10px;
+
+    bottom: 12px;
   }
 }
 

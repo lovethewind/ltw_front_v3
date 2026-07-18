@@ -471,19 +471,6 @@ html.dark {
     background: $dark-main-color !important;
   }
 
-  .md-editor-toolbar-wrapper {
-    top: 60px;
-    background: $dark-main-color;
-  }
-
-  .ͼo, .md-editor-resize-operate {
-    --md-bk-color: #{$dark-main-color};
-  }
-
-  .md-editor-preview-wrapper {
-    background: $dark-main-color;
-  }
-
   .w-e-menu-tooltip-v5:before {
     --w-e-toolbar-bg-color: #fff;
     --w-e-toolbar-active-color: #555353;

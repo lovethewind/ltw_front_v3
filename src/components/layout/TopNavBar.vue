@@ -1,7 +1,7 @@
 <template>
   <div :class="[navClass, 'nav']">
     <!--     手机端导航栏-->
-    <div class="d-md-none nav-mobile-container">
+    <div class="d-lg-none nav-mobile-container">
       <div class="blog-title">
         <router-link to="/">
           <span class="brand-mark">心</span>
@@ -41,7 +41,7 @@
             :key="'mobile_nav_' + menu.path"
             :to="menu.path"
             class="mobile-menu-item"
-            @click="handleMobileMenuSelect(menu.path)"
+            @click="handleMobileMenuSelect"
           >
             <Icon :icon="menu.icon" />
             <span>{{ menu.name }}</span>
@@ -50,7 +50,7 @@
       </el-drawer>
     </div>
     <!--    电脑导航栏-->
-    <div class="d-md-inline-flex d-none nav-container align-content-center">
+    <div class="d-lg-inline-flex d-none nav-container align-content-center">
       <el-row type="flex" justify="center" align="middle" class="nav-inner">
         <el-col :xs="8" :sm="7" class="ps-2">
           <div class="float-left blog-title">
@@ -147,12 +147,11 @@
                 <Icon icon="bx:user" />
               </button>
               <div v-else>
-                <el-dropdown popper-class="user-profile-popper" trigger="hover">
+                <el-dropdown popper-class="user-profile-popper" trigger="click">
                   <button
                     class="user-avatar-button"
                     type="button"
-                    aria-label="进入个人中心"
-                    @click="router.push('/user/' + user.id)"
+                    aria-label="打开用户菜单"
                   >
                     <img class="user-avatar" :src="user.avatar" height="30" width="30" alt="">
                   </button>
@@ -168,6 +167,13 @@
                         </div>
                       </div>
                       <div class="user-profile-actions">
+                        <button class="user-profile-action" type="button" @click="router.push('/notes')">
+                          <span class="user-profile-action-icon">
+                            <Icon icon="tabler:notes" />
+                          </span>
+                          <span>我的笔记</span>
+                          <Icon class="user-profile-action-arrow" icon="tabler:chevron-right" />
+                        </button>
                         <button class="user-profile-action" type="button" @click="router.push('/user/' + user?.id)">
                           <span class="user-profile-action-icon">
                             <Icon icon="mingcute:user-4-line" />
@@ -233,9 +239,9 @@ const totalUnreadCount = ref(0)
 const eventServer = EventServer.getInstance()
 const navMenus: NavMenu[] = [
   { name: '首页', path: '/', icon: 'tabler:home' },
+  { name: '笔记', path: '/notes', icon: 'tabler:notes' },
   { name: '图库', path: '/picture', icon: 'tabler:photo' },
   { name: '网站导航', path: '/website', icon: 'tabler:compass' },
-  { name: '友链', path: '/link', icon: 'tabler:link' },
   { name: '留言板', path: '/message-board', icon: 'tabler:message-circle' }
 ]
 
@@ -320,13 +326,11 @@ function toSearchPage() {
 }
 
 /**
- * 处理移动端菜单项点击，关闭抽屉并交给路由链接完成跳转。
+ * 处理移动端菜单点击并关闭导航抽屉。
  *
- * :param path: 当前点击的菜单路径。
  * :return: 无返回值。
  */
-function handleMobileMenuSelect(path: string): void {
-  void path
+function handleMobileMenuSelect(): void {
   mobileMenuVisible.value = false
 }
 </script>

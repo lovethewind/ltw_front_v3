@@ -1,6 +1,7 @@
 <template>
   <el-dialog
-    v-model="forgetFlag"
+    :model-value="forgetFlag"
+    @update:model-value="modalStore.setForgetFlag"
     class="login-container auth-container"
     width="452"
     align-center

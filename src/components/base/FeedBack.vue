@@ -1,6 +1,7 @@
 <template>
   <AppFormDialog
-    v-model="feedbackFlag"
+    :model-value="feedbackFlag"
+    @update:model-value="modalStore.setFeedbackFlag"
     class="feedback-dialog"
     width="540px"
     title="意见反馈"

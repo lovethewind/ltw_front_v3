@@ -43,7 +43,7 @@ const toolbarConfig = {
 }
 const editorConfig = {
   placeholder: '请输入内容...',
-  scroll: false,
+  scroll: true,
   MENU_CONF: {
     uploadImage: {
       // 自定义上传

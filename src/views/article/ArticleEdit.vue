@@ -3,7 +3,8 @@
     ref="formRef"
     :model="postForm"
     :rules="rules"
-    class="article-edit-page"
+    class="article-edit-page is-fixed-editor"
+    :class="{ 'is-markdown-editor': postForm.isMarkdown }"
     label-position="top"
   >
     <div class="article-edit-shell">
@@ -17,7 +18,6 @@
             <md-editor
               v-if="postForm.isMarkdown"
               ref="editorRef"
-              :toolbar-exclude="articleMarkdownToolbarExclude"
               @change="contentChange($event, true)"
               class="article-md-editor"
             />
@@ -403,7 +403,7 @@ const baseInfo: { [key: string]: any } = {
   tagList: [],
   attachList: [],
   content: '',
-  isMarkdown: false,
+  isMarkdown: true,
   isOriginal: true,
   originalUrl: '',
   status: ArticleStatusEnum.DRAFT,
@@ -434,12 +434,6 @@ const cacheTimer = ref<any>(null)
 const isShowAttachment = ref(false)
 const uploadLoading = ref(false)
 const attachList = ref<any[]>([])
-const articleMarkdownToolbarExclude = [
-  'save',
-  'github',
-  'fullscreen',
-  'pageFullscreen'
-]
 const customColors = ref([
   { color: '#f56c6c', percentage: 20 },
   { color: '#e6a23c', percentage: 40 },

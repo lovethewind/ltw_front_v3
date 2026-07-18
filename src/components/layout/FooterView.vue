@@ -9,6 +9,7 @@
         <nav class="footer-links" aria-label="页脚导航">
           <button class="footer-link" type="button" @click="openFeedback">联系我们</button>
           <button class="footer-link" type="button" @click="goPage('/about')">关于本站</button>
+          <button class="footer-link" type="button" @click="goPage('/link')">友链</button>
         </nav>
         <div class="footer-meta">
           <a class="footer-record" href="https://beian.miit.gov.cn/" target="_blank" rel="noreferrer">

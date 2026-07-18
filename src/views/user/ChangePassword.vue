@@ -124,11 +124,24 @@
         <el-form-item v-if="changePasswordForm.changePasswordVerifyType === ValidTypeEnum.WECHAT" prop="randomCodeVerifySuccess">
           <div class="password-wechat-panel">
             <div class="password-wechat-qr">
-              <el-image
+              <div
                 v-if="!changePasswordForm.randomCodeVerifySuccess && changePasswordForm.randomCode && !isExpired"
-                :src="changePasswordForm.wechatAppletImg"
-                alt=""
-              />
+                :class="['password-wechat-stage', { 'is-scanned': wechatScanned }]"
+              >
+                <el-image
+                  :src="changePasswordForm.wechatAppletImg"
+                  alt="微信身份验证二维码"
+                />
+                <Transition name="password-wechat-scan-state">
+                  <div v-if="wechatScanned" class="password-wechat-scan-overlay" role="status" aria-live="polite">
+                    <span class="password-wechat-scan-overlay__icon">
+                      <Icon icon="material-symbols:check-rounded" />
+                    </span>
+                    <strong>已扫码</strong>
+                    <span>请在手机上确认</span>
+                  </div>
+                </Transition>
+              </div>
               <div v-if="!changePasswordForm.randomCodeVerifySuccess && !changePasswordForm.randomCode && !isExpired" class="password-wechat-state">
                 加载中...
               </div>
@@ -142,7 +155,9 @@
                 二维码已过期，重新获取
               </button>
             </div>
-            <p v-if="!changePasswordForm.randomCodeVerifySuccess">请使用微信扫码完成身份验证。</p>
+            <p v-if="!changePasswordForm.randomCodeVerifySuccess">
+              {{ wechatScanned ? '确认后将自动完成身份验证。' : '请使用微信扫码完成身份验证。' }}
+            </p>
           </div>
         </el-form-item>
       </section>
@@ -226,6 +241,7 @@ const changePasswordRules: FormRules = {
 const updateBtnDisabled = ref(false)
 const sendCodeBtnDisabled = ref(false)
 const isExpired = ref(false)
+const wechatScanned = ref(false)
 const codeMsg = ref('发送验证码')
 const time = ref(60)
 const codeTimer = ref<any>(null)
@@ -237,6 +253,7 @@ const user = computed(() => {
 watch(() => changePasswordForm.value.changePasswordVerifyType, (val) => {
   changePasswordForm.value.wechatAppletImg = ''
   changePasswordForm.value.randomCode = null
+  wechatScanned.value = false
   clearInterval(codeTimer.value)
   nextTick(() => changePasswordFormRef.value?.clearValidate())
   if (val === ValidTypeEnum.WECHAT) {
@@ -274,6 +291,7 @@ function getVerifyTypeText(type: ValidTypeEnum): string {
 async function getWechatAppletCode(_type?: WechatAppletCodeTypeEnum): Promise<void> {
   const res = await userApi.getWechatAppletCode(WechatAppletCodeTypeEnum.MODIFY_PASSWORD)
   isExpired.value = false
+  wechatScanned.value = false
   changePasswordForm.value.randomCode = res.data.code
   changePasswordForm.value.wechatAppletImg = binaryStrToImgUrl(res.data.img)
   codeTimer.value = setInterval(() => {
@@ -281,7 +299,9 @@ async function getWechatAppletCode(_type?: WechatAppletCodeTypeEnum): Promise<vo
       code: changePasswordForm.value.randomCode
     }).then(res => {
       // 0:未扫码 1: 未绑定 2: 已绑定 3: 已过期
-      if (res.data.status === WechatScanResultEnum.NOT_BIND) { // 未绑定
+      if (res.data.status === WechatScanResultEnum.SCANNED) {
+        wechatScanned.value = true
+      } else if (res.data.status === WechatScanResultEnum.NOT_BIND) { // 未绑定
         clearInterval(codeTimer.value)
         ElMessage({
           message: '该微信号未绑定该用户',
@@ -301,6 +321,7 @@ async function getWechatAppletCode(_type?: WechatAppletCodeTypeEnum): Promise<vo
       } else if (res.data.status === WechatScanResultEnum.EXPIRED) {
         clearInterval(codeTimer.value)
         isExpired.value = true
+        wechatScanned.value = false
         changePasswordForm.value.wechatAppletImg = ''
         ElMessage({
           message: '二维码已过期，请点击重新获取',
@@ -406,6 +427,7 @@ async function changePassword(): Promise<void> {
 function cancelChangePassword(): void {
   changePasswordForm.value = Object.assign({}, defaultChangePasswordForm)
   updateBtnDisabled.value = false
+  wechatScanned.value = false
   nextTick(() => changePasswordFormRef.value?.clearValidate())
 }
 </script>

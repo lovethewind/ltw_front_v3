@@ -46,12 +46,25 @@
       </div>
       <div v-if="!showRegister && loginType === LoginType.WECHAT">
         <div class="wechat-login">
-          <el-image
+          <div
             v-if="wechatLoginCode && !isExpired"
-            class="wechat-loading"
-            :src="wechatAppletImg"
-            alt=""
-          />
+            :class="['wechat-qr-stage', { 'is-scanned': wechatScanned }]"
+          >
+            <el-image
+              class="wechat-loading"
+              :src="wechatAppletImg"
+              alt="微信登录二维码"
+            />
+            <Transition name="wechat-scan-state">
+              <div v-if="wechatScanned" class="wechat-scan-overlay" role="status" aria-live="polite">
+                <span class="wechat-scan-overlay__icon">
+                  <Icon icon="material-symbols:check-rounded" />
+                </span>
+                <strong>已扫码</strong>
+                <span>请在手机上确认</span>
+              </div>
+            </Transition>
+          </div>
           <div v-if="!wechatLoginCode && !isExpired" class="wechat-loading">
             <Icon icon="eos-icons:loading" />
             <span>二维码加载中</span>
@@ -60,7 +73,7 @@
             <Icon icon="material-symbols:refresh-rounded" />
             <span>二维码已过期，点击重新获取</span>
           </div>
-          <div class="wechat-login__tip">请使用微信扫码登录</div>
+          <div class="wechat-login__tip">{{ wechatScanned ? '确认后将自动完成登录' : '请使用微信扫码登录' }}</div>
         </div>
       </div>
       <el-form
@@ -439,6 +452,84 @@
   background: #fff;
 }
 
+.wechat-qr-stage {
+  position: relative;
+  width: min(238px, 78%);
+  min-height: 238px;
+  margin: 0 auto 16px;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.wechat-qr-stage .wechat-loading {
+  width: 100%;
+  min-height: 238px;
+  margin: 0;
+  transition:
+    filter 0.24s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.24s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.wechat-qr-stage.is-scanned .wechat-loading {
+  filter: blur(2px);
+  opacity: 0.26;
+  transform: scale(1.02);
+}
+
+.wechat-scan-overlay {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 7px;
+  padding: 24px;
+  background: rgb(20 31 48 / 82%);
+  color: #fff;
+  text-align: center;
+  backdrop-filter: blur(2px);
+}
+
+.wechat-scan-overlay__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 3px;
+  border: 1px solid rgb(255 255 255 / 28%);
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2f80ed, #29a4ef);
+  box-shadow: 0 12px 28px rgb(47 128 237 / 35%);
+}
+
+.wechat-scan-overlay__icon svg {
+  font-size: 30px;
+}
+
+.wechat-scan-overlay strong {
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+.wechat-scan-overlay > span:last-child {
+  color: rgb(255 255 255 / 78%);
+  font-size: 13px;
+}
+
+.wechat-scan-state-enter-active,
+.wechat-scan-state-leave-active {
+  transition: opacity 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.wechat-scan-state-enter-from,
+.wechat-scan-state-leave-to {
+  opacity: 0;
+}
+
 .wechat-login .wechat-loading svg {
   font-size: 25px;
 }
@@ -654,6 +745,24 @@
     width: min(214px, 86%);
     min-height: 214px;
   }
+
+  .wechat-qr-stage {
+    width: min(214px, 86%);
+    min-height: 214px;
+  }
+
+  .wechat-qr-stage .wechat-loading {
+    width: 100%;
+    min-height: 214px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wechat-qr-stage .wechat-loading,
+  .wechat-scan-state-enter-active,
+  .wechat-scan-state-leave-active {
+    transition-duration: 0.01ms;
+  }
 }
 </style>
 
@@ -767,6 +876,7 @@ const time = ref(60)
 const wechatLoginCode = ref('')
 const wechatAppletImg = ref('')
 const isExpired = ref(false)
+const wechatScanned = ref(false)
 const checkTimer = ref<any>(null)
 const rules = ref({
   username: [
@@ -1001,9 +1111,15 @@ function changeLoginMethod(val: LoginType) {
   loginType.value = val
 }
 
-function getWechatAppletCode() {
+/**
+ * 获取微信登录小程序码并轮询扫码状态。
+ *
+ * :return: 无返回值。
+ */
+function getWechatAppletCode(): void {
   userApi.getWechatAppletCode(WechatAppletCodeTypeEnum.LOGIN).then(res => {
     isExpired.value = false
+    wechatScanned.value = false
     wechatAppletImg.value = binaryStrToImgUrl(res.data.img)
     wechatLoginCode.value = res.data.code
     checkTimer.value = setInterval(() => {
@@ -1014,7 +1130,9 @@ function getWechatAppletCode() {
       userApi.checkScan({
         code: wechatLoginCode.value
       }).then(res => {
-        if (res.data.status === WechatScanResultEnum.HAS_BIND) {
+        if (res.data.status === WechatScanResultEnum.SCANNED) {
+          wechatScanned.value = true
+        } else if (res.data.status === WechatScanResultEnum.HAS_BIND) {
           clearInterval(checkTimer.value)
           userStore.setUserToken(res.data.token)
           userStore.getInfo()
@@ -1037,6 +1155,7 @@ function getWechatAppletCode() {
         } else if (res.data.status === WechatScanResultEnum.EXPIRED) {
           clearInterval(checkTimer.value)
           isExpired.value = true
+          wechatScanned.value = false
           wechatLoginCode.value = ''
           wechatAppletImg.value = ''
           ElMessage({
@@ -1055,6 +1174,7 @@ function closeWeChatLogin() {
   postForm.value = Object.assign({}, baseInfo)
   wechatAppletImg.value = ''
   isExpired.value = false
+  wechatScanned.value = false
   firstNeedRegister.value = false
   showRegister.value = false
   btnDisabled.value = false

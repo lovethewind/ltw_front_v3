@@ -343,7 +343,21 @@
           </div>
         </div>
         <div class="profile-wechat-qr">
-          <el-image v-if="wechatOldCode && !isExpired" :src="wechatAppletImg" alt="" />
+          <div
+            v-if="wechatOldCode && !isExpired"
+            :class="['profile-wechat-stage', { 'is-scanned': wechatScanned }]"
+          >
+            <el-image :src="wechatAppletImg" alt="验证当前微信二维码" />
+            <Transition name="profile-wechat-scan-state">
+              <div v-if="wechatScanned" class="profile-wechat-scan-overlay" role="status" aria-live="polite">
+                <span class="profile-wechat-scan-overlay__icon">
+                  <Icon icon="material-symbols:check-rounded" />
+                </span>
+                <strong>已扫码</strong>
+                <span>请在手机上确认</span>
+              </div>
+            </Transition>
+          </div>
           <div v-if="!wechatOldCode && !isExpired" class="profile-wechat-loading">加载中...</div>
           <button
             v-if="isExpired"
@@ -356,7 +370,7 @@
         </div>
         <div class="profile-dialog-tip">
           <span>下一步</span>
-          <strong>扫码验证成功后，将自动进入新微信绑定</strong>
+          <strong>{{ wechatScanned ? '确认后将自动进入新微信绑定' : '扫码验证成功后，将自动进入新微信绑定' }}</strong>
         </div>
       </div>
       <div v-else class="profile-wechat-panel">
@@ -370,7 +384,21 @@
           </div>
         </div>
         <div class="profile-wechat-qr">
-          <el-image v-if="wechatCode && !isExpired" :src="wechatAppletImg" alt="" />
+          <div
+            v-if="wechatCode && !isExpired"
+            :class="['profile-wechat-stage', { 'is-scanned': wechatScanned }]"
+          >
+            <el-image :src="wechatAppletImg" alt="绑定新微信二维码" />
+            <Transition name="profile-wechat-scan-state">
+              <div v-if="wechatScanned" class="profile-wechat-scan-overlay" role="status" aria-live="polite">
+                <span class="profile-wechat-scan-overlay__icon">
+                  <Icon icon="material-symbols:check-rounded" />
+                </span>
+                <strong>已扫码</strong>
+                <span>请在手机上确认</span>
+              </div>
+            </Transition>
+          </div>
           <div v-if="!wechatCode && !isExpired" class="profile-wechat-loading">加载中...</div>
           <button
             v-if="isExpired"
@@ -383,7 +411,7 @@
         </div>
         <div class="profile-dialog-tip is-warning">
           <span>微信扫码</span>
-          <strong>请确认使用的是新的微信账号</strong>
+          <strong>{{ wechatScanned ? '确认后将自动完成新微信绑定' : '请确认使用的是新的微信账号' }}</strong>
         </div>
       </div>
     </el-dialog>
@@ -509,7 +537,9 @@ const wechatOldCode = ref('')
 const wechatCode = ref('')
 const wechatAppletImg = ref('')
 const codeTimer = ref<any>(null)
+const wechatPollTimer = ref<ReturnType<typeof setTimeout> | null>(null)
 const isExpired = ref(false)
+const wechatScanned = ref(false)
 const postForm = ref<any>(Object.assign({}, defaultPostForm))
 const rules = ref({
   email: [
@@ -547,6 +577,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   codeTimer.value && clearInterval(codeTimer.value)
+  clearWechatPoll()
 })
 
 async function update() {
@@ -612,100 +643,168 @@ function openMobileModel() {
   needValidOldMobile.value = !!loginUser.value.mobile
 }
 
-async function openWeChatModel() {
+/**
+ * 打开微信绑定弹窗并进入对应扫码步骤。
+ *
+ * :return: 无返回值。
+ */
+async function openWeChatModel(): Promise<void> {
   wechatDialogVisible.value = true
   needValidOldWeChat.value = !!loginUser.value.wechat
   if (needValidOldWeChat.value) {
-    await getWechatAppletCode(2)
+    await getWechatAppletCode(WechatAppletCodeTypeEnum.VALIDATE_OLD_WECHAT)
   } else {
     await bindNewWeChat()
   }
 }
 
-async function getWechatAppletCode(type: WechatAppletCodeTypeEnum) {
+/**
+ * 获取指定用途的小程序码并启动串行轮询。
+ *
+ * :param type: 小程序码用途。
+ * :return: 无返回值。
+ */
+async function getWechatAppletCode(type: WechatAppletCodeTypeEnum): Promise<void> {
+  clearWechatPoll()
   // type 2: 验证旧微信 3: 绑定新微信 4: 修改密码
   const res = await userApi.getWechatAppletCode(type)
   isExpired.value = false
+  wechatScanned.value = false
   if (type === WechatAppletCodeTypeEnum.VALIDATE_OLD_WECHAT) {
     wechatOldCode.value = res.data.code
     wechatAppletImg.value = binaryStrToImgUrl(res.data.img)
-    codeTimer.value = setInterval(() => {
-      userApi.checkOldScan({
-        code: wechatOldCode.value
-      }).then(res => {
-        // res.data.status 0:未扫码 1: 未绑定 2: 已绑定且是登录用户本人 3: 已过期
-        if (res.data.status === WechatScanResultEnum.HAS_BIND) {
-          clearInterval(codeTimer.value)
-          ElMessage({
-            message: '验证成功',
-            type: 'success',
-            plain: true
-          })
-          needValidOldWeChat.value = false
-          bindNewWeChat()
-        } else if (res.data.status === WechatScanResultEnum.EXPIRED) {
-          clearInterval(codeTimer.value)
-          isExpired.value = true
-          wechatOldCode.value = ''
-          wechatAppletImg.value = ''
-          ElMessage({
-            message: '二维码已过期，请点击重新获取',
-            type: 'warning',
-            plain: true
-          })
-        }
-      })
-    }, 1500)
+    scheduleWechatPoll(pollOldWechatScan)
   }
   if (type === WechatAppletCodeTypeEnum.BIND_NEW_WECHAT) {
     wechatCode.value = res.data.code
     wechatAppletImg.value = binaryStrToImgUrl(res.data.img)
-    codeTimer.value = setInterval(() => {
-      userApi.checkScan({
-        code: wechatCode.value
-      }).then(res => {
-        // res.data.status 0:未扫码 1: 未绑定 2: 已绑定 3: 已过期
-        if (res.data.status === WechatScanResultEnum.NOT_BIND) { // 未绑定
-          clearInterval(codeTimer.value)
-          userApi.bindWeChat({
-            oldCode: wechatOldCode.value,
-            code: wechatCode.value
-          }).then(async () => {
-            ElMessage({
-              message: '绑定成功',
-              type: 'success',
-              plain: true
-            })
-            wechatDialogVisible.value = false
-            await userStore.getInfo()
-            loginUser.value = Object.assign({}, user.value)
-          })
-        } else if (res.data.status === WechatScanResultEnum.HAS_BIND) { // 已绑定
-          clearInterval(codeTimer.value)
-          ElMessage({
-            message: '该微信已绑定其他账号',
-            type: 'warning',
-            plain: true
-          })
-          getWechatAppletCode(WechatAppletCodeTypeEnum.BIND_NEW_WECHAT)
-        } else if (res.data.status === WechatScanResultEnum.EXPIRED) {
-          clearInterval(codeTimer.value)
-          isExpired.value = true
-          wechatOldCode.value = ''
-          wechatAppletImg.value = ''
-          ElMessage({
-            message: '二维码已过期，请点击重新获取',
-            type: 'warning',
-            plain: true
-          })
-        }
-      })
-    }, 1500)
+    scheduleWechatPoll(pollNewWechatScan)
   }
 }
 
-async function bindNewWeChat() {
+/**
+ * 获取新微信绑定二维码。
+ *
+ * :return: 无返回值。
+ */
+async function bindNewWeChat(): Promise<void> {
   await getWechatAppletCode(WechatAppletCodeTypeEnum.BIND_NEW_WECHAT)
+}
+
+/**
+ * 清理微信扫码轮询。
+ *
+ * :return: 无返回值。
+ */
+function clearWechatPoll(): void {
+  if (wechatPollTimer.value !== null) {
+    clearTimeout(wechatPollTimer.value)
+    wechatPollTimer.value = null
+  }
+}
+
+/**
+ * 安排下一次微信扫码轮询。
+ *
+ * :param poll: 单次轮询函数。
+ * :return: 无返回值。
+ */
+function scheduleWechatPoll(poll: () => Promise<void>): void {
+  clearWechatPoll()
+  wechatPollTimer.value = setTimeout(() => {
+    wechatPollTimer.value = null
+    void poll()
+  }, 1500)
+}
+
+/**
+ * 查询旧微信扫码状态。
+ *
+ * :return: 无返回值。
+ */
+async function pollOldWechatScan(): Promise<void> {
+  const code = wechatOldCode.value
+  if (!wechatDialogVisible.value || !code) return
+  try {
+    const res = await userApi.checkOldScan({ code })
+    if (!wechatDialogVisible.value || code !== wechatOldCode.value) return
+    if (res.data.status === WechatScanResultEnum.SCANNED) {
+      wechatScanned.value = true
+    }
+    if (res.data.status === WechatScanResultEnum.HAS_BIND) {
+      ElMessage({ message: '验证成功', type: 'success', plain: true })
+      needValidOldWeChat.value = false
+      await bindNewWeChat()
+      return
+    }
+    if (res.data.status === WechatScanResultEnum.EXPIRED) {
+      isExpired.value = true
+      wechatScanned.value = false
+      wechatOldCode.value = ''
+      wechatAppletImg.value = ''
+      ElMessage({ message: '二维码已过期，请点击重新获取', type: 'warning', plain: true })
+      return
+    }
+  } finally {
+    if (wechatDialogVisible.value && code === wechatOldCode.value && needValidOldWeChat.value) {
+      scheduleWechatPoll(pollOldWechatScan)
+    }
+  }
+}
+
+/**
+ * 查询新微信扫码状态并提交绑定。
+ *
+ * :return: 无返回值。
+ */
+async function pollNewWechatScan(): Promise<void> {
+  const code = wechatCode.value
+  if (!wechatDialogVisible.value || !code) return
+  try {
+    const res = await userApi.checkScan({ code })
+    if (!wechatDialogVisible.value || code !== wechatCode.value) return
+    if (res.data.status === WechatScanResultEnum.SCANNED) {
+      wechatScanned.value = true
+    }
+    if (res.data.status === WechatScanResultEnum.NOT_BIND) {
+      try {
+        await userApi.bindWeChat({ oldCode: wechatOldCode.value, code })
+      } catch {
+        wechatCode.value = ''
+        wechatAppletImg.value = ''
+        if (loginUser.value.wechat) {
+          needValidOldWeChat.value = true
+          wechatOldCode.value = ''
+          await getWechatAppletCode(WechatAppletCodeTypeEnum.VALIDATE_OLD_WECHAT)
+        } else {
+          isExpired.value = true
+        }
+        return
+      }
+      ElMessage({ message: '绑定成功', type: 'success', plain: true })
+      wechatDialogVisible.value = false
+      await userStore.getInfo()
+      loginUser.value = Object.assign({}, user.value)
+      return
+    }
+    if (res.data.status === WechatScanResultEnum.HAS_BIND) {
+      ElMessage({ message: '该微信已绑定其他账号', type: 'warning', plain: true })
+      await getWechatAppletCode(WechatAppletCodeTypeEnum.BIND_NEW_WECHAT)
+      return
+    }
+    if (res.data.status === WechatScanResultEnum.EXPIRED) {
+      isExpired.value = true
+      wechatScanned.value = false
+      wechatCode.value = ''
+      wechatAppletImg.value = ''
+      ElMessage({ message: '二维码已过期，请点击重新获取', type: 'warning', plain: true })
+      return
+    }
+  } finally {
+    if (wechatDialogVisible.value && code === wechatCode.value && !isExpired.value) {
+      scheduleWechatPoll(pollNewWechatScan)
+    }
+  }
 }
 
 function cancelEdit() {
@@ -896,11 +995,17 @@ function closeMobileDialog(): void {
   mobileDialogVisible.value = false
 }
 
-function closeWeChatDialog() {
+/**
+ * 关闭微信绑定弹窗并清理扫码状态。
+ *
+ * :return: 无返回值。
+ */
+function closeWeChatDialog(): void {
   wechatDialogVisible.value = false
   wechatAppletImg.value = ''
   wechatCode.value = ''
   wechatOldCode.value = ''
-  clearInterval(codeTimer.value)
+  wechatScanned.value = false
+  clearWechatPoll()
 }
 </script>

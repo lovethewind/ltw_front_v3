@@ -1921,9 +1921,11 @@
 }
 
 .password-wechat-panel {
+  width: min(440px, 100%);
   display: grid;
   place-items: center;
   gap: 10px;
+  margin: 0 auto;
   border: 1px dashed rgba(148, 163, 184, 0.28);
   border-radius: 8px;
   padding: 16px;
@@ -1936,6 +1938,84 @@
     font-size: 13px;
     line-height: 1.5;
   }
+}
+
+.password-wechat-stage {
+  position: relative;
+  width: 164px;
+  height: 164px;
+  overflow: hidden;
+  border-radius: 8px;
+
+  :deep(.el-image),
+  :deep(img) {
+    width: 100%;
+    height: 100%;
+    transition:
+      filter 0.24s cubic-bezier(0.16, 1, 0.3, 1),
+      opacity 0.24s cubic-bezier(0.16, 1, 0.3, 1),
+      transform 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  &.is-scanned :deep(.el-image),
+  &.is-scanned :deep(img) {
+    filter: blur(2px);
+    opacity: 0.26;
+    transform: scale(1.02);
+  }
+}
+
+.password-wechat-scan-overlay {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 6px;
+  padding: 18px;
+  background: rgba(20, 31, 48, 0.82);
+  color: #fff;
+  text-align: center;
+  backdrop-filter: blur(2px);
+
+  strong {
+    font-size: 16px;
+    line-height: 1.3;
+  }
+
+  > span:last-child {
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 12px;
+  }
+}
+
+.password-wechat-scan-overlay__icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2f80ed, #29a4ef);
+  box-shadow: 0 10px 24px rgba(47, 128, 237, 0.35);
+
+  svg {
+    width: 26px;
+    height: 26px;
+  }
+}
+
+.password-wechat-scan-state-enter-active,
+.password-wechat-scan-state-leave-active {
+  transition: opacity 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.password-wechat-scan-state-enter-from,
+.password-wechat-scan-state-leave-to {
+  opacity: 0;
 }
 
 .password-wechat-qr {
@@ -2612,6 +2692,89 @@
 :global(.profile-wechat-dialog .profile-wechat-retry) {
   width: 164px;
   height: 164px;
+}
+
+.profile-wechat-stage {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+:global(.profile-wechat-dialog .profile-wechat-stage) {
+  width: 164px;
+  height: 164px;
+}
+
+.profile-wechat-stage :deep(.el-image),
+.profile-wechat-stage :deep(img) {
+  width: 100%;
+  height: 100%;
+  transition:
+    filter 0.24s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.24s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.profile-wechat-stage.is-scanned :deep(.el-image),
+.profile-wechat-stage.is-scanned :deep(img) {
+  filter: blur(2px);
+  opacity: 0.26;
+  transform: scale(1.02);
+}
+
+.profile-wechat-scan-overlay {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 6px;
+  padding: 18px;
+  background: rgba(20, 31, 48, 0.82);
+  color: #fff;
+  text-align: center;
+  backdrop-filter: blur(2px);
+
+  strong {
+    font-size: 16px;
+    line-height: 1.3;
+  }
+
+  > span:last-child {
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 12px;
+  }
+}
+
+.profile-wechat-scan-overlay__icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2f80ed, #29a4ef);
+  box-shadow: 0 10px 24px rgba(47, 128, 237, 0.35);
+
+  svg {
+    width: 26px;
+    height: 26px;
+  }
+}
+
+.profile-wechat-scan-state-enter-active,
+.profile-wechat-scan-state-leave-active {
+  transition: opacity 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.profile-wechat-scan-state-enter-from,
+.profile-wechat-scan-state-leave-to {
+  opacity: 0;
 }
 
 .profile-wechat-loading,
@@ -3491,6 +3654,7 @@
 
   .profile-wechat-qr :deep(.el-image),
   .profile-wechat-qr :deep(img),
+  .profile-wechat-stage,
   .profile-wechat-loading,
   .profile-wechat-retry {
     width: 200px;
@@ -3523,6 +3687,19 @@
       height: 100%;
       min-height: 292px;
     }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .password-wechat-stage :deep(.el-image),
+  .password-wechat-stage :deep(img),
+  .password-wechat-scan-state-enter-active,
+  .password-wechat-scan-state-leave-active,
+  .profile-wechat-stage :deep(.el-image),
+  .profile-wechat-stage :deep(img),
+  .profile-wechat-scan-state-enter-active,
+  .profile-wechat-scan-state-leave-active {
+    transition-duration: 0.01ms;
   }
 }
 

@@ -36,12 +36,13 @@ export enum AlbumTypeEnum {
 }
 
 export enum WechatScanResultEnum {
-  // 0:未扫码 1:未绑定 2:已绑定且是登录用户本人 3:已过期 4:已扫码待确认
+  // 0:未扫码 1:未绑定 2:已绑定且是登录用户本人 3:已过期 4:已扫码待确认 5:已取消
   NOT_SCAN = 0,
   NOT_BIND = 1,
   HAS_BIND = 2,
   EXPIRED = 3,
-  SCANNED = 4
+  SCANNED = 4,
+  CANCELLED = 5
 }
 
 export enum ValidTypeEnum {

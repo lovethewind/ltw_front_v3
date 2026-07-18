@@ -47,7 +47,7 @@
       <div v-if="!showRegister && loginType === LoginType.WECHAT">
         <div class="wechat-login">
           <div
-            v-if="wechatLoginCode && !isExpired"
+            v-if="wechatLoginCode && !isExpired && !wechatCancelled"
             :class="['wechat-qr-stage', { 'is-scanned': wechatScanned }]"
           >
             <el-image
@@ -65,7 +65,7 @@
               </div>
             </Transition>
           </div>
-          <div v-if="!wechatLoginCode && !isExpired" class="wechat-loading">
+          <div v-if="!wechatLoginCode && !isExpired && !wechatCancelled" class="wechat-loading">
             <Icon icon="eos-icons:loading" />
             <span>二维码加载中</span>
           </div>
@@ -73,7 +73,13 @@
             <Icon icon="material-symbols:refresh-rounded" />
             <span>二维码已过期，点击重新获取</span>
           </div>
-          <div class="wechat-login__tip">{{ wechatScanned ? '确认后将自动完成登录' : '请使用微信扫码登录' }}</div>
+          <div v-if="wechatCancelled" class="wechat-loading cursor" @click="getWechatAppletCode">
+            <Icon icon="material-symbols:cancel-outline-rounded" />
+            <span>操作已取消，点击重新获取</span>
+          </div>
+          <div class="wechat-login__tip">
+            {{ wechatCancelled ? '如需继续登录，请重新获取二维码' : (wechatScanned ? '确认后将自动完成登录' : '请使用微信扫码登录') }}
+          </div>
         </div>
       </div>
       <el-form
@@ -877,6 +883,7 @@ const wechatLoginCode = ref('')
 const wechatAppletImg = ref('')
 const isExpired = ref(false)
 const wechatScanned = ref(false)
+const wechatCancelled = ref(false)
 const checkTimer = ref<any>(null)
 const rules = ref({
   username: [
@@ -1120,6 +1127,7 @@ function getWechatAppletCode(): void {
   userApi.getWechatAppletCode(WechatAppletCodeTypeEnum.LOGIN).then(res => {
     isExpired.value = false
     wechatScanned.value = false
+    wechatCancelled.value = false
     wechatAppletImg.value = binaryStrToImgUrl(res.data.img)
     wechatLoginCode.value = res.data.code
     checkTimer.value = setInterval(() => {
@@ -1132,6 +1140,12 @@ function getWechatAppletCode(): void {
       }).then(res => {
         if (res.data.status === WechatScanResultEnum.SCANNED) {
           wechatScanned.value = true
+        } else if (res.data.status === WechatScanResultEnum.CANCELLED) {
+          clearInterval(checkTimer.value)
+          wechatCancelled.value = true
+          wechatScanned.value = false
+          wechatLoginCode.value = ''
+          wechatAppletImg.value = ''
         } else if (res.data.status === WechatScanResultEnum.HAS_BIND) {
           clearInterval(checkTimer.value)
           userStore.setUserToken(res.data.token)
@@ -1156,6 +1170,7 @@ function getWechatAppletCode(): void {
           clearInterval(checkTimer.value)
           isExpired.value = true
           wechatScanned.value = false
+          wechatCancelled.value = false
           wechatLoginCode.value = ''
           wechatAppletImg.value = ''
           ElMessage({
@@ -1175,6 +1190,7 @@ function closeWeChatLogin() {
   wechatAppletImg.value = ''
   isExpired.value = false
   wechatScanned.value = false
+  wechatCancelled.value = false
   firstNeedRegister.value = false
   showRegister.value = false
   btnDisabled.value = false

@@ -40,6 +40,22 @@ export interface INote extends INoteListItem {
   deletedTime: string | null
 }
 
+export interface INoteHistoryListItem {
+  id: ApiId
+  title: string
+  contentPreview: string
+  createTime: string
+}
+
+export interface INoteHistory {
+  id: ApiId
+  title: string
+  content: string
+  folderId: ApiId | null
+  tagIds: ApiId[]
+  createTime: string
+}
+
 export interface NoteQuery {
   keyword?: string | null
   folderId?: ApiId | null

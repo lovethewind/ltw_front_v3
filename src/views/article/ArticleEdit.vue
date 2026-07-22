@@ -4,7 +4,10 @@
     :model="postForm"
     :rules="rules"
     class="article-edit-page is-fixed-editor"
-    :class="{ 'is-markdown-editor': postForm.isMarkdown }"
+    :class="{
+      'is-markdown-editor': postForm.isMarkdown,
+      'is-side-panel-collapsed': sidePanelCollapsed
+    }"
     label-position="top"
   >
     <div class="article-edit-shell">
@@ -19,6 +22,7 @@
               v-if="postForm.isMarkdown"
               ref="editorRef"
               @change="contentChange($event, true)"
+              @focus-mode-change="handleEditorFocusModeChange"
               class="article-md-editor"
             />
             <rich-editor
@@ -32,6 +36,16 @@
       </main>
 
       <aside class="article-side-panel">
+        <button
+          type="button"
+          class="article-side-panel-toggle"
+          :aria-label="sidePanelCollapsed ? '展开发布设置' : '收起发布设置'"
+          :title="sidePanelCollapsed ? '展开发布设置' : '收起发布设置'"
+          @click="toggleArticleSidePanel"
+        >
+          <Icon :icon="sidePanelCollapsed ? 'material-symbols:chevron-left-rounded' : 'material-symbols:chevron-right-rounded'" />
+          <span v-if="sidePanelCollapsed">设置</span>
+        </button>
         <section class="article-setting-section">
           <div class="article-setting-title">
             <Icon icon="material-symbols:tune-rounded" />
@@ -427,6 +441,8 @@ const tabActiveName = ref('tag_0')
 const searchTagKeyword = ref('')
 const isTagPopoverVisible = ref(false)
 const customTagCreating = ref(false)
+const sidePanelCollapsed = ref(false)
+const sidePanelCollapsedBeforeFocus = ref(false)
 const isSuccess = ref(false)
 const submitDisabled = ref(false)
 const tips = ref('🍀 在这里填写标题，想写点什么呢~')
@@ -563,6 +579,30 @@ onBeforeRouteLeave((to, from, next) => {
 function contentChange(data: string, isMarkdown: boolean) {
   postForm.value.content = isMarkdown ? data : normalizeRichTextContent(data)
   setContentLength()
+}
+
+/**
+ * 手动切换文章发布设置侧栏。
+ *
+ * :return: 无返回值。
+ */
+function toggleArticleSidePanel(): void {
+  sidePanelCollapsed.value = !sidePanelCollapsed.value
+}
+
+/**
+ * 根据编辑器专注模式收起或恢复文章发布设置。
+ *
+ * :param enabled: 是否进入专注模式。
+ * :return: 无返回值。
+ */
+function handleEditorFocusModeChange(enabled: boolean): void {
+  if (enabled) {
+    sidePanelCollapsedBeforeFocus.value = sidePanelCollapsed.value
+    sidePanelCollapsed.value = true
+    return
+  }
+  sidePanelCollapsed.value = sidePanelCollapsedBeforeFocus.value
 }
 
 /**

@@ -27,6 +27,12 @@ interface AutosaveSession {
   noteId: ApiId
 }
 
+interface NoteNavigationCounts {
+  all: number
+  pinned: number
+  recycle: number
+}
+
 /**
  * 比较可能以数字或字符串返回的接口标识。
  *
@@ -53,6 +59,7 @@ export const useNoteStore = defineStore('note', () => {
   const folders = ref<INoteFolder[]>([])
   const tags = ref<INoteTag[]>([])
   const notes = ref<INoteListItem[]>([])
+  const navigationCounts = ref<NoteNavigationCounts>({ all: 0, pinned: 0, recycle: 0 })
   const activeNote = ref<INote | null>(null)
   const filter = ref<NoteQuery>({
     keyword: '',
@@ -211,6 +218,13 @@ export const useNoteStore = defineStore('note', () => {
       const records = await fetchAllNotes(filter.value.isDeleted === true)
       if (requestId !== listRequestId || generation !== storeGeneration) return false
       notes.value = records
+      navigationCounts.value = filter.value.isDeleted
+        ? { ...navigationCounts.value, recycle: records.length }
+        : {
+            ...navigationCounts.value,
+            all: records.length,
+            pinned: records.filter((note) => note.isPinned).length
+          }
       return true
     } catch (error) {
       if (requestId === listRequestId && generation === storeGeneration) setError(error)
@@ -231,15 +245,24 @@ export const useNoteStore = defineStore('note', () => {
     loading.value = true
     actionError.value = ''
     try {
-      const [folderResponse, tagResponse, noteResponse] = await Promise.all([
+      const [folderResponse, tagResponse, noteResponse, recycleCountResponse] = await Promise.all([
         noteFolderApi.getAll(),
         noteTagApi.getAll(),
-        fetchAllNotes(false)
+        fetchAllNotes(false),
+        noteApi.getPageList(1, 1, { isDeleted: true })
       ])
       if (requestId !== listRequestId || generation !== storeGeneration) return false
       folders.value = folderResponse.data
       tags.value = tagResponse.data
       notes.value = noteResponse
+      navigationCounts.value = {
+        all: noteResponse.length,
+        pinned: noteResponse.filter((note) => note.isPinned).length,
+        recycle: recycleCountResponse.data.total
+      }
+      if (!activeNote.value && noteResponse.length > 0) {
+        await selectNote(noteResponse[0].id)
+      }
       return true
     } catch (error) {
       if (requestId === listRequestId && generation === storeGeneration) setError(error)
@@ -291,6 +314,10 @@ export const useNoteStore = defineStore('note', () => {
         toListItem(activeNote.value),
         ...notes.value.filter((note) => !sameId(note.id, activeNote.value?.id))
       ]
+      navigationCounts.value = {
+        ...navigationCounts.value,
+        all: navigationCounts.value.all + 1
+      }
       return true
     } catch (error) {
       setError(error)
@@ -337,14 +364,34 @@ export const useNoteStore = defineStore('note', () => {
     folders.value = folderResponse.data
     return loadNotes()
   }
-  /** :return: 是否加载成功。 */
+  /**
+   * 切换到回收站，并在加载期间隐藏旧视图数据后原子替换目录和笔记。
+   *
+   * :return: 是否加载成功。
+   */
   async function showRecycleBin(): Promise<boolean> {
-    const shouldReload = filter.value.isDeleted !== true
+    if (filter.value.isDeleted === true) return true
+    const requestId = ++listRequestId
+    const generation = storeGeneration
+    loading.value = true
+    actionError.value = ''
     await setFilter({ folderId: null, tagId: null, isPinned: null, isDeleted: true })
-    if (!shouldReload) return true
-    const folderResponse = await noteFolderApi.getAll(true)
-    folders.value = folderResponse.data
-    return loadNotes()
+    try {
+      const [folderResponse, records] = await Promise.all([
+        noteFolderApi.getAll(true),
+        fetchAllNotes(true)
+      ])
+      if (requestId !== listRequestId || generation !== storeGeneration) return false
+      folders.value = folderResponse.data
+      notes.value = records
+      navigationCounts.value = { ...navigationCounts.value, recycle: records.length }
+      return true
+    } catch (error) {
+      if (requestId === listRequestId && generation === storeGeneration) setError(error)
+      return false
+    } finally {
+      if (requestId === listRequestId && generation === storeGeneration) loading.value = false
+    }
   }
   /**
    * 按文件夹筛选。
@@ -444,21 +491,66 @@ export const useNoteStore = defineStore('note', () => {
   }
 
   /**
-   * 立即提交当前自动保存队列。
+   * 立即提交当前自动保存队列，并再次将当前内容提交到后台。
    *
    * :return: 是否保存成功。
    */
   async function saveNow(): Promise<boolean> {
     const session = autosaveSession
     if (!activeNote.value || !session || editorLocked.value) return false
-    const initialStatus = saveStatus.value
     await session.controller.retry()
     await session.controller.flush()
     if (autosaveSession !== session || !sameId(activeNote.value?.id, session.noteId)) return false
-    return (
-      saveStatus.value === 'saved' ||
-      (initialStatus === 'idle' && saveStatus.value === 'idle')
-    )
+    try {
+      await saveSnapshot(toSnapshot(activeNote.value), session.noteId, session.generation)
+      return saveStatus.value === 'saved'
+    } catch {
+      return false
+    }
+  }
+
+  /**
+   * 恢复当前笔记的指定历史版本。
+   *
+   * 恢复前会先提交本地保存队列，服务端还会强制保存恢复前的当前版本。
+   *
+   * :param historyId: 历史版本标识。
+   * :return: 是否恢复成功。
+   */
+  async function restoreHistory(historyId: ApiId): Promise<boolean> {
+    const noteId = activeNote.value?.id
+    const session = autosaveSession
+    if (noteId === undefined || !session || editorLocked.value) return false
+    actionError.value = ''
+    editorLocked.value = true
+    try {
+      await session.controller.retry()
+      await session.controller.flush()
+      if (saveStatus.value === 'failed' || saveStatus.value === 'offline') {
+        throw new Error('当前内容尚未保存，暂时不能恢复历史版本')
+      }
+      session.controller.destroy()
+      if (autosaveSession === session) autosaveSession = undefined
+      await noteApi.restoreHistory(noteId, historyId)
+      const response = await noteApi.getDetail(noteId)
+      activeNote.value = response.data
+      notes.value = notes.value.map((note) =>
+        sameId(note.id, noteId) ? toListItem(response.data) : note
+      )
+      saveStatus.value = 'saved'
+      recoverySnapshot.value = null
+      hasRecoverySnapshot.value = false
+      startAutosaveSession(response.data)
+      return true
+    } catch (error) {
+      if (!autosaveSession && activeNote.value && sameId(activeNote.value.id, noteId)) {
+        startAutosaveSession(activeNote.value)
+      }
+      setError(error)
+      return false
+    } finally {
+      editorLocked.value = false
+    }
   }
   /** :return: 无返回值。 */
   function restoreRecoverySnapshot(): void {
@@ -488,6 +580,7 @@ export const useNoteStore = defineStore('note', () => {
    */
   async function setPinned(noteId: ApiId, isPinned: boolean): Promise<boolean> {
     actionError.value = ''
+    const previousNote = notes.value.find((note) => sameId(note.id, noteId))
     try {
       await noteApi.setPinned(noteId, isPinned)
       notes.value = notes.value
@@ -495,6 +588,12 @@ export const useNoteStore = defineStore('note', () => {
         .sort((left, right) => Number(right.isPinned) - Number(left.isPinned))
       if (sameId(activeNote.value?.id, noteId))
         activeNote.value = { ...activeNote.value!, isPinned }
+      if (previousNote && previousNote.isPinned !== isPinned) {
+        navigationCounts.value = {
+          ...navigationCounts.value,
+          pinned: Math.max(0, navigationCounts.value.pinned + (isPinned ? 1 : -1))
+        }
+      }
       return true
     } catch (error) {
       setError(error)
@@ -511,6 +610,7 @@ export const useNoteStore = defineStore('note', () => {
   async function removeNote(noteId: ApiId): Promise<boolean> {
     actionError.value = ''
     const deletingActive = sameId(activeNote.value?.id, noteId)
+    const removedNote = notes.value.find((note) => sameId(note.id, noteId))
     if (deletingActive) {
       editorLocked.value = true
       await closeAutosaveSession()
@@ -524,6 +624,13 @@ export const useNoteStore = defineStore('note', () => {
         saveStatus.value = 'idle'
         recoverySnapshot.value = null
         hasRecoverySnapshot.value = false
+      }
+      if (!filter.value.isDeleted && removedNote) {
+        navigationCounts.value = {
+          all: Math.max(0, navigationCounts.value.all - 1),
+          pinned: Math.max(0, navigationCounts.value.pinned - Number(removedNote.isPinned)),
+          recycle: navigationCounts.value.recycle + 1
+        }
       }
       editorLocked.value = false
       return true
@@ -542,10 +649,18 @@ export const useNoteStore = defineStore('note', () => {
    */
   async function restoreNote(noteId: ApiId): Promise<boolean> {
     actionError.value = ''
+    const restoredNote = notes.value.find((note) => sameId(note.id, noteId))
     try {
       await noteApi.restore(noteId)
       if (filter.value.isDeleted)
         notes.value = notes.value.filter((note) => !sameId(note.id, noteId))
+      if (filter.value.isDeleted && restoredNote) {
+        navigationCounts.value = {
+          all: navigationCounts.value.all + 1,
+          pinned: navigationCounts.value.pinned + Number(restoredNote.isPinned),
+          recycle: Math.max(0, navigationCounts.value.recycle - 1)
+        }
+      }
       return true
     } catch (error) {
       setError(error)
@@ -568,6 +683,12 @@ export const useNoteStore = defineStore('note', () => {
     try {
       await noteApi.permanentDelete(noteId)
       notes.value = notes.value.filter((note) => !sameId(note.id, noteId))
+      if (filter.value.isDeleted) {
+        navigationCounts.value = {
+          ...navigationCounts.value,
+          recycle: Math.max(0, navigationCounts.value.recycle - 1)
+        }
+      }
       if (sameId(activeNote.value?.id, noteId)) {
         activeNote.value = null
         saveStatus.value = 'idle'
@@ -638,8 +759,17 @@ export const useNoteStore = defineStore('note', () => {
           .filter((folder) => sameId(folder.parentId, currentId))
           .forEach((folder) => pending.push(folder.id))
       }
+      const removedNotes = notes.value.filter((note) => removedIds.has(String(note.folderId)))
       folders.value = folders.value.filter((folder) => !removedIds.has(String(folder.id)))
       notes.value = notes.value.filter((note) => !removedIds.has(String(note.folderId)))
+      navigationCounts.value = {
+        all: Math.max(0, navigationCounts.value.all - removedNotes.length),
+        pinned: Math.max(
+          0,
+          navigationCounts.value.pinned - removedNotes.filter((note) => note.isPinned).length
+        ),
+        recycle: navigationCounts.value.recycle + removedNotes.length
+      }
       if (activeNote.value && removedIds.has(String(activeNote.value.folderId))) {
         await closeAutosaveSession()
         activeNote.value = null
@@ -665,6 +795,15 @@ export const useNoteStore = defineStore('note', () => {
       const folderResponse = await noteFolderApi.getAll(true)
       folders.value = folderResponse.data
       await loadNotes()
+      const [allCountResponse, pinnedCountResponse] = await Promise.all([
+        noteApi.getPageList(1, 1, { isDeleted: false }),
+        noteApi.getPageList(1, 1, { isDeleted: false, isPinned: true })
+      ])
+      navigationCounts.value = {
+        ...navigationCounts.value,
+        all: allCountResponse.data.total,
+        pinned: pinnedCountResponse.data.total
+      }
       return true
     } catch (error) {
       setError(error)
@@ -796,6 +935,7 @@ export const useNoteStore = defineStore('note', () => {
     folders,
     tags,
     notes,
+    navigationCounts,
     visibleNotes,
     activeNote,
     filter,
@@ -820,6 +960,7 @@ export const useNoteStore = defineStore('note', () => {
     saveSnapshot,
     retrySave,
     saveNow,
+    restoreHistory,
     restoreRecoverySnapshot,
     discardRecoverySnapshot,
     setPinned,

@@ -9,10 +9,14 @@
             <h1>网站导航</h1>
             <p>收藏常用工具、灵感站点和好玩的角落，也欢迎你把私藏网站投递进来。</p>
           </div>
-          <el-button type="primary" class="hero-action" @click="openSubmitDialog()">
+          <button
+            type="button"
+            class="website-primary-button hero-action"
+            @click="openSubmitDialog()"
+          >
             <Icon icon="mage:plus" />
             投稿网站
-          </el-button>
+          </button>
         </section>
 
         <section class="website-toolbar">
@@ -100,10 +104,14 @@
         <Icon icon="mage:search" class="empty-icon" />
         <h3>没找到相关站点</h3>
         <p>换个关键词试试，或者把你知道的好网站投递进来。</p>
-        <el-button type="primary" @click="openSubmitDialog(activeCategoryId)">
+        <button
+          type="button"
+          class="website-primary-button empty-action"
+          @click="openSubmitDialog(activeCategoryId)"
+        >
           <Icon icon="mage:plus" />
           投稿补充
-        </el-button>
+        </button>
       </div>
     </section>
 
@@ -152,10 +160,17 @@
           </div>
         </div>
         <template #footer>
-          <el-button type="primary" :disabled="!selectedWebsite?.url" @click="confirmVisitWebsite">
-            <Icon icon="mage:external-link" />
-            打开网站
-          </el-button>
+          <button
+            type="button"
+            class="visit-open-button"
+            :disabled="!selectedWebsite?.url"
+            @click="confirmVisitWebsite"
+          >
+            <span class="visit-open-button__icon">
+              <Icon icon="mage:external-link" />
+            </span>
+            <span>打开网站</span>
+          </button>
         </template>
       </el-dialog>
 
@@ -424,7 +439,7 @@ function closeModal() {
   text-transform: uppercase;
 }
 
-.hero-action {
+.website-primary-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -436,6 +451,8 @@ function closeModal() {
   padding: 0 18px;
   background: linear-gradient(135deg, #2c7a7b, #2f80ed);
   color: #fff;
+  cursor: pointer;
+  font: inherit;
   font-weight: 800;
   box-shadow: 0 12px 24px rgba(47, 128, 237, 0.22);
   transition:
@@ -444,13 +461,7 @@ function closeModal() {
     transform 0.2s ease,
     filter 0.2s ease;
 
-  :deep(span) {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  :deep(svg) {
+  svg {
     font-size: 17px;
   }
 
@@ -462,7 +473,13 @@ function closeModal() {
   }
 
   &:active {
-    transform: translateY(0);
+    box-shadow: 0 8px 18px rgba(47, 128, 237, 0.2);
+    transform: translateY(0) scale(0.98);
+  }
+
+  &:focus-visible {
+    outline: 3px solid rgba(47, 128, 237, 0.24);
+    outline-offset: 3px;
   }
 }
 
@@ -748,10 +765,8 @@ function closeModal() {
     font-size: 14px;
   }
 
-  .el-button {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
+  .empty-action {
+    min-width: 132px;
   }
 }
 
@@ -856,11 +871,70 @@ function closeModal() {
   text-align: center;
 }
 
-:global(.visit-dialog .el-button) {
+.visit-open-button {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  min-width: 120px;
+  min-width: 164px;
+  height: 44px;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  border-radius: 999px;
+  padding: 0 22px;
+  background: linear-gradient(135deg, #2c7a7b, #2f80ed);
+  box-shadow: 0 12px 26px rgba(47, 128, 237, 0.24);
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  transition:
+    box-shadow 0.2s ease,
+    filter 0.2s ease,
+    transform 0.2s ease;
+
+  &:hover:not(:disabled) {
+    box-shadow: 0 16px 32px rgba(47, 128, 237, 0.3);
+    filter: saturate(1.08);
+    transform: translateY(-1px);
+  }
+
+  &:active:not(:disabled) {
+    box-shadow: 0 8px 18px rgba(47, 128, 237, 0.22);
+    transform: translateY(0) scale(0.98);
+  }
+
+  &:focus-visible {
+    outline: 3px solid rgba(47, 128, 237, 0.24);
+    outline-offset: 3px;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    filter: grayscale(0.25);
+    opacity: 0.5;
+  }
+}
+
+.visit-open-button__icon {
+  width: 25px;
+  height: 25px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+
+  svg {
+    font-size: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .website-primary-button,
+  .visit-open-button {
+    transition: none;
+  }
 }
 
 .tip-div {

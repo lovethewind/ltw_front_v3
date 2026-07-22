@@ -4,6 +4,7 @@
       <el-dropdown
         v-if="!filter.isDeleted"
         class="note-sidebar-create-dropdown"
+        popper-class="note-resource-popper"
         trigger="click"
         @command="(command: string) => handleCreateCommand(command, null)"
       >
@@ -41,25 +42,36 @@
     <nav class="note-sidebar-nav" aria-label="笔记筛选">
       <el-button :class="{ 'is-active': isAllActive }" @click="emit('show-all')">
         <Icon icon="material-symbols:description-outline-rounded" />
-        全部笔记
+        <span>全部笔记</span>
+        <small>{{ counts.all }}</small>
       </el-button>
       <el-button
         :class="{ 'is-active': filter.isPinned === true && !filter.isDeleted }"
         @click="emit('show-pinned')"
       >
         <Icon icon="material-symbols:keep-outline-rounded" />
-        置顶笔记
+        <span>置顶笔记</span>
+        <small>{{ counts.pinned }}</small>
       </el-button>
       <el-button :class="{ 'is-active': filter.isDeleted }" @click="emit('show-recycle')">
         <Icon icon="material-symbols:delete-outline-rounded" />
-        回收站
+        <span>回收站</span>
+        <small>{{ counts.recycle }}</small>
       </el-button>
     </nav>
 
     <section class="note-sidebar-section note-sidebar-explorer">
       <div class="note-sidebar-section__heading">
-        <h2>{{ filter.isDeleted ? '回收站' : '目录' }}</h2>
-        <span>{{ folders.length }} 个文件夹 · {{ notes.length }} 篇笔记</span>
+        <h2>{{ filter.isDeleted ? '已删除项目' : '文件夹' }}</h2>
+        <el-button
+          v-if="!filter.isDeleted"
+          text
+          circle
+          aria-label="新建文件夹"
+          @click="handleCreateCommand('folder', null)"
+        >
+          <Icon icon="material-symbols:add-rounded" />
+        </el-button>
       </div>
       <div v-if="loading" class="note-sidebar-state">正在加载…</div>
       <div v-else-if="error" class="note-sidebar-state is-error">
@@ -84,6 +96,7 @@
         <template #default="{ data }">
           <el-dropdown
             class="note-resource-node-context"
+            popper-class="note-resource-popper"
             trigger="contextmenu"
             :disabled="filter.isDeleted && (data.type === 'folder' ? !data.deletionRoot : data.managedByFolder)"
             @contextmenu.capture="dismissOpenDropdowns"
@@ -92,9 +105,16 @@
             <div class="note-resource-node" :class="`is-${data.type}`">
             <Icon
               class="note-resource-node__icon"
-              :icon="data.type === 'folder' ? 'material-symbols:folder-outline-rounded' : 'material-symbols:description-outline-rounded'"
+              :icon="data.type === 'folder'
+                ? expandedFolderKeys.includes(data.key)
+                  ? 'material-symbols:folder-open-outline-rounded'
+                  : 'material-symbols:folder-outline-rounded'
+                : 'material-symbols:description-outline-rounded'"
             />
             <span class="note-resource-node__label" :title="data.label">{{ data.label }}</span>
+            <small v-if="data.type === 'folder'" class="note-resource-node__count">
+              {{ folderNoteCount(data.key) }}
+            </small>
             <Icon
               v-if="data.type === 'note' && data.note?.isPinned && !filter.isDeleted"
               class="note-resource-node__pinned"
@@ -105,6 +125,7 @@
               <el-dropdown
                 v-if="data.type === 'folder' && !filter.isDeleted"
                 class="note-resource-node__create"
+                popper-class="note-resource-popper"
                 trigger="click"
                 @command="(command: string) => handleCreateCommand(command, data.folderId)"
               >
@@ -127,6 +148,7 @@
               <el-dropdown
                 v-if="data.type === 'folder' && !data.virtual && (!filter.isDeleted || data.deletionRoot)"
                 class="note-resource-node__more"
+                popper-class="note-resource-popper"
                 trigger="click"
                 @command="(command: string) => handleFolderCommand(command, data)"
               >
@@ -136,12 +158,24 @@
                 <template #dropdown>
                   <el-dropdown-menu>
                     <template v-if="filter.isDeleted">
-                      <el-dropdown-item command="restore">恢复整个文件夹</el-dropdown-item>
-                      <el-dropdown-item command="permanent" divided>彻底删除整个文件夹</el-dropdown-item>
+                      <el-dropdown-item command="restore">
+                        <Icon icon="material-symbols:restore-from-trash-outline-rounded" />
+                        恢复整个文件夹
+                      </el-dropdown-item>
+                      <el-dropdown-item class="is-danger" command="permanent" divided>
+                        <Icon icon="material-symbols:delete-forever-rounded" />
+                        彻底删除整个文件夹
+                      </el-dropdown-item>
                     </template>
                     <template v-else>
-                      <el-dropdown-item command="rename">重命名</el-dropdown-item>
-                      <el-dropdown-item command="remove" divided>删除</el-dropdown-item>
+                      <el-dropdown-item command="rename">
+                        <Icon icon="material-symbols:drive-file-rename-outline-rounded" />
+                        重命名
+                      </el-dropdown-item>
+                      <el-dropdown-item class="is-danger" command="remove" divided>
+                        <Icon icon="material-symbols:delete-outline-rounded" />
+                        删除
+                      </el-dropdown-item>
                     </template>
                   </el-dropdown-menu>
                 </template>
@@ -149,6 +183,7 @@
               <el-dropdown
                 v-if="data.type === 'note' && (!filter.isDeleted || !data.managedByFolder)"
                 class="note-resource-node__more"
+                popper-class="note-resource-popper"
                 trigger="click"
                 @command="(command: string) => handleNoteCommand(command, data)"
               >
@@ -158,12 +193,24 @@
                 <template #dropdown>
                   <el-dropdown-menu>
                     <template v-if="filter.isDeleted">
-                      <el-dropdown-item command="restore">恢复</el-dropdown-item>
-                      <el-dropdown-item command="permanent" divided>彻底删除</el-dropdown-item>
+                      <el-dropdown-item command="restore">
+                        <Icon icon="material-symbols:restore-from-trash-outline-rounded" />
+                        恢复
+                      </el-dropdown-item>
+                      <el-dropdown-item class="is-danger" command="permanent" divided>
+                        <Icon icon="material-symbols:delete-forever-rounded" />
+                        彻底删除
+                      </el-dropdown-item>
                     </template>
                     <template v-else>
-                      <el-dropdown-item command="pin">{{ data.note?.isPinned ? '取消置顶' : '置顶' }}</el-dropdown-item>
-                      <el-dropdown-item command="remove" divided>删除</el-dropdown-item>
+                      <el-dropdown-item command="pin">
+                        <Icon :icon="data.note?.isPinned ? 'material-symbols:keep-off-outline-rounded' : 'material-symbols:keep-outline-rounded'" />
+                        {{ data.note?.isPinned ? '取消置顶' : '置顶' }}
+                      </el-dropdown-item>
+                      <el-dropdown-item class="is-danger" command="remove" divided>
+                        <Icon icon="material-symbols:delete-outline-rounded" />
+                        删除
+                      </el-dropdown-item>
                     </template>
                   </el-dropdown-menu>
                 </template>
@@ -174,24 +221,54 @@
               <el-dropdown-menu>
                 <template v-if="data.type === 'folder'">
                   <template v-if="filter.isDeleted">
-                    <el-dropdown-item command="restore">恢复整个文件夹</el-dropdown-item>
-                    <el-dropdown-item command="permanent" divided>彻底删除整个文件夹</el-dropdown-item>
+                    <el-dropdown-item command="restore">
+                      <Icon icon="material-symbols:restore-from-trash-outline-rounded" />
+                      恢复整个文件夹
+                    </el-dropdown-item>
+                    <el-dropdown-item class="is-danger" command="permanent" divided>
+                      <Icon icon="material-symbols:delete-forever-rounded" />
+                      彻底删除整个文件夹
+                    </el-dropdown-item>
                   </template>
                   <template v-else>
-                    <el-dropdown-item command="create-note">新建笔记</el-dropdown-item>
-                    <el-dropdown-item v-if="!data.virtual" command="create-folder">新建子文件夹</el-dropdown-item>
-                    <el-dropdown-item v-if="!data.virtual" command="rename" divided>重命名</el-dropdown-item>
-                    <el-dropdown-item v-if="!data.virtual" command="remove">删除</el-dropdown-item>
+                    <el-dropdown-item command="create-note">
+                      <Icon icon="material-symbols:note-add-outline-rounded" />
+                      新建笔记
+                    </el-dropdown-item>
+                    <el-dropdown-item v-if="!data.virtual" command="create-folder">
+                      <Icon icon="material-symbols:create-new-folder-outline-rounded" />
+                      新建子文件夹
+                    </el-dropdown-item>
+                    <el-dropdown-item v-if="!data.virtual" command="rename" divided>
+                      <Icon icon="material-symbols:drive-file-rename-outline-rounded" />
+                      重命名
+                    </el-dropdown-item>
+                    <el-dropdown-item v-if="!data.virtual" class="is-danger" command="remove">
+                      <Icon icon="material-symbols:delete-outline-rounded" />
+                      删除
+                    </el-dropdown-item>
                   </template>
                 </template>
                 <template v-else>
                   <template v-if="filter.isDeleted">
-                    <el-dropdown-item command="restore">恢复</el-dropdown-item>
-                    <el-dropdown-item command="permanent" divided>彻底删除</el-dropdown-item>
+                    <el-dropdown-item command="restore">
+                      <Icon icon="material-symbols:restore-from-trash-outline-rounded" />
+                      恢复
+                    </el-dropdown-item>
+                    <el-dropdown-item class="is-danger" command="permanent" divided>
+                      <Icon icon="material-symbols:delete-forever-rounded" />
+                      彻底删除
+                    </el-dropdown-item>
                   </template>
                   <template v-else>
-                    <el-dropdown-item command="pin">{{ data.note?.isPinned ? '取消置顶' : '置顶' }}</el-dropdown-item>
-                    <el-dropdown-item command="remove" divided>删除</el-dropdown-item>
+                    <el-dropdown-item command="pin">
+                      <Icon :icon="data.note?.isPinned ? 'material-symbols:keep-off-outline-rounded' : 'material-symbols:keep-outline-rounded'" />
+                      {{ data.note?.isPinned ? '取消置顶' : '置顶' }}
+                    </el-dropdown-item>
+                    <el-dropdown-item class="is-danger" command="remove" divided>
+                      <Icon icon="material-symbols:delete-outline-rounded" />
+                      删除
+                    </el-dropdown-item>
                   </template>
                 </template>
               </el-dropdown-menu>
@@ -209,44 +286,82 @@
         </el-button>
       </div>
       <div class="note-sidebar-tag-list">
-        <el-tag
+        <el-dropdown
           v-for="tag in tags"
           :key="tag.id"
-          :effect="String(filter.tagId) === String(tag.id) ? 'dark' : 'plain'"
-          closable
-          @click="emit('select-tag', tag.id)"
-          @close.stop="removeTag(tag.id)"
+          class="note-sidebar-tag-context"
+          popper-class="note-resource-popper"
+          trigger="contextmenu"
+          @contextmenu.capture="dismissOpenDropdowns"
+          @command="removeTag(tag.id)"
         >
-          # {{ tag.name }}
-        </el-tag>
+          <div
+            class="note-sidebar-tag-row"
+            :class="{ 'is-active': String(filter.tagId) === String(tag.id) }"
+          >
+            <button type="button" class="note-sidebar-tag-main" @click="emit('select-tag', tag.id)">
+              <Icon icon="material-symbols:label-outline-rounded" />
+              <span>{{ tag.name }}</span>
+            </button>
+            <small>{{ tagNoteCount(tag.id) }}</small>
+            <el-dropdown
+              class="note-sidebar-tag-more"
+              popper-class="note-resource-popper"
+              trigger="click"
+              @click.stop
+              @command="removeTag(tag.id)"
+            >
+              <el-button text circle :aria-label="`${tag.name} 更多操作`">
+                <Icon icon="material-symbols:more-vert" />
+              </el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item class="is-danger" command="remove">
+                    <Icon icon="material-symbols:delete-outline-rounded" />
+                    删除标签
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </div>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item class="is-danger" command="remove">
+                <Icon icon="material-symbols:delete-outline-rounded" />
+                删除标签
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
       </div>
     </section>
   </aside>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { ElMessageBox } from 'element-plus'
 import { Icon } from '@iconify/vue'
 import type { ApiId, INoteFolder, INoteListItem, INoteTag, NoteQuery } from '@/interface/note'
-
-interface ExplorerNode {
-  key: string
-  type: 'folder' | 'note'
-  label: string
-  folderId: ApiId | null
-  note?: INoteListItem
-  folder?: INoteFolder
-  virtual?: boolean
-  deletionRoot?: boolean
-  managedByFolder?: boolean
-  children?: ExplorerNode[]
-}
+import {
+  buildFolderNoteCounts,
+  buildNoteExplorerTree,
+  buildTagNoteCounts,
+  getFolderPathKeys,
+  toggleFolderExpansion,
+  type FolderTreeNodeState,
+  type NoteExplorerNode as ExplorerNode
+} from './note-tree'
 
 interface Props {
   folders: INoteFolder[]
   tags: INoteTag[]
   notes: INoteListItem[]
+  counts: {
+    all: number
+    pinned: number
+    recycle: number
+  }
   activeId?: ApiId
   filter: NoteQuery
   loading: boolean
@@ -284,6 +399,28 @@ const isAllActive = computed(() =>
   props.filter.folderId === null &&
   !props.filter.tagId
 )
+const folderNoteCounts = computed(() => buildFolderNoteCounts(props.folders, props.notes))
+const tagNoteCounts = computed(() => buildTagNoteCounts(props.notes))
+
+/**
+ * 获取文件夹在当前视图中的笔记数量。
+ *
+ * :param key: 文件夹目录树节点键。
+ * :return: 文件夹及其子级包含的笔记数量。
+ */
+function folderNoteCount(key: string): number {
+  return folderNoteCounts.value.get(key) ?? 0
+}
+
+/**
+ * 获取标签在当前视图中的笔记数量。
+ *
+ * :param tagId: 标签标识。
+ * :return: 标签关联的笔记数量。
+ */
+function tagNoteCount(tagId: ApiId): number {
+  return tagNoteCounts.value.get(String(tagId)) ?? 0
+}
 
 const currentNodeKey = computed(() => {
   if (props.activeId !== undefined) return `note-${props.activeId}`
@@ -295,69 +432,49 @@ const currentNodeKey = computed(() => {
 })
 
 const treeData = computed<ExplorerNode[]>(() => {
-  const folderNodes = new Map<string, ExplorerNode>()
-  const rootNodes: ExplorerNode[] = []
-  props.folders.forEach((folder) => {
-    folderNodes.set(String(folder.id), {
-      key: `folder-${folder.id}`,
-      type: 'folder',
-      label: folder.name,
-      folderId: folder.id,
-      folder,
-      children: []
-    })
+  return buildNoteExplorerTree({
+    folders: props.folders,
+    notes: props.notes,
+    isDeleted: props.filter.isDeleted === true,
+    isFilteredView:
+      !props.filter.isDeleted &&
+      (props.filter.isPinned === true ||
+        (props.filter.tagId !== null && props.filter.tagId !== undefined))
   })
-  props.folders.forEach((folder) => {
-    const node = folderNodes.get(String(folder.id))!
-    const parent = folder.parentId === null ? undefined : folderNodes.get(String(folder.parentId))
-    const belongsToSameDeletion =
-      !props.filter.isDeleted || String(folder.deletedRootId) === String(parent?.folder?.deletedRootId)
-    if (parent && belongsToSameDeletion) {
-      parent.children!.push(node)
-    } else {
-      node.deletionRoot = props.filter.isDeleted === true
-      rootNodes.push(node)
-    }
-  })
-  const unclassifiedNotes: ExplorerNode[] = []
-  props.notes.forEach((note) => {
-    const node: ExplorerNode = {
-      key: `note-${note.id}`,
-      type: 'note',
-      label: note.title || '无标题笔记',
-      folderId: note.folderId,
-      note,
-      managedByFolder: folderNodes.has(String(note.folderId))
-    }
-    const folder = note.folderId === null ? undefined : folderNodes.get(String(note.folderId))
-    if (folder) folder.children!.push(node)
-    else unclassifiedNotes.push(node)
-  })
-  if (unclassifiedNotes.length || !props.filter.isDeleted) {
-    rootNodes.unshift({
-      key: 'folder-unclassified',
-      type: 'folder',
-      label: props.filter.isDeleted ? '其他已删除笔记' : '未分类',
-      folderId: null,
-      virtual: true,
-      children: unclassifiedNotes
-    })
-  }
-  return rootNodes
 })
 
 /**
- * 处理目录树节点选择。
+ * 自动展开当前笔记所在文件夹及其父级路径。
  *
- * :param node: 被选择的目录或笔记节点。
  * :return: 无返回值。
  */
-function selectTreeNode(node: ExplorerNode): void {
+function expandActiveNoteFolder(): void {
+  if (props.activeId === undefined) return
+  const activeNote = props.notes.find((note) => String(note.id) === String(props.activeId))
+  if (!activeNote) return
+  const pathKeys = getFolderPathKeys(props.folders, activeNote.folderId)
+  expandedFolderKeys.value = Array.from(new Set([...expandedFolderKeys.value, ...pathKeys]))
+}
+
+watch(
+  [() => props.activeId, () => props.folders, () => props.notes],
+  expandActiveNoteFolder,
+  { immediate: true }
+)
+
+/**
+ * 处理目录树节点点击，笔记用于打开内容，文件夹用于切换展开状态。
+ *
+ * :param node: 被选择的目录或笔记节点。
+ * :param treeNode: Element Plus 目录树节点状态。
+ * :return: 无返回值。
+ */
+function selectTreeNode(node: ExplorerNode, treeNode: FolderTreeNodeState): void {
   if (node.type === 'note' && node.note) {
     emit('select-note', node.note.id)
-  } else if (!props.filter.isDeleted) {
-    emit('select-folder', node.folderId)
+    return
   }
+  toggleFolderExpansion(treeNode)
 }
 
 /**
@@ -587,8 +704,8 @@ async function removeTag(id: ApiId): Promise<void> {
 .note-sidebar {
   display: grid;
   align-content: start;
-  gap: 12px;
-  padding: 14px 12px 28px;
+  gap: 14px;
+  padding: 18px 16px 30px;
 }
 
 .note-sidebar-toolbar {
@@ -596,11 +713,12 @@ async function removeTag(id: ApiId): Promise<void> {
   z-index: 4;
   top: 0;
   display: grid;
-  grid-template-columns: 104px minmax(0, 1fr);
+  grid-template-columns: 96px minmax(0, 1fr);
   gap: 8px;
-  margin: -14px -12px 0;
-  padding: 14px 12px 8px;
-  background: var(--note-surface);
+  margin: -18px -16px 0;
+  padding: 14px 16px 10px;
+  background: color-mix(in srgb, var(--note-surface) 96%, transparent);
+  backdrop-filter: blur(12px);
 }
 
 .note-sidebar-toolbar.is-recycle {
@@ -615,32 +733,136 @@ async function removeTag(id: ApiId): Promise<void> {
 .note-sidebar-create {
   height: 38px;
   margin: 0;
+  border: 0;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #2f80ed, #22a6f2);
+  box-shadow: 0 8px 18px rgb(47 128 237 / 22%);
   font-weight: 700;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.note-sidebar-create:hover,
+.note-sidebar-create:focus-visible {
+  background: linear-gradient(135deg, #1d6fe3, #168fdb);
+  box-shadow: 0 11px 24px rgb(47 128 237 / 28%);
+  transform: translateY(-1px);
+}
+
+.note-sidebar-create:active {
+  transform: translateY(0);
+}
+
+.note-sidebar-create svg {
+  width: 17px;
+  height: 17px;
+}
+
+.note-sidebar :deep(.note-sidebar-toolbar .el-input__wrapper) {
+  min-height: 38px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--note-surface) 88%, #f8fbff);
+  box-shadow: 0 0 0 1px var(--note-border) inset;
+  transition: box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.note-sidebar :deep(.note-sidebar-toolbar .el-input__wrapper:hover) {
+  box-shadow: 0 0 0 1px rgb(47 128 237 / 32%) inset;
+}
+
+.note-sidebar :deep(.note-sidebar-toolbar .el-input__wrapper.is-focus) {
+  background: var(--note-surface);
+  box-shadow: 0 0 0 1px var(--note-primary) inset, 0 0 0 3px rgb(47 128 237 / 10%);
+}
+
+.note-sidebar :deep(.note-sidebar-toolbar .el-input__prefix-inner svg) {
+  width: 17px;
+  height: 17px;
 }
 
 .note-sidebar-nav {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 4px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--note-border);
 }
 
 .note-sidebar-nav .el-button {
-  display: grid;
-  justify-items: center;
-  gap: 2px;
-  height: 50px;
+  position: relative;
+  display: flex;
+  justify-content: flex-start;
+  gap: 9px;
+  height: 36px;
   margin: 0;
-  padding: 5px 3px;
+  padding: 0 11px;
   border: 0;
+  border-radius: 7px;
   color: var(--note-text-muted);
   background: transparent;
+  font-size: 13px;
+  font-weight: 550;
+  transition: color 0.16s ease, background 0.16s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.note-sidebar-nav .el-button > span {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 9px;
+}
+
+.note-sidebar-nav .el-button small {
+  margin-left: auto;
+  color: var(--note-text-muted);
   font-size: 12px;
+  font-weight: 500;
 }
 
 .note-sidebar-nav .el-button:hover,
 .note-sidebar-nav .el-button.is-active {
   color: var(--note-primary);
   background: var(--note-surface-active);
+}
+
+.note-sidebar-nav .el-button:hover {
+  box-shadow: 0 5px 14px rgb(47 128 237 / 8%);
+  transform: translateX(2px);
+}
+
+.note-sidebar-nav .el-button:focus-visible {
+  outline: 2px solid rgb(47 128 237 / 24%);
+  outline-offset: 1px;
+}
+
+.note-sidebar-nav .el-button.is-active small {
+  color: var(--note-primary);
+}
+
+.note-sidebar-nav .el-button.is-active::before {
+  position: absolute;
+  top: 7px;
+  bottom: 7px;
+  left: 0;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--note-primary);
+  content: '';
+}
+
+.note-sidebar-nav .el-button svg {
+  box-sizing: content-box;
+  width: 17px;
+  height: 17px;
+  padding: 3px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--note-primary) 8%, transparent);
+  transition: color 0.16s ease, background 0.16s ease, transform 0.18s ease;
+}
+
+.note-sidebar-nav .el-button:hover svg,
+.note-sidebar-nav .el-button.is-active svg {
+  background: color-mix(in srgb, var(--note-primary) 14%, transparent);
+  transform: scale(1.04);
 }
 
 .note-sidebar-section {
@@ -654,12 +876,30 @@ async function removeTag(id: ApiId): Promise<void> {
   align-items: center;
   justify-content: space-between;
   min-height: 30px;
-  padding: 0 4px;
+  padding: 0 6px;
+}
+
+.note-sidebar-section__heading .el-button {
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  border-radius: 7px;
+  color: var(--note-text-muted);
+  transition: color 0.16s ease, background 0.16s ease, transform 0.2s ease;
+}
+
+.note-sidebar-section__heading .el-button:hover,
+.note-sidebar-section__heading .el-button:focus-visible {
+  color: var(--note-primary);
+  background: var(--note-surface-active);
+  transform: rotate(90deg);
 }
 
 .note-sidebar-section__heading h2 {
   margin: 0;
-  font-size: 17px;
+  color: var(--note-text);
+  font-size: 14px;
+  font-weight: 700;
 }
 
 .note-sidebar-section__heading span {
@@ -683,16 +923,54 @@ async function removeTag(id: ApiId): Promise<void> {
 }
 
 .note-resource-tree :deep(.el-tree-node__content) {
+  position: relative;
   box-sizing: border-box;
-  height: 38px;
+  height: 36px;
   margin: 1px 0;
   overflow: hidden;
-  border-radius: 8px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  transition: color 0.16s ease, border-color 0.16s ease, background 0.16s ease,
+    box-shadow 0.18s ease, transform 0.18s ease;
 }
 
 .note-resource-tree :deep(.el-tree-node__content:hover),
 .note-resource-tree :deep(.el-tree-node.is-current > .el-tree-node__content) {
   background: var(--note-surface-active);
+}
+
+.note-resource-tree :deep(.el-tree-node__content:hover) {
+  border-color: rgb(47 128 237 / 10%);
+  box-shadow: 0 5px 14px rgb(47 128 237 / 8%);
+  transform: translateX(2px);
+}
+
+.note-resource-tree :deep(.el-tree-node.is-current > .el-tree-node__content) {
+  border-left: 3px solid var(--note-primary);
+  color: var(--note-primary);
+}
+
+.note-resource-tree :deep(.el-tree-node__content:focus-visible) {
+  outline: 2px solid rgb(47 128 237 / 24%);
+  outline-offset: -1px;
+}
+
+.note-resource-tree :deep(.el-tree-node__expand-icon) {
+  box-sizing: content-box;
+  width: 14px;
+  height: 14px;
+  padding: 3px;
+  border-radius: 5px;
+  transition: color 0.16s ease, background 0.16s ease, transform 0.2s ease;
+}
+
+.note-resource-tree :deep(.el-tree-node__expand-icon:hover) {
+  color: var(--note-primary);
+  background: color-mix(in srgb, var(--note-primary) 9%, transparent);
+}
+
+.note-resource-tree :deep(.el-tree-node__expand-icon.is-leaf) {
+  background: transparent;
 }
 
 .note-resource-node {
@@ -718,11 +996,18 @@ async function removeTag(id: ApiId): Promise<void> {
   margin-right: 7px;
   color: var(--note-primary);
   font-size: 18px;
+  transition: color 0.16s ease, transform 0.18s ease;
 }
 
 .note-resource-node.is-note .note-resource-node__icon {
   color: var(--note-text-muted);
   font-size: 16px;
+}
+
+.note-resource-tree :deep(.el-tree-node__content:hover) .note-resource-node__icon,
+.note-resource-tree :deep(.el-tree-node.is-current > .el-tree-node__content) .note-resource-node__icon {
+  color: var(--note-primary);
+  transform: scale(1.06);
 }
 
 .note-resource-node__label {
@@ -731,6 +1016,15 @@ async function removeTag(id: ApiId): Promise<void> {
   min-width: 0;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: 13px;
+}
+
+.note-resource-node__count {
+  flex: 0 0 auto;
+  margin-left: 6px;
+  color: var(--note-text-muted);
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .note-resource-node__pinned {
@@ -748,11 +1042,14 @@ async function removeTag(id: ApiId): Promise<void> {
   padding-left: 5px;
   background: linear-gradient(90deg, transparent, var(--note-surface) 20%);
   opacity: 0;
+  transform: translateX(4px);
+  transition: opacity 0.16s ease, transform 0.18s ease;
 }
 
 .note-resource-tree :deep(.el-tree-node__content:hover) .note-resource-node__actions,
 .note-resource-tree :deep(.el-tree-node__content:focus-within) .note-resource-node__actions {
   opacity: 1;
+  transform: translateX(0);
 }
 
 .note-resource-node__more {
@@ -773,34 +1070,251 @@ async function removeTag(id: ApiId): Promise<void> {
   height: 26px;
   margin: 0;
   padding: 0;
+  border-radius: 6px;
+  color: var(--note-text-muted);
+  background: color-mix(in srgb, var(--note-surface) 84%, transparent);
+  transition: color 0.16s ease, background 0.16s ease, transform 0.18s ease;
+}
+
+.note-resource-node__actions .el-button:hover,
+.note-resource-node__actions .el-button:focus-visible {
+  color: var(--note-primary);
+  background: color-mix(in srgb, var(--note-primary) 11%, var(--note-surface));
+  transform: translateY(-1px);
 }
 
 .note-sidebar-tags {
-  padding-top: 4px;
+  padding-top: 8px;
   border-top: 1px solid var(--note-border);
 }
 
 .note-sidebar-tag-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
+  display: grid;
+  gap: 3px;
   padding: 0 4px;
 }
 
-.note-sidebar-tag-list .el-tag {
-  max-width: 100%;
+.note-sidebar-tag-context {
+  display: block;
+  width: 100%;
+}
+
+.note-sidebar-tag-row {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  height: 34px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--note-text-muted);
+  transition: color 0.16s ease, border-color 0.16s ease, background 0.16s ease,
+    box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.note-sidebar-tag-row:hover,
+.note-sidebar-tag-row.is-active {
+  color: var(--note-primary);
+  background: var(--note-surface-active);
+}
+
+.note-sidebar-tag-row:hover {
+  border-color: rgb(47 128 237 / 10%);
+  box-shadow: 0 5px 14px rgb(47 128 237 / 8%);
+  transform: translateX(2px);
+}
+
+.note-sidebar-tag-row.is-active {
+  border-color: rgb(47 128 237 / 16%);
+}
+
+.note-sidebar-tag-main {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
   cursor: pointer;
 }
 
-.note-sidebar :deep(.el-input__wrapper) {
-  min-height: 38px;
-  border-radius: 9px;
-  box-shadow: 0 0 0 1px var(--note-border) inset;
+.note-sidebar-tag-main svg {
+  flex: 0 0 auto;
+  width: 17px;
+  height: 17px;
+  transition: transform 0.18s ease;
 }
 
-@media (max-width: 767px) {
-  .note-sidebar-toolbar {
-    grid-template-columns: 98px minmax(0, 1fr);
+.note-sidebar-tag-row:hover .note-sidebar-tag-main svg,
+.note-sidebar-tag-row.is-active .note-sidebar-tag-main svg {
+  transform: scale(1.06);
+}
+
+.note-sidebar-tag-main span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.note-sidebar-tag-row small {
+  flex: 0 0 auto;
+  margin-left: auto;
+  color: var(--note-text-muted);
+  font-size: 12px;
+}
+
+.note-sidebar-tag-more {
+  display: flex;
+  flex: 0 0 auto;
+  margin-left: 4px;
+  visibility: hidden;
+  opacity: 0;
+  transform: translateX(3px);
+  transition: visibility 0.16s ease, opacity 0.16s ease, transform 0.18s ease;
+}
+
+.note-sidebar-tag-row:hover .note-sidebar-tag-more,
+.note-sidebar-tag-row:focus-within .note-sidebar-tag-more,
+.note-sidebar-tag-row.is-active .note-sidebar-tag-more {
+  visibility: visible;
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.note-sidebar-tag-more .el-button {
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  padding: 0;
+  border-radius: 6px;
+  color: var(--note-text-muted);
+  background: color-mix(in srgb, var(--note-surface) 84%, transparent);
+}
+
+.note-sidebar-tag-more .el-button:hover,
+.note-sidebar-tag-more .el-button:focus-visible {
+  color: var(--note-primary);
+  background: color-mix(in srgb, var(--note-primary) 11%, var(--note-surface));
+}
+
+:global(.note-resource-popper.el-popper) {
+  overflow: hidden;
+  padding: 6px;
+  border: 1px solid rgb(148 163 184 / 16%);
+  border-radius: 12px;
+  background: rgb(255 255 255 / 98%);
+  box-shadow: 0 18px 42px rgb(15 23 42 / 14%);
+  backdrop-filter: blur(16px);
+}
+
+:global(.note-resource-popper.el-popper .el-popper__arrow::before) {
+  border-color: rgb(148 163 184 / 16%);
+  background: rgb(255 255 255 / 98%);
+}
+
+:global(.note-resource-popper .el-dropdown-menu) {
+  min-width: 168px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+:global(.note-resource-popper .el-dropdown-menu__item) {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 38px;
+  margin: 1px 0;
+  padding: 0 10px;
+  border-radius: 8px;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 550;
+  transition: color 0.16s ease, background 0.16s ease;
+}
+
+:global(.note-resource-popper .el-dropdown-menu__item svg) {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  color: #64748b;
+  transition: color 0.16s ease, transform 0.18s ease;
+}
+
+:global(.note-resource-popper .el-dropdown-menu__item:hover),
+:global(.note-resource-popper .el-dropdown-menu__item:focus) {
+  color: #2478e5;
+  background: rgb(47 128 237 / 9%);
+}
+
+:global(.note-resource-popper .el-dropdown-menu__item:hover svg),
+:global(.note-resource-popper .el-dropdown-menu__item:focus svg) {
+  color: #2478e5;
+  transform: scale(1.05);
+}
+
+:global(.note-resource-popper .el-dropdown-menu__item--divided) {
+  margin-top: 7px;
+}
+
+:global(.note-resource-popper .el-dropdown-menu__item--divided::before) {
+  top: -4px;
+  right: 2px;
+  left: 2px;
+  height: 1px;
+  background: rgb(148 163 184 / 16%);
+}
+
+:global(.note-resource-popper .el-dropdown-menu__item.is-danger) {
+  color: #dc5b62;
+}
+
+:global(.note-resource-popper .el-dropdown-menu__item.is-danger svg) {
+  color: #dc5b62;
+}
+
+:global(.note-resource-popper .el-dropdown-menu__item.is-danger:hover),
+:global(.note-resource-popper .el-dropdown-menu__item.is-danger:focus) {
+  color: #cc3f49;
+  background: rgb(220 91 98 / 10%);
+}
+
+:global(html.dark .note-resource-popper.el-popper) {
+  border-color: rgb(148 163 184 / 14%);
+  background: rgb(23 27 45 / 98%);
+  box-shadow: 0 20px 46px rgb(0 0 0 / 34%);
+}
+
+:global(html.dark .note-resource-popper.el-popper .el-popper__arrow::before) {
+  border-color: rgb(148 163 184 / 14%);
+  background: rgb(23 27 45 / 98%);
+}
+
+:global(html.dark .note-resource-popper .el-dropdown-menu__item) {
+  color: #cbd5e1;
+}
+
+:global(html.dark .note-resource-popper .el-dropdown-menu__item svg) {
+  color: #94a3b8;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .note-sidebar *,
+  .note-sidebar *::before,
+  .note-sidebar *::after,
+  :global(.note-resource-popper *),
+  :global(.note-resource-popper *::before),
+  :global(.note-resource-popper *::after) {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }
 </style>

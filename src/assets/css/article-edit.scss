@@ -32,6 +32,11 @@
   grid-template-columns: minmax(0, 1fr) 300px;
   gap: 18px 22px;
   align-items: start;
+  transition: grid-template-columns 0.2s ease;
+}
+
+.article-edit-page.is-side-panel-collapsed .article-edit-shell {
+  grid-template-columns: minmax(0, 1fr) 48px;
 }
 
 .article-setting-title {
@@ -67,6 +72,56 @@
     border-radius: 999px;
     background: rgb(148 163 184 / 34%);
   }
+}
+
+.article-side-panel-toggle {
+  display: flex;
+  flex: 0 0 40px;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 40px;
+  margin: 8px 8px 0 auto;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 8px;
+  color: #64748b;
+  background: rgb(241 245 249 / 82%);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: color 0.16s ease, background 0.16s ease, transform 0.16s ease;
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  &:hover,
+  &:focus-visible {
+    color: #2f80ed;
+    background: #edf5ff;
+    transform: translateY(-1px);
+  }
+}
+
+.article-edit-page.is-side-panel-collapsed .article-side-panel {
+  min-height: 64px;
+  overflow: hidden;
+}
+
+.article-edit-page.is-side-panel-collapsed .article-side-panel-toggle {
+  flex-direction: column;
+  width: 40px;
+  height: 50px;
+  margin: 6px auto;
+  padding: 3px;
+}
+
+.article-edit-page.is-side-panel-collapsed .article-side-panel > .article-setting-section {
+  display: none;
 }
 
 .article-setting-section {
@@ -1549,6 +1604,15 @@ html.dark {
   .article-edit-shell {
     grid-template-columns: 1fr;
     gap: 16px;
+  }
+
+  .article-edit-page.is-side-panel-collapsed .article-edit-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .article-edit-page.is-side-panel-collapsed .article-side-panel {
+    width: 48px;
+    margin-left: auto;
   }
 
   .article-side-panel {

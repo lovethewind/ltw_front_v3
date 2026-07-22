@@ -149,7 +149,7 @@ html.dark .note-guest-features {
   --note-shadow: 0 10px 28px rgb(33 56 92 / 8%);
   --note-shadow-hover: 0 16px 34px rgb(33 56 92 / 13%);
   display: grid;
-  grid-template-columns: 320px minmax(0, 1fr);
+  grid-template-columns: 286px minmax(0, 1fr);
   position: relative;
   height: calc(100dvh - 61px);
   min-height: 0;
@@ -181,6 +181,7 @@ html.dark .note-workspace {
 .note-workspace-sidebar {
   position: relative;
   border-right: 1px solid var(--note-border);
+  background: color-mix(in srgb, var(--note-surface-subtle) 58%, var(--note-surface));
   overflow: hidden;
 }
 
@@ -269,7 +270,7 @@ html.dark .note-workspace {
 
 @media (min-width: 768px) and (max-width: 1199px) {
   .note-workspace {
-    grid-template-columns: 286px minmax(0, 1fr);
+    grid-template-columns: 260px minmax(0, 1fr);
   }
 }
 

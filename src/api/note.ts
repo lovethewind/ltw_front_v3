@@ -1,5 +1,15 @@
 import type { AxiosRequestConfig } from 'axios'
-import type { ApiId, ApiResponse, INote, INoteListItem, NoteQuery, NoteSavePayload, PageResult } from '@/interface/note'
+import type {
+  ApiId,
+  ApiResponse,
+  INote,
+  INoteHistory,
+  INoteHistoryListItem,
+  INoteListItem,
+  NoteQuery,
+  NoteSavePayload,
+  PageResult
+} from '@/interface/note'
 import request from '@/utils/request'
 
 const apiName = '/note'
@@ -59,6 +69,67 @@ export default {
    */
   update(noteId: ApiId, data: NoteSavePayload): Promise<ApiResponse<null>> {
     return requestApi<null>({ url: `${apiName}/${noteId}`, method: 'put', data })
+  },
+
+  /**
+   * 获取笔记历史版本分页列表。
+   *
+   * :param noteId: 笔记 ID。
+   * :param current: 当前页码。
+   * :param size: 每页数量。
+   * :return: 历史版本分页数据。
+   */
+  getHistoryList(
+    noteId: ApiId,
+    current = 1,
+    size = 50
+  ): Promise<ApiResponse<PageResult<INoteHistoryListItem>>> {
+    return requestApi<PageResult<INoteHistoryListItem>>({
+      url: `${apiName}/${noteId}/history/list/${current}/${size}`,
+      method: 'get'
+    })
+  },
+
+  /**
+   * 获取笔记历史版本详情。
+   *
+   * :param noteId: 笔记 ID。
+   * :param historyId: 历史版本 ID。
+   * :return: 历史版本详情。
+   */
+  getHistoryDetail(noteId: ApiId, historyId: ApiId): Promise<ApiResponse<INoteHistory>> {
+    return requestApi<INoteHistory>({
+      url: `${apiName}/${noteId}/history/${historyId}`,
+      method: 'get'
+    })
+  },
+
+  /**
+   * 恢复指定笔记历史版本。
+   *
+   * :param noteId: 笔记 ID。
+   * :param historyId: 历史版本 ID。
+   * :return: 操作结果。
+   */
+  restoreHistory(noteId: ApiId, historyId: ApiId): Promise<ApiResponse<null>> {
+    return requestApi<null>({
+      url: `${apiName}/${noteId}/history/${historyId}/restore`,
+      method: 'put'
+    })
+  },
+
+  /**
+   * 删除指定笔记历史版本。
+   *
+   * :param noteId: 笔记 ID。
+   * :param historyId: 历史版本 ID。
+   * :return: 操作结果。
+   */
+  deleteHistory(noteId: ApiId, historyId: ApiId): Promise<ApiResponse<null>> {
+    return requestApi<null>({
+      url: `${apiName}/${noteId}/history/${historyId}`,
+      method: 'delete'
+    })
   },
 
   /**

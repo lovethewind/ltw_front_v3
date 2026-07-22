@@ -2,23 +2,19 @@
   <div
     ref="editorShellRef"
     class="milkdown-editor-shell"
-    :class="{ 'has-outline': outlineOpen, 'is-preview': previewMode }"
+    :class="{
+      'has-outline': props.showOutline && outlineOpen,
+      'is-preview': previewMode,
+      'is-readonly': props.readonly,
+      'is-focus-mode': focusMode,
+      'is-toolbar-hidden': !props.showToolbar
+    }"
   >
-    <button
-      v-if="previewMode"
-      type="button"
-      class="markdown-preview-exit"
-      aria-label="退出预览并继续编辑"
-      @click="togglePreview"
-    >
-      <Icon icon="material-symbols:edit-outline-rounded" />
-      编辑
-    </button>
     <div ref="editorScrollRef" class="milkdown-editor-scroll" @scroll.passive="updateActiveOutline">
       <div ref="editorRootRef" class="milkdown-editor-root" />
     </div>
     <aside
-      v-if="outlineOpen"
+      v-if="props.showOutline && outlineOpen"
       id="markdown-outline-panel"
       class="markdown-outline"
       aria-label="Markdown 大纲"
@@ -50,9 +46,13 @@
 <script setup lang="ts">
 import '@milkdown/crepe/theme/common/style.css'
 import '@milkdown/crepe/theme/classic.css'
+import { Compartment, EditorState, Prec, StateEffect } from '@codemirror/state'
+import { EditorView } from '@codemirror/view'
 import { Crepe } from '@milkdown/crepe'
+import { commandsCtx } from '@milkdown/kit/core'
+import { redoCommand, undoCommand } from '@milkdown/kit/plugin/history'
 import { replaceAll } from '@milkdown/kit/utils'
-import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import { h, nextTick, onBeforeUnmount, onMounted, ref, render, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Icon } from '@iconify/vue'
 
@@ -63,21 +63,43 @@ import { uploadFile } from '@/utils/oss-upload'
 
 const emit = defineEmits<{
   (event: 'change', value: string): void
+  (event: 'focus-mode-change', value: boolean): void
+  (event: 'preview-change', value: boolean): void
 }>()
+
+interface Props {
+  externalPreviewToggle?: boolean
+  value?: string
+  readonly?: boolean
+  showToolbar?: boolean
+  showOutline?: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  externalPreviewToggle: false,
+  value: '',
+  readonly: false,
+  showToolbar: true,
+  showOutline: true
+})
 
 const editorRootRef = ref<HTMLDivElement | null>(null)
 const editorShellRef = ref<HTMLDivElement | null>(null)
 const editorScrollRef = ref<HTMLDivElement | null>(null)
-const contentValue = ref('')
+const contentValue = ref(props.value)
 const outlineItems = ref<MarkdownOutlineItem[]>([])
 const outlineOpen = ref(true)
 const previewMode = ref(false)
+const focusMode = ref(false)
 const activeOutlineIndex = ref(0)
 let editor: Crepe | null = null
 let editorReady = false
 let destroyed = false
 let pendingContent: string | null = null
 let suppressedMarkdown: string | null = null
+let readonlyObserver: MutationObserver | null = null
+let toolbarEventsBound = false
+const codeMirrorReadonlyCompartments = new WeakMap<EditorView, Compartment>()
 const OUTLINE_STORAGE_KEY = 'markdown-outline-open'
 const topBarLabels = [
   '加粗',
@@ -95,6 +117,20 @@ const topBarLabels = [
   '引用',
   '分隔线'
 ]
+
+interface ToolbarActionItem {
+  action: () => void | Promise<void>
+  icon: string
+  label: string
+  previewAllowed?: boolean
+}
+
+interface ToolbarMenuOptions {
+  className?: string
+  icon: string
+  key: string
+  label: string
+}
 
 /**
  * 根据 Markdown 内容刷新大纲。
@@ -148,7 +184,10 @@ function syncOutlineToggle(): void {
   const button = editorRootRef.value?.querySelector<HTMLButtonElement>('.markdown-outline-toggle')
   if (!button) return
   button.setAttribute('aria-expanded', String(outlineOpen.value))
-  button.textContent = outlineOpen.value ? '收起' : '大纲'
+  button.setAttribute('aria-label', outlineOpen.value ? '收起大纲' : '展开大纲')
+  button.title = outlineOpen.value ? '收起大纲' : '展开大纲'
+  button.dataset.label = '大纲'
+  button.classList.toggle('active', outlineOpen.value)
 }
 
 /**
@@ -160,6 +199,107 @@ function syncPreviewToggle(): void {
   const button = editorRootRef.value?.querySelector<HTMLButtonElement>('.markdown-preview-toggle')
   if (!button) return
   button.setAttribute('aria-pressed', String(previewMode.value))
+  button.setAttribute('aria-label', previewMode.value ? '退出预览并继续编辑' : '预览文档')
+  button.title = previewMode.value ? '退出预览并继续编辑' : '预览文档'
+  button.dataset.label = '预览'
+  button.classList.toggle('active', previewMode.value)
+}
+
+/**
+ * 同步代码块内部 CodeMirror 编辑器的只读状态。
+ *
+ * :param isReadonly: 是否处于只读状态。
+ * :return: 无返回值。
+ */
+function syncCodeMirrorReadonly(isReadonly: boolean): void {
+  editorRootRef.value?.querySelectorAll<HTMLElement>('.milkdown-code-block .cm-editor').forEach((element) => {
+    const view = EditorView.findFromDOM(element)
+    if (!view) return
+
+    let compartment = codeMirrorReadonlyCompartments.get(view)
+    if (!compartment) {
+      compartment = new Compartment()
+      codeMirrorReadonlyCompartments.set(view, compartment)
+      view.dispatch({
+        effects: StateEffect.appendConfig.of(
+          compartment.of(Prec.highest(EditorState.readOnly.of(isReadonly)))
+        )
+      })
+      return
+    }
+
+    view.dispatch({
+      effects: compartment.reconfigure(Prec.highest(EditorState.readOnly.of(isReadonly)))
+    })
+  })
+}
+
+/**
+ * 同步正文与代码编辑器节点的可编辑属性。
+ *
+ * :param isReadonly: 是否处于只读状态。
+ * :return: 无返回值。
+ */
+function syncEditableElements(isReadonly: boolean): void {
+  editorRootRef.value
+    ?.querySelectorAll<HTMLElement>('.ProseMirror, .ProseMirror .cm-content')
+    .forEach((element) => {
+      element.setAttribute('contenteditable', String(!isReadonly))
+      element.setAttribute('aria-readonly', String(isReadonly))
+    })
+  syncCodeMirrorReadonly(isReadonly)
+}
+
+/**
+ * 在代码块懒加载后继续维持当前只读状态。
+ *
+ * :return: 无返回值。
+ */
+function maintainReadonlyElements(): void {
+  if (props.readonly || previewMode.value) syncEditableElements(true)
+}
+
+/**
+ * 根据预览状态启动或停止嵌套编辑节点观察器。
+ *
+ * :param isReadonly: 是否处于只读状态。
+ * :return: 无返回值。
+ */
+function syncReadonlyObserver(isReadonly: boolean): void {
+  readonlyObserver?.disconnect()
+  readonlyObserver = null
+  if (!isReadonly || !editorRootRef.value) return
+  readonlyObserver = new MutationObserver(maintainReadonlyElements)
+  readonlyObserver.observe(editorRootRef.value, { childList: true, subtree: true })
+}
+
+/**
+ * 同步预览模式下正文区域的只读状态。
+ *
+ * :return: 无返回值。
+ */
+function syncPreviewReadonly(): void {
+  const isReadonly = props.readonly || previewMode.value
+  if (editor && editor.readonly !== props.readonly) editor.setReadonly(props.readonly)
+  syncEditableElements(isReadonly)
+  syncReadonlyObserver(isReadonly)
+  editorRootRef.value
+    ?.querySelectorAll<HTMLButtonElement>(
+      '.top-bar-heading-selector button, .top-bar-actions .top-bar-item:not(.markdown-outline-toggle):not(.markdown-preview-toggle):not(.markdown-tools-menu-toggle)'
+    )
+    .forEach((button) => {
+      button.disabled = isReadonly
+      if (isReadonly) button.setAttribute('aria-disabled', 'true')
+      else button.removeAttribute('aria-disabled')
+    })
+  editorRootRef.value?.querySelectorAll<HTMLButtonElement>('.markdown-tools-menu .markdown-toolbar-menu__item')
+    .forEach((button) => {
+      const disabled = isReadonly && button.dataset.previewAllowed !== 'true'
+      button.disabled = disabled
+      if (disabled) button.setAttribute('aria-disabled', 'true')
+      else button.removeAttribute('aria-disabled')
+    })
+  closeToolbarMenus()
 }
 
 /**
@@ -168,15 +308,16 @@ function syncPreviewToggle(): void {
  * :return: 无返回值。
  */
 function togglePreview(): void {
-  if (!editor || !editorReady) return
+  if (props.readonly || !editor || !editorReady) return
   previewMode.value = !previewMode.value
-  editor.setReadonly(previewMode.value)
+  syncPreviewReadonly()
   if (previewMode.value) {
     const activeElement = document.activeElement
     if (activeElement instanceof HTMLElement) activeElement.blur()
     window.getSelection()?.removeAllRanges()
   }
   syncPreviewToggle()
+  emit('preview-change', previewMode.value)
   void nextTick(updateActiveOutline)
 }
 
@@ -242,6 +383,298 @@ function replaceContentSilently(value: string, crepe: Crepe): void {
 }
 
 /**
+ * 关闭所有已展开的工具栏二级菜单。
+ *
+ * :return: 无返回值。
+ */
+function closeToolbarMenus(): void {
+  editorRootRef.value?.querySelectorAll<HTMLElement>('.markdown-toolbar-menu.is-open').forEach((menu) => {
+    menu.classList.remove('is-open')
+    menu.querySelector<HTMLButtonElement>('.markdown-toolbar-menu__toggle')
+      ?.setAttribute('aria-expanded', 'false')
+  })
+}
+
+/**
+ * 切换指定工具栏二级菜单。
+ *
+ * :param menu: 待切换的菜单容器。
+ * :return: 无返回值。
+ */
+function toggleToolbarMenu(menu: HTMLElement): void {
+  const shouldOpen = !menu.classList.contains('is-open')
+  closeToolbarMenus()
+  menu.classList.toggle('is-open', shouldOpen)
+  menu.querySelector<HTMLButtonElement>('.markdown-toolbar-menu__toggle')
+    ?.setAttribute('aria-expanded', String(shouldOpen))
+}
+
+/**
+ * 创建工具栏分隔线。
+ *
+ * :return: 工具栏分隔线节点。
+ */
+function createToolbarDivider(): HTMLDivElement {
+  const divider = document.createElement('div')
+  divider.className = 'top-bar-divider markdown-toolbar-divider'
+  divider.setAttribute('aria-hidden', 'true')
+  return divider
+}
+
+/**
+ * 创建自定义的二级菜单操作按钮。
+ *
+ * :param item: 操作按钮配置。
+ * :return: 操作按钮节点。
+ */
+function createToolbarActionButton(item: ToolbarActionItem): HTMLButtonElement {
+  const button = document.createElement('button')
+  button.type = 'button'
+  button.className = 'markdown-toolbar-menu__item'
+  button.dataset.action = item.label === '专注模式' ? 'focus-mode' : item.label
+  button.dataset.label = item.label
+  button.dataset.previewAllowed = String(Boolean(item.previewAllowed))
+  button.title = item.label
+  button.setAttribute('aria-label', item.label)
+  render(h(Icon, { icon: item.icon, 'aria-hidden': 'true' }), button)
+  button.addEventListener('click', () => {
+    closeToolbarMenus()
+    void item.action()
+  })
+  return button
+}
+
+/**
+ * 创建直接展示在一级工具栏中的快捷操作按钮。
+ *
+ * :param item: 操作按钮配置。
+ * :return: 一级工具栏操作按钮节点。
+ */
+function createTopBarActionButton(item: ToolbarActionItem): HTMLButtonElement {
+  const button = document.createElement('button')
+  button.type = 'button'
+  button.className = 'top-bar-item markdown-toolbar-direct-action'
+  button.dataset.action = item.label
+  button.dataset.label = item.label
+  button.dataset.previewAllowed = String(Boolean(item.previewAllowed))
+  button.title = item.label
+  button.setAttribute('aria-label', item.label)
+  render(h(Icon, { icon: item.icon, 'aria-hidden': 'true' }), button)
+  button.addEventListener('click', () => {
+    void item.action()
+  })
+  return button
+}
+
+/**
+ * 创建包含原生按钮或自定义操作的工具栏二级菜单。
+ *
+ * :param options: 菜单显示配置。
+ * :param items: 菜单操作按钮。
+ * :return: 二级菜单容器。
+ */
+function createToolbarMenu(
+  options: ToolbarMenuOptions,
+  items: HTMLButtonElement[]
+): HTMLDivElement {
+  const menu = document.createElement('div')
+  menu.className = ['markdown-toolbar-menu', options.className].filter(Boolean).join(' ')
+  menu.dataset.menu = options.key
+
+  const toggle = document.createElement('button')
+  toggle.type = 'button'
+  toggle.className = 'markdown-toolbar-menu__toggle top-bar-item'
+  toggle.dataset.label = options.label
+  toggle.title = options.label
+  toggle.setAttribute('aria-label', `${options.label}菜单`)
+  toggle.setAttribute('aria-haspopup', 'menu')
+  toggle.setAttribute('aria-expanded', 'false')
+  render(h(Icon, { icon: options.icon, 'aria-hidden': 'true' }), toggle)
+  toggle.addEventListener('click', (event) => {
+    event.stopPropagation()
+    toggleToolbarMenu(menu)
+  })
+
+  const panel = document.createElement('div')
+  panel.className = 'markdown-toolbar-menu__panel'
+  panel.setAttribute('role', 'menu')
+  panel.addEventListener('click', (event) => event.stopPropagation())
+  items.forEach((button) => {
+    button.classList.add('markdown-toolbar-menu__item')
+    button.setAttribute('role', 'menuitem')
+    button.addEventListener('click', closeToolbarMenus)
+    panel.append(button)
+  })
+
+  menu.append(toggle, panel)
+  return menu
+}
+
+/**
+ * 执行编辑器撤销命令。
+ *
+ * :return: 无返回值。
+ */
+function undoEditor(): void {
+  editor?.editor.action((ctx) => ctx.get(commandsCtx).call(undoCommand.key))
+}
+
+/**
+ * 执行编辑器重做命令。
+ *
+ * :return: 无返回值。
+ */
+function redoEditor(): void {
+  editor?.editor.action((ctx) => ctx.get(commandsCtx).call(redoCommand.key))
+}
+
+/**
+ * 切换当前选区的行内公式格式。
+ *
+ * :return: 无返回值。
+ */
+function toggleInlineFormula(): void {
+  editor?.editor.action((ctx) => ctx.get(commandsCtx).call('ToggleLatex'))
+}
+
+/**
+ * 将当前 Markdown 原文复制到剪贴板。
+ *
+ * :return: 异步操作完成后无返回值。
+ */
+async function copyMarkdown(): Promise<void> {
+  if (!editor) return
+  try {
+    await navigator.clipboard.writeText(editor.getMarkdown())
+    ElMessage({ message: 'Markdown 已复制', type: 'success', plain: true })
+  } catch {
+    ElMessage({ message: '复制失败，请检查浏览器剪贴板权限', type: 'error', plain: true })
+  }
+}
+
+/**
+ * 同步专注模式按钮的显示状态。
+ *
+ * :return: 无返回值。
+ */
+function syncFocusModeToggle(): void {
+  const button = editorRootRef.value?.querySelector<HTMLButtonElement>('[data-action="focus-mode"]')
+  if (!button) return
+  const label = focusMode.value ? '退出专注' : '专注模式'
+  button.dataset.label = label
+  button.title = label
+  button.setAttribute('aria-label', label)
+  button.classList.toggle('active', focusMode.value)
+}
+
+/**
+ * 切换编辑器专注模式并通知外层页面。
+ *
+ * :return: 无返回值。
+ */
+function toggleFocusMode(): void {
+  focusMode.value = !focusMode.value
+  document.body.classList.toggle('markdown-editor-focus-mode', focusMode.value)
+  syncFocusModeToggle()
+  closeToolbarMenus()
+  emit('focus-mode-change', focusMode.value)
+}
+
+/**
+ * 处理编辑器级键盘操作。
+ *
+ * :param event: 键盘事件。
+ * :return: 无返回值。
+ */
+function handleEditorDocumentKeydown(event: KeyboardEvent): void {
+  if (event.key !== 'Escape') return
+  closeToolbarMenus()
+  if (focusMode.value) toggleFocusMode()
+}
+
+/**
+ * 将原生工具栏按钮重新组织为紧凑的一级入口和二级菜单。
+ *
+ * :param actions: 原生工具栏操作区。
+ * :return: 无返回值。
+ */
+function groupTopBarActions(actions: HTMLElement): void {
+  if (actions.querySelector('.markdown-toolbar-menu')) return
+  const buttons = Array.from(actions.querySelectorAll<HTMLButtonElement>('.top-bar-item'))
+  const buttonMap = new Map(buttons.map((button) => [button.dataset.label, button]))
+  const pickButtons = (labels: string[]): HTMLButtonElement[] => (
+    labels.map((label) => buttonMap.get(label)).filter((button): button is HTMLButtonElement => Boolean(button))
+  )
+
+  const listMenu = createToolbarMenu({
+    key: 'list',
+    label: '列表',
+    icon: 'material-symbols:format-list-bulleted-rounded'
+  }, pickButtons(['无序列表', '有序列表', '任务列表']))
+  const inlineFormulaButton = createToolbarActionButton({
+    label: '行内公式',
+    icon: 'material-symbols:functions-rounded',
+    action: toggleInlineFormula
+  })
+  const insertMenu = createToolbarMenu({
+    key: 'insert',
+    label: '插入',
+    icon: 'material-symbols:add-box-outline-rounded'
+  }, [
+    ...pickButtons(['表格', '公式', '引用', '分隔线']),
+    inlineFormulaButton
+  ])
+  const undoButton = createTopBarActionButton({
+    label: '撤销',
+    icon: 'material-symbols:undo-rounded',
+    action: undoEditor
+  })
+  const redoButton = createTopBarActionButton({
+    label: '重做',
+    icon: 'material-symbols:redo-rounded',
+    action: redoEditor
+  })
+  const toolsMenu = createToolbarMenu({
+    key: 'tools',
+    label: '更多',
+    icon: 'material-symbols:more-horiz',
+    className: 'markdown-tools-menu'
+  }, [
+    createToolbarActionButton({
+      label: '复制 Markdown',
+      icon: 'material-symbols:content-copy-outline-rounded',
+      action: copyMarkdown,
+      previewAllowed: true
+    }),
+    createToolbarActionButton({
+      label: '专注模式',
+      icon: 'material-symbols:fullscreen-rounded',
+      action: toggleFocusMode,
+      previewAllowed: true
+    })
+  ])
+  toolsMenu.querySelector('.markdown-toolbar-menu__toggle')?.classList.add('markdown-tools-menu-toggle')
+
+  const formattingButtons = pickButtons(['加粗', '斜体', '删除线', '行内代码'])
+  const directInsertButtons = pickButtons(['链接', '图片', '代码块'])
+  actions.replaceChildren(
+    undoButton,
+    redoButton,
+    createToolbarDivider(),
+    ...formattingButtons,
+    createToolbarDivider(),
+    listMenu,
+    createToolbarDivider(),
+    ...directInsertButtons,
+    createToolbarDivider(),
+    insertMenu,
+    createToolbarDivider(),
+    toolsMenu
+  )
+  syncFocusModeToggle()
+}
+
+/**
  * 为 Milkdown 工具栏补充中文标题和无障碍名称。
  *
  * :param root: 编辑器根元素。
@@ -259,30 +692,45 @@ function localizeTopBar(root: HTMLElement): void {
   const inner = root.querySelector<HTMLElement>('.top-bar-inner')
   const heading = inner?.querySelector<HTMLElement>('.top-bar-heading-selector')
   if (!inner || !heading) return
-  if (!inner.querySelector('.top-bar-actions')) {
-    const actions = document.createElement('div')
-    actions.className = 'top-bar-actions'
+  let actions = inner.querySelector<HTMLElement>('.top-bar-actions')
+  if (!actions) {
+    const createdActions = document.createElement('div')
+    createdActions.className = 'top-bar-actions'
     Array.from(inner.children).forEach((child) => {
-      if (child !== heading) actions.append(child)
+      if (child !== heading) createdActions.append(child)
     })
-    inner.append(actions)
+    inner.append(createdActions)
+    actions = createdActions
   }
-  if (!inner.querySelector('.markdown-outline-toggle')) {
+  groupTopBarActions(actions)
+  const showTrailingActions = props.showOutline || (!props.readonly && !props.externalPreviewToggle)
+  if (showTrailingActions && !actions.querySelector('.markdown-toolbar-trailing-divider')) {
+    const divider = createToolbarDivider()
+    divider.classList.add('markdown-toolbar-trailing-divider')
+    actions.append(divider)
+  }
+  if (props.showOutline && !actions.querySelector('.markdown-outline-toggle')) {
     const outlineToggle = document.createElement('button')
     outlineToggle.type = 'button'
-    outlineToggle.className = 'markdown-outline-toggle'
+    outlineToggle.className = 'markdown-outline-toggle top-bar-item'
     outlineToggle.setAttribute('aria-controls', 'markdown-outline-panel')
+    render(h(Icon, { icon: 'material-symbols:toc-rounded', 'aria-hidden': 'true' }), outlineToggle)
     outlineToggle.addEventListener('click', toggleOutline)
-    inner.append(outlineToggle)
+    actions.append(outlineToggle)
   }
-  if (!inner.querySelector('.markdown-preview-toggle')) {
+  if (!props.readonly && !props.externalPreviewToggle && !actions.querySelector('.markdown-preview-toggle')) {
     const previewToggle = document.createElement('button')
     previewToggle.type = 'button'
-    previewToggle.className = 'markdown-preview-toggle'
-    previewToggle.textContent = '预览'
+    previewToggle.className = 'markdown-preview-toggle top-bar-item'
     previewToggle.setAttribute('aria-label', '预览文档')
+    render(h(Icon, { icon: 'material-symbols:visibility-outline-rounded', 'aria-hidden': 'true' }), previewToggle)
     previewToggle.addEventListener('click', togglePreview)
-    inner.append(previewToggle)
+    actions.append(previewToggle)
+  }
+  if (!toolbarEventsBound) {
+    document.addEventListener('click', closeToolbarMenus)
+    document.addEventListener('keydown', handleEditorDocumentKeydown)
+    toolbarEventsBound = true
   }
   syncOutlineToggle()
   syncPreviewToggle()
@@ -386,6 +834,7 @@ async function createEditor(): Promise<void> {
       suppressedMarkdown = null
       if (!editorReady && pendingContent !== null) return
       contentValue.value = markdown
+      if (props.readonly) return
       emit('change', markdown)
     })
   })
@@ -398,6 +847,7 @@ async function createEditor(): Promise<void> {
   }
 
   localizeTopBar(editorRootRef.value)
+  syncPreviewReadonly()
 
   const targetContent = pendingContent ?? contentValue.value
   pendingContent = null
@@ -433,13 +883,26 @@ function getContentLength(): number {
   return contentValue.value.length
 }
 
+watch(() => props.value, setContent)
+watch(() => props.readonly, () => syncPreviewReadonly())
+
 onMounted(() => {
-  outlineOpen.value = localStorage.getItem(OUTLINE_STORAGE_KEY) !== 'false'
+  outlineOpen.value = props.showOutline && localStorage.getItem(OUTLINE_STORAGE_KEY) !== 'false'
   void createEditor()
 })
 
 onBeforeUnmount(() => {
   destroyed = true
+  document.body.classList.remove('markdown-editor-focus-mode')
+  if (focusMode.value) emit('focus-mode-change', false)
+  focusMode.value = false
+  if (toolbarEventsBound) {
+    document.removeEventListener('click', closeToolbarMenus)
+    document.removeEventListener('keydown', handleEditorDocumentKeydown)
+    toolbarEventsBound = false
+  }
+  readonlyObserver?.disconnect()
+  readonlyObserver = null
   pendingContent = null
   suppressedMarkdown = null
   const currentEditor = editor
@@ -450,7 +913,8 @@ onBeforeUnmount(() => {
 
 defineExpose({
   setContent,
-  getContentLength
+  getContentLength,
+  togglePreview
 })
 </script>
 
@@ -473,6 +937,20 @@ defineExpose({
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 14px 34px rgb(15 23 42 / 5%);
+}
+
+body.markdown-editor-focus-mode {
+  overflow: hidden;
+}
+
+.milkdown-editor-shell.is-focus-mode {
+  position: fixed;
+  z-index: 2000;
+  inset: 12px;
+  width: auto;
+  height: auto;
+  border-color: color-mix(in srgb, var(--markdown-outline-primary) 24%, var(--markdown-outline-border));
+  box-shadow: 0 28px 80px rgb(15 23 42 / 24%);
 }
 
 .milkdown-editor-scroll {
@@ -516,7 +994,7 @@ defineExpose({
   min-height: 500px;
   margin-right: auto;
   margin-left: auto;
-  padding: 16px clamp(22px, 4vw, 56px) 72px;
+  padding: 18px clamp(28px, 4.5vw, 64px) 72px;
   font-size: 16px;
   line-height: 1.8;
   outline: none;
@@ -529,7 +1007,7 @@ defineExpose({
 
 .milkdown-editor-root .milkdown .milkdown-top-bar {
   position: sticky;
-  z-index: 4;
+  z-index: 20;
   top: 0;
   min-height: 62px;
   border-bottom: 1px solid var(--milkdown-toolbar-divider);
@@ -656,91 +1134,62 @@ defineExpose({
   box-shadow: none;
 }
 
-.markdown-outline-toggle,
-.markdown-preview-toggle {
-  flex: 0 0 auto;
-  height: 36px;
-  margin: 0 8px;
-  padding: 0 10px;
-  border: 0;
-  border-radius: 7px;
-  color: var(--milkdown-toolbar-icon);
-  background: var(--markdown-outline-background);
-  font: inherit;
-  white-space: nowrap;
-  cursor: pointer;
-}
-
-.markdown-preview-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  margin-left: 0;
+.milkdown-editor-root .milkdown .milkdown-top-bar .markdown-outline-toggle,
+.milkdown-editor-root .milkdown .milkdown-top-bar .markdown-preview-toggle {
+  flex: 0 0 52px;
 }
 
 .markdown-preview-toggle:hover,
-.markdown-outline-toggle:hover {
+.markdown-outline-toggle:hover,
+.markdown-preview-toggle.active,
+.markdown-outline-toggle.active {
   color: var(--markdown-outline-primary);
   background: var(--markdown-outline-hover);
 }
 
-.markdown-preview-exit {
-  position: absolute;
-  z-index: 8;
-  top: 12px;
-  right: 14px;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  height: 34px;
-  padding: 0 13px;
-  border: 1px solid color-mix(in srgb, var(--markdown-outline-primary) 32%, transparent);
-  border-radius: 8px;
-  color: var(--markdown-outline-primary);
-  background: color-mix(in srgb, var(--markdown-outline-background) 92%, transparent);
-  box-shadow: 0 8px 20px rgb(15 23 42 / 8%);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 650;
-  cursor: pointer;
-  backdrop-filter: blur(10px);
+.milkdown-editor-shell.is-preview .milkdown-top-bar .top-bar-heading-selector button:disabled,
+.milkdown-editor-shell.is-preview .milkdown-top-bar .top-bar-item:disabled {
+  color: var(--milkdown-toolbar-icon);
+  background: transparent;
+  box-shadow: none;
+  opacity: 0.38;
+  cursor: not-allowed;
+  pointer-events: none;
+  transform: none;
 }
 
-.milkdown-editor-shell.has-outline .markdown-preview-exit {
-  right: calc(var(--markdown-outline-width) + 34px);
+.milkdown-editor-shell.is-preview .milkdown-top-bar .top-bar-item:disabled svg {
+  color: var(--milkdown-toolbar-icon);
+  fill: var(--milkdown-toolbar-icon);
+  transform: none;
 }
 
-.markdown-preview-exit:hover {
-  background: var(--markdown-outline-hover);
-}
-
-.markdown-preview-exit svg {
-  width: 17px;
-  height: 17px;
-}
-
-.milkdown-editor-shell.is-preview .markdown-outline {
+.milkdown-editor-shell.is-toolbar-hidden .markdown-outline {
   top: 0;
 }
 
-.milkdown-editor-shell.is-preview .milkdown-editor-root .milkdown .ProseMirror {
-  padding-top: 58px;
+.milkdown-editor-shell.is-toolbar-hidden .milkdown-top-bar {
+  display: none;
+}
+
+.milkdown-editor-shell.is-preview .milkdown-editor-root .milkdown .ProseMirror,
+.milkdown-editor-shell.is-readonly .milkdown-editor-root .milkdown .ProseMirror {
   caret-color: transparent;
 }
 
-.milkdown-editor-shell.is-preview .milkdown-block-handle,
-.milkdown-editor-shell.is-preview .milkdown-table-block .handle,
-.milkdown-editor-shell.is-preview .milkdown-table-block .cell-handle,
-.milkdown-editor-shell.is-preview .milkdown-table-block .line-handle,
-.milkdown-editor-shell.is-preview .milkdown-image-block .image-resize-handle,
-.milkdown-editor-shell.is-preview .milkdown-image-block .operation,
-.milkdown-editor-shell.is-preview .milkdown-image-block .image-edit {
+.milkdown-editor-shell:is(.is-preview, .is-readonly) .milkdown-block-handle,
+.milkdown-editor-shell:is(.is-preview, .is-readonly) .milkdown-table-block .handle,
+.milkdown-editor-shell:is(.is-preview, .is-readonly) .milkdown-table-block .cell-handle,
+.milkdown-editor-shell:is(.is-preview, .is-readonly) .milkdown-table-block .line-handle,
+.milkdown-editor-shell:is(.is-preview, .is-readonly) .milkdown-image-block .image-resize-handle,
+.milkdown-editor-shell:is(.is-preview, .is-readonly) .milkdown-image-block .operation,
+.milkdown-editor-shell:is(.is-preview, .is-readonly) .milkdown-image-block .image-edit {
   display: none !important;
 }
 
-.milkdown-editor-shell.is-preview .ProseMirror-selectednode,
-.milkdown-editor-shell.is-preview .milkdown-code-block.selected,
-.milkdown-editor-shell.is-preview .milkdown-image-block.selected {
+.milkdown-editor-shell:is(.is-preview, .is-readonly) .ProseMirror-selectednode,
+.milkdown-editor-shell:is(.is-preview, .is-readonly) .milkdown-code-block.selected,
+.milkdown-editor-shell:is(.is-preview, .is-readonly) .milkdown-image-block.selected {
   outline: none !important;
 }
 
@@ -884,9 +1333,7 @@ defineExpose({
   display: flex;
   align-items: center;
   min-width: 0;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scrollbar-width: thin;
+  overflow: visible;
 }
 
 .milkdown-editor-root .milkdown .milkdown-top-bar .top-bar-item {
@@ -904,6 +1351,98 @@ defineExpose({
 
 .milkdown-editor-root .milkdown .milkdown-top-bar .top-bar-item::after {
   content: attr(data-label);
+}
+
+.milkdown-editor-root .milkdown .milkdown-top-bar .markdown-toolbar-menu {
+  position: relative;
+  flex: 0 0 52px;
+  width: 52px;
+}
+
+.milkdown-editor-root .milkdown .milkdown-top-bar .markdown-toolbar-menu__toggle {
+  width: 50px;
+}
+
+.milkdown-editor-root .milkdown .milkdown-top-bar .markdown-toolbar-menu__panel {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% - 2px);
+  left: 0;
+  display: none;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  width: 300px;
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, var(--markdown-outline-border) 86%, transparent);
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--markdown-outline-background) 96%, transparent);
+  box-shadow: 0 18px 44px rgb(15 23 42 / 16%);
+  backdrop-filter: blur(16px);
+}
+
+.milkdown-editor-root .milkdown .milkdown-top-bar .markdown-tools-menu .markdown-toolbar-menu__panel {
+  right: 0;
+  left: auto;
+}
+
+.milkdown-editor-root .milkdown .milkdown-top-bar .markdown-toolbar-menu.is-open .markdown-toolbar-menu__panel {
+  display: grid;
+}
+
+.milkdown-editor-root .milkdown .milkdown-top-bar .markdown-toolbar-menu.is-open .markdown-toolbar-menu__toggle {
+  color: var(--markdown-outline-primary);
+  background: var(--markdown-outline-hover);
+}
+
+.milkdown-editor-root .milkdown .milkdown-top-bar .markdown-toolbar-menu__item {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  gap: 9px;
+  align-items: center;
+  justify-content: flex-start;
+  width: 136px;
+  height: 40px;
+  margin: 0;
+  padding: 0 11px;
+  border: 0;
+  border-radius: 8px;
+  color: var(--milkdown-toolbar-icon);
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.16s ease, background 0.16s ease, transform 0.16s ease;
+}
+
+.milkdown-editor-root .milkdown .milkdown-top-bar .markdown-toolbar-menu__item::after {
+  content: attr(data-label);
+}
+
+.milkdown-editor-root .milkdown .milkdown-top-bar .markdown-toolbar-menu__item svg {
+  flex: 0 0 19px;
+  width: 19px;
+  height: 19px;
+  color: currentColor;
+  fill: currentColor;
+}
+
+.milkdown-editor-root .milkdown .milkdown-top-bar .markdown-toolbar-menu__item:hover,
+.milkdown-editor-root .milkdown .milkdown-top-bar .markdown-toolbar-menu__item:focus-visible,
+.milkdown-editor-root .milkdown .milkdown-top-bar .markdown-toolbar-menu__item.active {
+  color: var(--markdown-outline-primary);
+  background: var(--markdown-outline-hover);
+  transform: translateY(-1px);
+}
+
+.milkdown-editor-root .milkdown .milkdown-top-bar .markdown-toolbar-menu__item:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .milkdown-editor-root .milkdown .milkdown-top-bar .top-bar-item svg {
@@ -1013,10 +1552,14 @@ html.dark .milkdown-editor-root .milkdown .milkdown-top-bar {
 .note-milkdown-editor .milkdown-editor-root .milkdown .milkdown-top-bar {
   height: 52px;
   min-height: 52px;
+  border-color: color-mix(in srgb, var(--milkdown-toolbar-divider) 72%, transparent);
+  background: color-mix(in srgb, var(--markdown-outline-background) 95%, transparent);
+  box-shadow: 0 5px 16px rgb(15 23 42 / 3%);
 }
 
 .note-milkdown-editor .milkdown-editor-root .milkdown .milkdown-top-bar .top-bar-inner {
   height: 51px;
+  padding: 0 3px;
 }
 
 .note-milkdown-editor .milkdown-editor-root .milkdown .milkdown-top-bar .top-bar-actions {
@@ -1032,20 +1575,124 @@ html.dark .milkdown-editor-root .milkdown .milkdown-top-bar {
   height: 46px;
   margin: 2px 1px;
   padding: 2px 3px;
+  border-radius: 7px;
   font-size: 10px;
   line-height: 12px;
+  transition: color 0.16s ease, background 0.16s ease, box-shadow 0.18s ease,
+    transform 0.18s ease;
 }
 
 .note-milkdown-editor .milkdown-editor-root .milkdown .milkdown-top-bar .top-bar-item svg {
   width: 19px;
   height: 19px;
+  transition: color 0.16s ease, fill 0.16s ease, transform 0.18s ease;
+}
+
+.note-milkdown-editor .milkdown-editor-root .milkdown .milkdown-top-bar .top-bar-item:hover,
+.note-milkdown-editor .milkdown-editor-root .milkdown .milkdown-top-bar .top-bar-item:focus-visible,
+.note-milkdown-editor .milkdown-editor-root .milkdown .milkdown-top-bar .top-bar-item.active {
+  color: var(--markdown-outline-primary);
+  background: var(--markdown-outline-hover);
+  box-shadow: 0 4px 12px rgb(47 128 237 / 8%);
+  transform: translateY(-1px);
+}
+
+.note-milkdown-editor .milkdown-editor-root .milkdown .milkdown-top-bar .top-bar-item:hover svg,
+.note-milkdown-editor .milkdown-editor-root .milkdown .milkdown-top-bar .top-bar-item:focus-visible svg,
+.note-milkdown-editor .milkdown-editor-root .milkdown .milkdown-top-bar .top-bar-item.active svg {
+  transform: scale(1.05);
+}
+
+.note-milkdown-editor .milkdown-editor-root .milkdown .milkdown-top-bar .top-bar-heading-button {
+  height: 38px;
+  border-radius: 7px;
+  transition: color 0.16s ease, background 0.16s ease;
+}
+
+.note-milkdown-editor .milkdown-editor-root .milkdown .milkdown-top-bar .top-bar-heading-button:hover,
+.note-milkdown-editor .milkdown-editor-root .milkdown .milkdown-top-bar .top-bar-heading-button:focus-visible {
+  color: var(--markdown-outline-primary);
+  background: var(--markdown-outline-hover);
+}
+
+.note-milkdown-editor .milkdown-editor-root .milkdown .milkdown-top-bar .top-bar-divider {
+  height: 24px;
+  margin: 0 3px;
+  opacity: 0.68;
 }
 
 .note-milkdown-editor .markdown-outline {
   top: 52px;
+  padding: 0 14px 22px;
+  scrollbar-color: color-mix(in srgb, var(--markdown-outline-text) 28%, transparent) transparent;
+  scrollbar-width: thin;
+}
+
+.note-milkdown-editor .markdown-outline__header {
+  height: 52px;
+  background: color-mix(in srgb, var(--markdown-outline-background) 95%, transparent);
+  backdrop-filter: blur(12px);
+}
+
+.note-milkdown-editor .markdown-outline__header::after {
+  width: 34px;
+  height: 2px;
+  border-radius: 2px;
+}
+
+.note-milkdown-editor .markdown-outline__close {
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--markdown-outline-text) 5%, transparent);
+  transition: color 0.16s ease, background 0.16s ease, transform 0.18s ease;
+}
+
+.note-milkdown-editor .markdown-outline__close:hover,
+.note-milkdown-editor .markdown-outline__close:focus-visible {
+  transform: rotate(90deg);
+}
+
+.note-milkdown-editor .markdown-outline__list {
+  gap: 4px;
+  padding-top: 12px;
+}
+
+.note-milkdown-editor .markdown-outline-item {
+  position: relative;
+  min-height: 34px;
+  border-radius: 7px;
+  transition: color 0.16s ease, background 0.16s ease, box-shadow 0.18s ease;
+}
+
+.note-milkdown-editor .markdown-outline-item:hover,
+.note-milkdown-editor .markdown-outline-item:focus-visible {
+  box-shadow: 0 4px 12px rgb(47 128 237 / 7%);
+}
+
+.note-milkdown-editor .markdown-outline-item.is-active {
+  background: color-mix(in srgb, var(--markdown-outline-primary) 9%, transparent);
+}
+
+.note-milkdown-editor .markdown-outline-item.is-active::before {
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 0;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--markdown-outline-primary);
+  content: '';
 }
 
 .note-milkdown-editor .milkdown-editor-root .milkdown .ProseMirror {
   padding-top: 10px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .note-milkdown-editor *,
+  .note-milkdown-editor *::before,
+  .note-milkdown-editor *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 </style>

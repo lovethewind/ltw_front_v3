@@ -21,9 +21,42 @@
           maxlength="100"
           @input="updateTitle"
         />
-        <el-tag :type="statusType" effect="light" round role="status" aria-live="polite">
+        <el-tag
+          class="note-editor-save-status"
+          :class="`is-${saveStatus}`"
+          :type="statusType"
+          effect="light"
+          round
+          role="status"
+          aria-live="polite"
+        >
           {{ statusText }}
         </el-tag>
+        <el-tooltip content="立即保存（⌘/Ctrl + S）" placement="bottom">
+          <el-button
+            class="note-editor-save-button"
+            text
+            :loading="saveStatus === 'saving'"
+            :disabled="locked || saveStatus === 'saving'"
+            aria-label="立即保存笔记"
+            @click="emit('save-now')"
+          >
+            <Icon icon="tabler:device-floppy" />
+            <span>保存</span>
+          </el-button>
+        </el-tooltip>
+        <el-tooltip content="历史版本" placement="bottom">
+          <el-button
+            class="note-editor-history-button"
+            text
+            circle
+            :disabled="locked"
+            aria-label="查看历史版本"
+            @click="emit('show-history')"
+          >
+            <Icon icon="material-symbols:history-rounded" />
+          </el-button>
+        </el-tooltip>
         <el-button
           v-if="saveStatus === 'failed' || saveStatus === 'offline'"
           size="small"
@@ -124,13 +157,16 @@ const emit = defineEmits<{
   (event: 'retry-save'): void
   (event: 'restore-recovery'): void
   (event: 'discard-recovery'): void
+  (event: 'save-now'): void
+  (event: 'show-history'): void
 }>()
 
 const editorRef = ref<EditorInstance | null>(null)
+const lastSavedTime = ref('')
 const statusText = computed(() => ({
   idle: '尚未编辑',
   saving: '正在保存',
-  saved: '已保存',
+  saved: lastSavedTime.value ? `已保存 ${lastSavedTime.value}` : '已保存',
   failed: '保存失败',
   offline: '离线草稿'
 })[props.saveStatus])
@@ -141,7 +177,6 @@ const statusType = computed<'success' | 'warning' | 'danger' | 'info'>(() => ({
   failed: 'danger' as const,
   offline: 'warning' as const
 })[props.saveStatus])
-
 /**
  * 获取当前文件夹名称。
  *
@@ -185,6 +220,20 @@ const visibleTags = computed(resolveVisibleTags)
 const hiddenTagCount = computed(resolveHiddenTagCount)
 
 /**
+ * 格式化最近保存时间。
+ *
+ * :param value: 保存完成时间。
+ * :return: 二十四小时制的时分文本。
+ */
+function formatSavedTime(value: Date): string {
+  return new Intl.DateTimeFormat('zh-CN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  }).format(value)
+}
+
+/**
  * 将笔记内容同步到编辑器。
  *
  * :param content: Markdown 内容。
@@ -198,10 +247,21 @@ function syncEditor(content: string | undefined): void {
 
 watch(
   () => props.note?.id,
-  () => syncEditor(props.note?.content),
+  () => {
+    lastSavedTime.value = ''
+    syncEditor(props.note?.content)
+  },
   { immediate: true }
 )
 watch(() => props.note?.content, syncEditor)
+watch(
+  () => props.saveStatus,
+  (status, previousStatus) => {
+    if (status === 'saved' && previousStatus !== 'saved') {
+      lastSavedTime.value = formatSavedTime(new Date())
+    }
+  }
+)
 
 /**
  * 更新笔记标题。
@@ -244,6 +304,7 @@ function updateTags(ids: ApiId[]): void {
     tagList: props.tags.filter((tag) => ids.some((id) => String(id) === String(tag.id)))
   })
 }
+
 </script>
 
 <style scoped lang="scss">
@@ -307,12 +368,113 @@ function updateTags(ids: ApiId[]): void {
   outline: none;
 }
 
+.note-editor-save-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  height: 26px;
+  padding: 0 9px;
+  border-color: color-mix(in srgb, currentColor 16%, transparent);
+  background: color-mix(in srgb, currentColor 7%, var(--note-surface));
+  box-shadow: 0 4px 12px rgb(15 23 42 / 4%);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.note-editor-save-status::before {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  content: '';
+}
+
+.note-editor-save-status.is-saving::before {
+  animation: note-save-pulse 1.2s ease-in-out infinite;
+}
+
+.note-editor-save-status.is-failed,
+.note-editor-save-status.is-offline {
+  box-shadow: 0 4px 12px color-mix(in srgb, currentColor 12%, transparent);
+}
+
+.note-editor-save-button {
+  flex: 0 0 auto;
+  height: 30px;
+  padding: 0 9px;
+  border-radius: 8px;
+  color: var(--note-text-muted);
+  background: var(--note-surface-subtle);
+  transition: color 0.16s ease, background 0.16s ease, box-shadow 0.18s ease,
+    transform 0.18s ease;
+}
+
+.note-editor-save-button :deep(.el-icon) {
+  display: none;
+}
+
+.note-editor-save-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.note-editor-save-button span {
+  margin-left: 5px;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.note-editor-save-button:hover:not(.is-disabled),
+.note-editor-save-button:focus-visible:not(.is-disabled) {
+  color: var(--note-primary);
+  background: var(--note-surface-active);
+  box-shadow: 0 6px 16px rgb(47 128 237 / 10%);
+  transform: translateY(-1px);
+}
+
+@keyframes note-save-pulse {
+  0%,
+  100% {
+    opacity: 0.42;
+    transform: scale(0.82);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+}
+
+.note-editor-history-button {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  color: var(--note-text-muted);
+  background: var(--note-surface-subtle);
+  transition: color 0.16s ease, background 0.16s ease, box-shadow 0.18s ease,
+    transform 0.18s ease;
+}
+
+.note-editor-history-button:hover,
+.note-editor-history-button:focus-visible {
+  color: var(--note-primary);
+  background: var(--note-surface-active);
+  box-shadow: 0 6px 16px rgb(47 128 237 / 10%);
+  transform: translateY(-1px);
+}
+
+.note-editor-history-button svg {
+  width: 19px;
+  height: 19px;
+}
+
 .note-editor-meta {
   display: flex;
   align-items: center;
   gap: 10px;
   min-height: 32px;
-  padding: 0 4px 3px;
+  padding: 1px 4px 4px;
   border-bottom: 1px solid var(--note-border);
   background: transparent;
 }
@@ -340,6 +502,16 @@ function updateTags(ids: ApiId[]): void {
   white-space: nowrap;
 }
 
+.note-editor-field__label svg {
+  box-sizing: content-box;
+  width: 15px;
+  height: 15px;
+  padding: 3px;
+  border-radius: 6px;
+  color: var(--note-primary);
+  background: color-mix(in srgb, var(--note-primary) 9%, transparent);
+}
+
 .note-editor-property-button,
 .note-editor-tags-trigger {
   min-width: 0;
@@ -347,14 +519,19 @@ function updateTags(ids: ApiId[]): void {
   margin: 0;
   padding: 0 8px;
   border: 0;
+  border-radius: 7px;
   color: var(--note-text);
   background: transparent;
+  transition: color 0.16s ease, background 0.16s ease, box-shadow 0.18s ease;
 }
 
 .note-editor-property-button:hover,
-.note-editor-tags-trigger:hover {
+.note-editor-tags-trigger:hover,
+.note-editor-property-button:focus-visible,
+.note-editor-tags-trigger:focus-visible {
   color: var(--note-primary);
   background: var(--note-surface-active);
+  box-shadow: 0 4px 12px rgb(47 128 237 / 8%);
 }
 
 .note-editor-property-button :deep(> span),
@@ -377,6 +554,12 @@ function updateTags(ids: ApiId[]): void {
   max-width: 100%;
 }
 
+.note-editor-tags-trigger :deep(.el-tag) {
+  border-color: color-mix(in srgb, var(--note-primary) 25%, transparent);
+  color: var(--note-primary);
+  background: color-mix(in srgb, var(--note-primary) 7%, var(--note-surface));
+}
+
 .note-editor-tags-more,
 .note-editor-tags-placeholder,
 .note-editor-tags-add {
@@ -392,6 +575,13 @@ function updateTags(ids: ApiId[]): void {
   height: 18px;
   border-radius: 50%;
   background: var(--note-surface-subtle);
+  transition: color 0.16s ease, background 0.16s ease, transform 0.18s ease;
+}
+
+.note-editor-tags-trigger:hover .note-editor-tags-add {
+  color: var(--note-primary);
+  background: color-mix(in srgb, var(--note-primary) 12%, transparent);
+  transform: rotate(90deg);
 }
 
 .note-editor-tag-options {
@@ -410,6 +600,15 @@ function updateTags(ids: ApiId[]): void {
   min-height: 0;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .note-editor *,
+  .note-editor *::before,
+  .note-editor *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 @media (max-width: 560px) {
   .note-editor {
     padding: 8px 14px 14px;
@@ -423,6 +622,10 @@ function updateTags(ids: ApiId[]): void {
 
   .note-editor-header .el-input {
     flex-basis: 100%;
+  }
+
+  .note-editor-save-status {
+    margin-right: auto;
   }
 
   .note-editor-meta {

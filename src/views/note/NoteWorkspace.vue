@@ -31,6 +31,7 @@
           :folders="store.folders"
           :tags="store.tags"
           :notes="store.visibleNotes"
+          :counts="store.navigationCounts"
           :active-id="store.activeNote?.id"
           :filter="store.filter"
           :loading="store.loading"
@@ -75,25 +76,42 @@
         :locked="store.editorLocked"
         @update-note="store.updateActiveNote"
         @retry-save="store.retrySave"
+        @save-now="saveActiveNote"
         @restore-recovery="store.restoreRecoverySnapshot"
         @discard-recovery="store.discardRecoverySnapshot"
+        @show-history="openHistory"
       />
     </section>
+    <NoteHistoryDrawer
+      v-model="historyVisible"
+      :histories="histories"
+      :selected="selectedHistory"
+      :loading="historyLoading"
+      :detail-loading="historyDetailLoading"
+      :restoring="historyRestoring"
+      :deleting="historyDeleting"
+      @select="selectHistory"
+      @restore="restoreHistory"
+      @delete="deleteHistoryVersion"
+    />
   </main>
 </template>
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { ElMessage, ElScrollbar } from 'element-plus'
+import { ElMessage, ElMessageBox, ElScrollbar } from 'element-plus'
 import type { ScrollbarInstance } from 'element-plus'
 import { Icon } from '@iconify/vue'
 import NoteEditor from '@/components/note/NoteEditor.vue'
+import NoteHistoryDrawer from '@/components/note/NoteHistoryDrawer.vue'
 import NoteSidebar from '@/components/note/NoteSidebar.vue'
-import type { ApiId } from '@/interface/note'
+import noteApi from '@/api/note'
+import type { ApiId, INoteHistory, INoteHistoryListItem } from '@/interface/note'
 import { useCommonStore } from '@/stores/common'
 import { useModalStore } from '@/stores/modal'
 import { useNoteStore } from '@/stores/note'
 import { useUserStore } from '@/stores/user'
 type MobilePanel = 'sidebar' | 'editor'
+
 const store = useNoteStore()
 const commonStore = useCommonStore()
 const modalStore = useModalStore()
@@ -103,6 +121,119 @@ let workspaceActive = false
 const user = computed(() => userStore.user)
 const mobilePanel = ref<MobilePanel>('sidebar')
 const sidebarScrollbarRef = ref<ScrollbarInstance | null>(null)
+const historyVisible = ref(false)
+const historyLoading = ref(false)
+const historyDetailLoading = ref(false)
+const historyRestoring = ref(false)
+const historyDeleting = ref(false)
+const histories = ref<INoteHistoryListItem[]>([])
+const selectedHistory = ref<INoteHistory | null>(null)
+let historyRequestId = 0
+let historyDetailRequestId = 0
+/**
+ * 打开当前笔记的历史版本抽屉并加载最近版本。
+ *
+ * :return: 无返回值。
+ */
+async function openHistory(): Promise<void> {
+  const noteId = store.activeNote?.id
+  if (noteId === undefined) return
+  const requestId = ++historyRequestId
+  historyVisible.value = true
+  historyLoading.value = true
+  histories.value = []
+  selectedHistory.value = null
+  try {
+    const response = await noteApi.getHistoryList(noteId)
+    if (requestId !== historyRequestId || String(store.activeNote?.id) !== String(noteId)) return
+    histories.value = response.data.records
+    if (histories.value[0]) await selectHistory(histories.value[0].id)
+  } catch {
+    if (requestId === historyRequestId) ElMessage.error('历史版本加载失败')
+  } finally {
+    if (requestId === historyRequestId) historyLoading.value = false
+  }
+}
+
+/**
+ * 加载选中的历史版本详情。
+ *
+ * :param historyId: 历史版本标识。
+ * :return: 无返回值。
+ */
+async function selectHistory(historyId: ApiId): Promise<void> {
+  const noteId = store.activeNote?.id
+  if (noteId === undefined) return
+  const requestId = ++historyDetailRequestId
+  historyDetailLoading.value = true
+  try {
+    const response = await noteApi.getHistoryDetail(noteId, historyId)
+    if (requestId === historyDetailRequestId && String(store.activeNote?.id) === String(noteId)) {
+      selectedHistory.value = response.data
+    }
+  } catch {
+    if (requestId === historyDetailRequestId) ElMessage.error('历史版本详情加载失败')
+  } finally {
+    if (requestId === historyDetailRequestId) historyDetailLoading.value = false
+  }
+}
+
+/**
+ * 确认并恢复选中的历史版本。
+ *
+ * :param historyId: 历史版本标识。
+ * :return: 无返回值。
+ */
+async function restoreHistory(historyId: ApiId): Promise<void> {
+  try {
+    await ElMessageBox.confirm(
+      '恢复后当前内容仍会保留在历史版本中，是否继续？',
+      '恢复历史版本',
+      { type: 'warning', confirmButtonText: '恢复', cancelButtonText: '取消' }
+    )
+  } catch {
+    return
+  }
+  historyRestoring.value = true
+  const restored = await store.restoreHistory(historyId)
+  historyRestoring.value = false
+  if (!restored) {
+    ElMessage.error(store.actionError || '历史版本恢复失败')
+    return
+  }
+  ElMessage.success('已恢复历史版本，恢复前内容已自动留档')
+  await openHistory()
+}
+
+/**
+ * 确认并删除选中的单个历史版本。
+ *
+ * :param historyId: 历史版本标识。
+ * :return: 无返回值。
+ */
+async function deleteHistoryVersion(historyId: ApiId): Promise<void> {
+  const noteId = store.activeNote?.id
+  if (noteId === undefined) return
+  try {
+    await ElMessageBox.confirm(
+      '删除后无法恢复，但不会影响当前笔记内容，是否继续？',
+      '删除历史版本',
+      { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' }
+    )
+  } catch {
+    return
+  }
+  historyDeleting.value = true
+  try {
+    await noteApi.deleteHistory(noteId, historyId)
+    ElMessage.success('历史版本已删除')
+    await openHistory()
+  } catch {
+    ElMessage.error('历史版本删除失败')
+  } finally {
+    historyDeleting.value = false
+  }
+}
 
 /**
  * 在异步数据更新后重新计算目录栏滚动指示条。
@@ -163,6 +294,12 @@ watch(user, (currentUser) => {
   }
 })
 
+watch(() => store.activeNote?.id, () => {
+  historyVisible.value = false
+  historyRequestId += 1
+  historyDetailRequestId += 1
+})
+
 /**
  * 新建笔记成功后切换到编辑层。
  *
@@ -200,6 +337,21 @@ function selectNote(id: ApiId): void {
 }
 
 /**
+ * 立即提交笔记保存队列，并反馈保存结果。
+ *
+ * :return: 无返回值。
+ */
+async function saveActiveNote(): Promise<void> {
+  const saved = await store.saveNow()
+  if (unmounted) return
+  if (saved) {
+    ElMessage.success('保存成功')
+  } else if (store.activeNote) {
+    ElMessage.error('保存失败，请稍后重试')
+  }
+}
+
+/**
  * 拦截系统保存快捷键并立即提交笔记保存队列。
  *
  * :param event: 键盘事件。
@@ -208,13 +360,7 @@ function selectNote(id: ApiId): void {
 async function handleSaveShortcut(event: KeyboardEvent): Promise<void> {
   if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== 's') return
   event.preventDefault()
-  const saved = await store.saveNow()
-  if (unmounted) return
-  if (saved) {
-    ElMessage.success('保存成功')
-  } else if (store.activeNote) {
-    ElMessage.error('保存失败，请稍后重试')
-  }
+  await saveActiveNote()
 }
 
 onMounted(() => {

@@ -101,6 +101,7 @@ declare module 'vue' {
     NoteEditor: typeof import('./src/components/note/NoteEditor.vue')['default']
     NoteHistoryDrawer: typeof import('./src/components/note/NoteHistoryDrawer.vue')['default']
     NoteList: typeof import('./src/components/note/NoteList.vue')['default']
+    NoteNavigation: typeof import('./src/components/note/NoteNavigation.vue')['default']
     NoteSidebar: typeof import('./src/components/note/NoteSidebar.vue')['default']
     OnBuild: typeof import('./src/components/base/OnBuild.vue')['default']
     OrderBar: typeof import('./src/components/base/OrderBar.vue')['default']

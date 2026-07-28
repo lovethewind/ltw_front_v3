@@ -49,8 +49,10 @@ import '@milkdown/crepe/theme/classic.css'
 import { Compartment, EditorState, Prec, StateEffect } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { Crepe } from '@milkdown/crepe'
-import { commandsCtx } from '@milkdown/kit/core'
+import { commandsCtx, editorViewCtx } from '@milkdown/kit/core'
 import { redoCommand, undoCommand } from '@milkdown/kit/plugin/history'
+import { paragraphSchema } from '@milkdown/kit/preset/commonmark'
+import { TextSelection } from '@milkdown/kit/prose/state'
 import { replaceAll } from '@milkdown/kit/utils'
 import { h, nextTick, onBeforeUnmount, onMounted, ref, render, watch } from 'vue'
 import { ElMessage } from 'element-plus'
@@ -161,6 +163,20 @@ function updateActiveOutline(): void {
     if (heading.getBoundingClientRect().top <= threshold) nextIndex = index
   })
   activeOutlineIndex.value = nextIndex
+}
+
+/**
+ * 将编辑区和大纲状态重置到文档顶部。
+ *
+ * :return: 无返回值。
+ */
+function resetEditorScroll(): void {
+  const scrollContainer = editorScrollRef.value
+  if (scrollContainer) scrollContainer.scrollTop = 0
+  activeOutlineIndex.value = 0
+  void nextTick(() => {
+    if (editorScrollRef.value) editorScrollRef.value.scrollTop = 0
+  })
 }
 
 /**
@@ -581,12 +597,56 @@ function toggleFocusMode(): void {
 }
 
 /**
+ * 在文档首个代码块前插入空段落。
+ *
+ * :param event: 代码编辑器键盘事件。
+ * :return: 成功插入段落时返回 true。
+ */
+function insertParagraphBeforeLeadingCodeBlock(event: KeyboardEvent): boolean {
+  if (
+    (event.key !== 'ArrowUp' && event.key !== 'Backspace')
+    || event.altKey
+    || event.ctrlKey
+    || event.metaKey
+    || event.shiftKey
+    || props.readonly
+    || previewMode.value
+  ) return false
+  const target = event.target
+  if (!(target instanceof HTMLElement)) return false
+  const codeMirrorElement = target.closest<HTMLElement>('.cm-editor')
+  if (!codeMirrorElement) return false
+  const codeMirrorView = EditorView.findFromDOM(codeMirrorElement)
+  const selection = codeMirrorView?.state.selection.main
+  if (!selection || !selection.empty || selection.head !== 0) return false
+
+  let inserted = false
+  editor?.editor.action((context) => {
+    const view = context.get(editorViewCtx)
+    const { state } = view
+    if (state.doc.firstChild?.type.name !== 'code_block') return
+    const paragraph = paragraphSchema.type(context).create()
+    let transaction = state.tr.insert(0, paragraph)
+    transaction = transaction.setSelection(TextSelection.create(transaction.doc, 1))
+    view.dispatch(transaction.scrollIntoView())
+    view.focus()
+    inserted = true
+  })
+  if (inserted) {
+    event.preventDefault()
+    event.stopPropagation()
+  }
+  return inserted
+}
+
+/**
  * 处理编辑器级键盘操作。
  *
  * :param event: 键盘事件。
  * :return: 无返回值。
  */
 function handleEditorDocumentKeydown(event: KeyboardEvent): void {
+  if (insertParagraphBeforeLeadingCodeBlock(event)) return
   if (event.key !== 'Escape') return
   closeToolbarMenus()
   if (focusMode.value) toggleFocusMode()
@@ -861,17 +921,19 @@ async function createEditor(): Promise<void> {
  * 设置编辑器 Markdown 内容。
  *
  * :param value: Markdown 内容。
+ * :param resetScroll: 是否重置编辑区滚动位置。
  * :return: 无返回值。
  */
-function setContent(value: string): void {
+function setContent(value: string, resetScroll = false): void {
   contentValue.value = value
   updateOutline(value)
   if (!editor || !editorReady) {
     pendingContent = value
+    if (resetScroll) resetEditorScroll()
     return
   }
-  if (editor.getMarkdown() === value) return
-  replaceContentSilently(value, editor)
+  if (editor.getMarkdown() !== value) replaceContentSilently(value, editor)
+  if (resetScroll) resetEditorScroll()
 }
 
 /**
@@ -883,7 +945,7 @@ function getContentLength(): number {
   return contentValue.value.length
 }
 
-watch(() => props.value, setContent)
+watch(() => props.value, (value) => setContent(value, false))
 watch(() => props.readonly, () => syncPreviewReadonly())
 
 onMounted(() => {

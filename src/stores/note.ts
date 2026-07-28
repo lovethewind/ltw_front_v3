@@ -129,8 +129,8 @@ export const useNoteStore = defineStore('note', () => {
    * :return: 列表展示项。
    */
   function toListItem(note: INote): INoteListItem {
-    const { id, title, folderId, tagList, isPinned, updateTime } = note
-    return { id, title, folderId, tagList, isPinned, updateTime }
+    const { id, title, content, folderId, tagList, isPinned, updateTime } = note
+    return { id, title, contentPreview: content, folderId, tagList, isPinned, updateTime }
   }
 
   /**

@@ -101,10 +101,12 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox, ElScrollbar } from 'element-plus'
 import type { ScrollbarInstance } from 'element-plus'
 import { Icon } from '@iconify/vue'
+import { useRoute } from 'vue-router'
 import NoteEditor from '@/components/note/NoteEditor.vue'
 import NoteHistoryDrawer from '@/components/note/NoteHistoryDrawer.vue'
 import NoteSidebar from '@/components/note/NoteSidebar.vue'
 import noteApi from '@/api/note'
+import userApi from '@/api/user'
 import type { ApiId, INoteHistory, INoteHistoryListItem } from '@/interface/note'
 import { useCommonStore } from '@/stores/common'
 import { useModalStore } from '@/stores/modal'
@@ -116,8 +118,10 @@ const store = useNoteStore()
 const commonStore = useCommonStore()
 const modalStore = useModalStore()
 const userStore = useUserStore()
+const route = useRoute()
 let unmounted = false
 let workspaceActive = false
+let desktopAuthRequested = false
 const user = computed(() => userStore.user)
 const mobilePanel = ref<MobilePanel>('sidebar')
 const sidebarScrollbarRef = ref<ScrollbarInstance | null>(null)
@@ -256,6 +260,39 @@ function openLogin(): void {
 }
 
 /**
+ * 读取并校验桌面端浏览器登录状态参数。
+ *
+ * :return: 合法状态值；当前不是桌面端授权页面时返回空字符串。
+ */
+function getDesktopAuthState(): string {
+  if (route.query.desktop_login !== '1') return ''
+  const state = typeof route.query.state === 'string' ? route.query.state : ''
+  return /^[A-Za-z0-9_-]{32,128}$/.test(state) ? state : ''
+}
+
+/**
+ * 为已登录用户签发一次性授权码并返回桌面应用。
+ *
+ * :return: 授权跳转完成后的 Promise。
+ */
+async function completeDesktopAuth(): Promise<void> {
+  const state = getDesktopAuthState()
+  if (!state || !user.value || desktopAuthRequested) return
+  desktopAuthRequested = true
+  try {
+    const response = await userApi.createDesktopAuthCode({ state })
+    const code = String(response.data?.code || '')
+    if (!/^[A-Za-z0-9_-]{32,128}$/.test(code)) throw new Error('服务未返回有效授权码')
+    window.location.assign(
+      `xinyue-notes://auth/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`
+    )
+  } catch (error) {
+    desktopAuthRequested = false
+    ElMessage.error(error instanceof Error ? error.message : '桌面端授权失败，请重试')
+  }
+}
+
+/**
  * 启动已登录用户的笔记工作区与保存快捷键。
  *
  * :return: 无返回值。
@@ -289,6 +326,7 @@ watch(user, (currentUser) => {
   if (unmounted) return
   if (currentUser) {
     activateWorkspace()
+    void completeDesktopAuth()
   } else {
     deactivateWorkspace()
   }
@@ -366,7 +404,14 @@ async function handleSaveShortcut(event: KeyboardEvent): Promise<void> {
 onMounted(() => {
   unmounted = false
   commonStore.setShowFooter(false)
-  if (user.value) activateWorkspace()
+  const desktopAuthState = getDesktopAuthState()
+  if (user.value) {
+    activateWorkspace()
+    void completeDesktopAuth()
+  } else if (desktopAuthState) {
+    openLogin()
+    ElMessage.info('请登录并授权心悦笔记，完成后会自动返回应用')
+  }
 })
 onBeforeUnmount(() => {
   unmounted = true

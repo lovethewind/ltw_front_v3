@@ -69,7 +69,7 @@ export const useCommonStore = defineStore('common', () => {
       meta: [
         {
           name: 'keyWords',
-          content: '心悦心享,乐学,开源博客,资源分享,www.lovethewind.cn'
+          content: '心悦心享,乐学,开源博客,资源分享,lovethewind.cn'
         },
         {
           name: 'description',

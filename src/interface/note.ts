@@ -28,6 +28,7 @@ export interface INoteFolder {
 export interface INoteListItem {
   id: ApiId
   title: string
+  contentPreview: string
   folderId: ApiId | null
   tagList: INoteTag[]
   isPinned: boolean

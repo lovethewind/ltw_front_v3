@@ -1,5 +1,11 @@
 <template>
-  <section class="note-editor" aria-label="笔记编辑器" :aria-busy="locked" :inert="locked">
+  <section
+    class="note-editor"
+    aria-label="笔记编辑器"
+    :aria-busy="locked"
+    :inert="locked"
+    @click="closePropertyPickers"
+  >
     <template v-if="note">
       <div v-if="hasRecoverySnapshot" class="note-editor-recovery" role="status" aria-live="polite">
         <div>
@@ -74,51 +80,108 @@
             <Icon icon="material-symbols:folder-outline-rounded" />
             文件夹
           </span>
-          <el-dropdown :disabled="locked" trigger="click" @command="updateFolder">
-            <el-button class="note-editor-property-button" text :disabled="locked">
+          <div class="note-editor-property-picker" @click.stop>
+            <button
+              class="note-editor-property-button"
+              type="button"
+              :disabled="locked"
+              :aria-expanded="folderPickerVisible"
+              @click="toggleFolderPicker"
+            >
+              <Icon icon="material-symbols:folder-outline-rounded" />
               <span>{{ folderName }}</span>
               <Icon icon="material-symbols:keyboard-arrow-down-rounded" />
-            </el-button>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item command="">未分类</el-dropdown-item>
-                <el-dropdown-item v-for="folder in folders" :key="folder.id" :command="folder.id">
-                  {{ folder.name }}
-                </el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
+            </button>
+            <div v-if="folderPickerVisible" class="note-editor-property-popover is-folder">
+              <div class="note-editor-popover-title">
+                <span>移动到文件夹</span>
+                <small>{{ folderOptions.length }} 个</small>
+              </div>
+              <button
+                class="note-editor-folder-option"
+                :class="{ 'is-selected': note.folderId === null }"
+                type="button"
+                @click="updateFolder('')"
+              >
+                <Icon icon="tabler:folder-question" />
+                <span>未分类</span>
+                <Icon v-if="note.folderId === null" icon="material-symbols:check-rounded" />
+              </button>
+              <div class="note-editor-popover-divider" />
+              <div class="note-editor-popover-scroll">
+                <button
+                  v-for="folder in folderOptions"
+                  :key="folder.id"
+                  class="note-editor-folder-option"
+                  :class="{ 'is-selected': String(note.folderId) === String(folder.id) }"
+                  :style="{ paddingLeft: `${10 + folder.depth * 14}px` }"
+                  type="button"
+                  @click="updateFolder(folder.id)"
+                >
+                  <Icon icon="material-symbols:folder-outline-rounded" />
+                  <span>{{ folder.name }}</span>
+                  <Icon
+                    v-if="String(note.folderId) === String(folder.id)"
+                    icon="material-symbols:check-rounded"
+                  />
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="note-editor-property note-editor-property--tags">
           <span class="note-editor-field__label">
-            <Icon icon="material-symbols:tag-rounded" />
+            <Icon icon="material-symbols:label-outline-rounded" />
             标签
           </span>
-          <el-popover :disabled="locked" placement="bottom-start" trigger="click" :width="260">
-            <template #reference>
-              <el-button class="note-editor-tags-trigger" text :disabled="locked">
+          <div class="note-editor-property-picker is-tags" @click.stop>
+              <button
+                class="note-editor-tags-trigger"
+                type="button"
+                :disabled="locked"
+                :aria-expanded="tagPickerVisible"
+                @click="toggleTagPicker"
+              >
                 <template v-if="visibleTags.length">
-                  <el-tag v-for="tag in visibleTags" :key="tag.id" size="small" effect="plain" round>
+                  <span v-for="tag in visibleTags" :key="tag.id" class="note-editor-tag-chip">
                     {{ tag.name }}
-                  </el-tag>
+                  </span>
                   <span v-if="hiddenTagCount" class="note-editor-tags-more">+{{ hiddenTagCount }}</span>
                   <span class="note-editor-tags-add" aria-label="添加标签">+</span>
                 </template>
                 <span v-else class="note-editor-tags-placeholder">添加标签</span>
-              </el-button>
-            </template>
-            <el-checkbox-group
-              v-if="tags.length"
-              :model-value="selectedTagIds"
-              class="note-editor-tag-options"
-              @change="updateTags"
-            >
-              <el-checkbox v-for="tag in tags" :key="tag.id" :value="tag.id">
-                {{ tag.name }}
-              </el-checkbox>
-            </el-checkbox-group>
-            <el-empty v-else description="暂无可用标签" :image-size="48" />
-          </el-popover>
+              </button>
+              <div v-if="tagPickerVisible" class="note-editor-property-popover is-tags">
+                <div class="note-editor-popover-title">
+                  <span>选择标签</span>
+                  <small>{{ selectedTagIds.length }}/12</small>
+                </div>
+                <label class="note-editor-tag-search">
+                  <Icon icon="material-symbols:search-rounded" />
+                  <input v-model="tagSearchKeyword" autofocus placeholder="搜索标签" />
+                </label>
+                <div v-if="filteredTags.length" class="note-editor-tag-options">
+                  <button
+                    v-for="tag in filteredTags"
+                    :key="tag.id"
+                    type="button"
+                    @click="toggleTag(tag.id)"
+                  >
+                    <span
+                      class="note-editor-tag-check"
+                      :class="{ 'is-checked': selectedTagIds.some((id) => String(id) === String(tag.id)) }"
+                    >
+                      <Icon
+                        v-if="selectedTagIds.some((id) => String(id) === String(tag.id))"
+                        icon="material-symbols:check-rounded"
+                      />
+                    </span>
+                    <span>{{ tag.name }}</span>
+                  </button>
+                </div>
+                <p v-else class="note-editor-tag-empty">没有匹配的标签</p>
+              </div>
+          </div>
         </div>
       </div>
 
@@ -136,7 +199,7 @@ import type { ApiId, INote, INoteFolder, INoteTag } from '@/interface/note'
 import type { NoteSaveStatus } from '@/utils/note-autosave'
 
 interface EditorInstance {
-  setContent(value: string): void
+  setContent(value: string, resetScroll?: boolean): void
 }
 
 interface Props {
@@ -163,6 +226,9 @@ const emit = defineEmits<{
 
 const editorRef = ref<EditorInstance | null>(null)
 const lastSavedTime = ref('')
+const folderPickerVisible = ref(false)
+const tagPickerVisible = ref(false)
+const tagSearchKeyword = ref('')
 const statusText = computed(() => ({
   idle: '尚未编辑',
   saving: '正在保存',
@@ -218,6 +284,35 @@ const folderName = computed(resolveFolderName)
 const selectedTagIds = computed(resolveSelectedTagIds)
 const visibleTags = computed(resolveVisibleTags)
 const hiddenTagCount = computed(resolveHiddenTagCount)
+const folderOptions = computed(() => {
+  const options: Array<INoteFolder & { depth: number }> = []
+  const visited = new Set<string>()
+
+  /**
+   * 按文件夹层级生成自定义选择器选项。
+   *
+   * :param parentId: 当前父文件夹标识。
+   * :param depth: 当前层级深度。
+   * :return: 无返回值。
+   */
+  function appendOptions(parentId: ApiId | null, depth: number): void {
+    for (const folder of props.folders.filter((item) =>
+      parentId === null ? item.parentId === null : String(item.parentId) === String(parentId)
+    )) {
+      if (visited.has(String(folder.id))) continue
+      visited.add(String(folder.id))
+      options.push({ ...folder, depth })
+      appendOptions(folder.id, depth + 1)
+    }
+  }
+
+  appendOptions(null, 0)
+  return options
+})
+const filteredTags = computed(() => {
+  const keyword = tagSearchKeyword.value.trim().toLocaleLowerCase()
+  return props.tags.filter((tag) => !keyword || tag.name.toLocaleLowerCase().includes(keyword))
+})
 
 /**
  * 格式化最近保存时间。
@@ -237,23 +332,24 @@ function formatSavedTime(value: Date): string {
  * 将笔记内容同步到编辑器。
  *
  * :param content: Markdown 内容。
+ * :param resetScroll: 是否重置编辑区滚动位置。
  * :return: 无返回值。
  */
-function syncEditor(content: string | undefined): void {
+function syncEditor(content: string | undefined, resetScroll: boolean): void {
   void nextTick(() => {
-    editorRef.value?.setContent(content ?? '')
+    editorRef.value?.setContent(content ?? '', resetScroll)
   })
 }
 
 watch(
-  () => props.note?.id,
-  () => {
-    lastSavedTime.value = ''
-    syncEditor(props.note?.content)
+  () => [props.note?.id, props.note?.content] as const,
+  ([noteId, content], previous) => {
+    const documentChanged = noteId !== previous?.[0]
+    if (documentChanged) lastSavedTime.value = ''
+    syncEditor(content, documentChanged)
   },
   { immediate: true }
 )
-watch(() => props.note?.content, syncEditor)
 watch(
   () => props.saveStatus,
   (status, previousStatus) => {
@@ -291,6 +387,7 @@ function updateContent(content: string): void {
  */
 function updateFolder(folderId: ApiId | ''): void {
   emit('update-note', { folderId: folderId === '' ? null : folderId })
+  folderPickerVisible.value = false
 }
 
 /**
@@ -303,6 +400,52 @@ function updateTags(ids: ApiId[]): void {
   emit('update-note', {
     tagList: props.tags.filter((tag) => ids.some((id) => String(id) === String(tag.id)))
   })
+}
+
+/**
+ * 切换文件夹选择弹窗。
+ *
+ * :return: 无返回值。
+ */
+function toggleFolderPicker(): void {
+  folderPickerVisible.value = !folderPickerVisible.value
+  tagPickerVisible.value = false
+}
+
+/**
+ * 切换标签选择弹窗。
+ *
+ * :return: 无返回值。
+ */
+function toggleTagPicker(): void {
+  tagPickerVisible.value = !tagPickerVisible.value
+  folderPickerVisible.value = false
+  if (!tagPickerVisible.value) tagSearchKeyword.value = ''
+}
+
+/**
+ * 关闭笔记属性选择弹窗。
+ *
+ * :return: 无返回值。
+ */
+function closePropertyPickers(): void {
+  folderPickerVisible.value = false
+  tagPickerVisible.value = false
+  tagSearchKeyword.value = ''
+}
+
+/**
+ * 切换单个标签选中状态。
+ *
+ * :param tagId: 标签标识。
+ * :return: 无返回值。
+ */
+function toggleTag(tagId: ApiId): void {
+  const ids = selectedTagIds.value
+  const selected = ids.some((id) => String(id) === String(tagId))
+  updateTags(selected
+    ? ids.filter((id) => String(id) !== String(tagId))
+    : [...ids, tagId].slice(0, 12))
 }
 
 </script>
@@ -514,6 +657,9 @@ function updateTags(ids: ApiId[]): void {
 
 .note-editor-property-button,
 .note-editor-tags-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   min-width: 0;
   height: 28px;
   margin: 0;
@@ -522,7 +668,33 @@ function updateTags(ids: ApiId[]): void {
   border-radius: 7px;
   color: var(--note-text);
   background: transparent;
+  cursor: pointer;
+  font: inherit;
   transition: color 0.16s ease, background 0.16s ease, box-shadow 0.18s ease;
+}
+
+.note-editor-property-button {
+  min-width: 120px;
+  height: 28px;
+  border: 1px solid var(--note-border);
+  border-radius: 9px;
+  background: linear-gradient(
+    180deg,
+    var(--note-surface),
+    color-mix(in srgb, var(--note-surface) 92%, var(--note-primary))
+  );
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.note-editor-property-button > svg:first-child {
+  flex: 0 0 auto;
+  color: var(--note-text-muted);
+  font-size: 15px;
+}
+
+.note-editor-property-button > svg:last-child {
+  margin-left: auto;
 }
 
 .note-editor-property-button:hover,
@@ -534,14 +706,6 @@ function updateTags(ids: ApiId[]): void {
   box-shadow: 0 4px 12px rgb(47 128 237 / 8%);
 }
 
-.note-editor-property-button :deep(> span),
-.note-editor-tags-trigger :deep(> span) {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-}
-
 .note-editor-property-button span {
   overflow: hidden;
   max-width: 180px;
@@ -551,13 +715,23 @@ function updateTags(ids: ApiId[]): void {
 
 .note-editor-tags-trigger {
   justify-content: flex-start;
+  width: 100%;
   max-width: 100%;
 }
 
-.note-editor-tags-trigger :deep(.el-tag) {
+.note-editor-tag-chip {
+  overflow: hidden;
+  max-width: 88px;
+  border: 1px solid color-mix(in srgb, var(--note-primary) 25%, transparent);
+  border-radius: 999px;
+  padding: 2px 7px;
   border-color: color-mix(in srgb, var(--note-primary) 25%, transparent);
   color: var(--note-primary);
   background: color-mix(in srgb, var(--note-primary) 7%, var(--note-surface));
+  font-size: 11px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .note-editor-tags-more,
@@ -584,14 +758,152 @@ function updateTags(ids: ApiId[]): void {
   transform: rotate(90deg);
 }
 
+.note-editor-property-picker {
+  position: relative;
+  min-width: 0;
+}
+
+.note-editor-property-picker.is-tags {
+  flex: 1;
+  min-width: 180px;
+}
+
+.note-editor-property-popover {
+  position: absolute;
+  z-index: 90;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 270px;
+  padding: 8px;
+  border: 1px solid var(--note-border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--note-surface) 96%, transparent);
+  box-shadow: 0 20px 55px rgb(15 23 42 / 18%);
+  backdrop-filter: blur(20px);
+}
+
+.note-editor-property-popover.is-tags {
+  width: min(310px, calc(100vw - 48px));
+}
+
+.note-editor-popover-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 30px;
+  padding: 0 8px;
+  color: var(--note-text);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.note-editor-popover-title small {
+  color: var(--note-text-muted);
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.note-editor-popover-divider {
+  height: 1px;
+  margin: 5px 4px;
+  background: var(--note-border);
+}
+
+.note-editor-popover-scroll,
 .note-editor-tag-options {
   display: grid;
-  max-height: 260px;
+  max-height: 240px;
+  gap: 2px;
   overflow-y: auto;
 }
 
-.note-editor-tag-options .el-checkbox {
-  margin-right: 0;
+.note-editor-folder-option,
+.note-editor-tag-options button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  height: 36px;
+  border: 0;
+  border-radius: 9px;
+  padding: 0 10px;
+  color: var(--note-text-muted);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  text-align: left;
+}
+
+.note-editor-folder-option:hover,
+.note-editor-tag-options button:hover,
+.note-editor-folder-option.is-selected {
+  color: var(--note-primary);
+  background: var(--note-surface-active);
+}
+
+.note-editor-folder-option > span,
+.note-editor-tag-options button > span:last-child {
+  overflow: hidden;
+  flex: 1;
+  min-width: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.note-editor-folder-option > svg {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+}
+
+.note-editor-tag-search {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 34px;
+  margin: 3px 3px 7px;
+  border: 1px solid var(--note-border);
+  border-radius: 9px;
+  padding: 0 9px;
+  color: var(--note-text-muted);
+  background: var(--note-surface-subtle);
+}
+
+.note-editor-tag-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  color: var(--note-text);
+  background: transparent;
+  font: inherit;
+  font-size: 11px;
+}
+
+.note-editor-tag-check {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  border: 1px solid var(--note-border);
+  border-radius: 5px;
+  color: white;
+  background: var(--note-surface);
+}
+
+.note-editor-tag-check.is-checked {
+  border-color: var(--note-primary);
+  background: var(--note-primary);
+}
+
+.note-editor-tag-empty {
+  margin: 16px 0;
+  color: var(--note-text-muted);
+  font-size: 11px;
+  text-align: center;
 }
 
 .note-milkdown-editor {

@@ -19,6 +19,20 @@ export default {
     })
   },
 
+  /**
+   * 为桌面端浏览器登录创建短期一次性授权码。
+   *
+   * :param data: 桌面端随机状态参数。
+   * :return: 授权码接口请求。
+   */
+  createDesktopAuthCode(data: { state: string }) {
+    return request({
+      url: `${apiName}/desktop/auth-code`,
+      method: 'post',
+      data
+    })
+  },
+
   emailRegister(user: object) {
     return request({
       url: `${apiName}/common/emailRegister`,

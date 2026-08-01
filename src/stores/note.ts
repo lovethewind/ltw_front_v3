@@ -261,7 +261,7 @@ export const useNoteStore = defineStore('note', () => {
         recycle: recycleCountResponse.data.total
       }
       const targetNoteId = initialNoteId ?? noteResponse[0]?.id
-      if (targetNoteId !== undefined && !sameId(activeNote.value?.id, targetNoteId)) {
+      if (targetNoteId !== undefined) {
         await selectNote(targetNoteId)
       }
       return true
@@ -281,7 +281,10 @@ export const useNoteStore = defineStore('note', () => {
    */
   async function selectNote(noteId: ApiId): Promise<boolean> {
     if (editorLocked.value) return false
-    if (sameId(activeNote.value?.id, noteId)) return true
+    if (sameId(activeNote.value?.id, noteId)) {
+      if (!autosaveSession && activeNote.value) startAutosaveSession(activeNote.value)
+      return true
+    }
     const requestId = ++detailRequestId
     actionError.value = ''
     try {

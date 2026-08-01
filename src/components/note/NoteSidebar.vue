@@ -165,6 +165,10 @@
                     </el-dropdown-item>
                   </template>
                   <template v-else>
+                    <el-dropdown-item command="copy-link">
+                      <Icon icon="material-symbols:link-rounded" />
+                      复制链接
+                    </el-dropdown-item>
                     <el-dropdown-item command="pin">
                       <Icon :icon="data.note?.isPinned ? 'material-symbols:keep-off-outline-rounded' : 'material-symbols:keep-outline-rounded'" />
                       {{ data.note?.isPinned ? '取消置顶' : '置顶' }}
@@ -225,7 +229,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { ElMessageBox } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { Icon } from '@iconify/vue'
 import NoteNavigation from './NoteNavigation.vue'
 import {
@@ -539,6 +543,10 @@ async function handleFolderCommand(command: string, node: ExplorerNode): Promise
  */
 async function handleNoteCommand(command: string, node: ExplorerNode): Promise<void> {
   if (!node.note) return
+  if (command === 'copy-link') {
+    await copyNoteLink(node.note)
+    return
+  }
   if (command === 'pin') {
     emit('toggle-pin', node.note.id, !node.note.isPinned)
     return
@@ -565,6 +573,36 @@ async function handleNoteCommand(command: string, node: ExplorerNode): Promise<v
     }
   } catch {
     // 用户取消时不改变笔记状态。
+  }
+}
+
+/**
+ * 将笔记标题超链接复制到剪贴板，并提供 Markdown 文本作为降级格式。
+ *
+ * :param note: 待复制链接的笔记。
+ * :return: 复制完成后的 Promise。
+ */
+async function copyNoteLink(note: INoteListItem): Promise<void> {
+  const noteLink = new URL(`/notes/${encodeURIComponent(note.id)}`, window.location.origin).toString()
+  const noteTitle = note.title.trim() || '无标题笔记'
+  const markdownLink = `[${noteTitle}](${noteLink})`
+  const anchor = document.createElement('a')
+  anchor.href = noteLink
+  anchor.textContent = noteTitle
+  try {
+    if (typeof ClipboardItem === 'undefined' || !navigator.clipboard.write) {
+      await navigator.clipboard.writeText(markdownLink)
+    } else {
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          'text/html': new Blob([anchor.outerHTML], { type: 'text/html' }),
+          'text/plain': new Blob([markdownLink], { type: 'text/plain' })
+        })
+      ])
+    }
+    ElMessage.success('笔记链接已复制')
+  } catch {
+    ElMessage.error('复制失败，请检查剪贴板权限')
   }
 }
 

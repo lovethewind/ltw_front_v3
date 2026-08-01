@@ -51,10 +51,11 @@ import { EditorView } from '@codemirror/view'
 import { Crepe } from '@milkdown/crepe'
 import { commandsCtx, editorViewCtx } from '@milkdown/kit/core'
 import { redoCommand, undoCommand } from '@milkdown/kit/plugin/history'
-import { paragraphSchema } from '@milkdown/kit/preset/commonmark'
+import { linkSchema, paragraphSchema } from '@milkdown/kit/preset/commonmark'
 import { TextSelection } from '@milkdown/kit/prose/state'
 import { replaceAll } from '@milkdown/kit/utils'
 import { h, nextTick, onBeforeUnmount, onMounted, ref, render, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Icon } from '@iconify/vue'
 
@@ -85,6 +86,7 @@ const props = withDefaults(defineProps<Props>(), {
   showOutline: true
 })
 
+const router = useRouter()
 const editorRootRef = ref<HTMLDivElement | null>(null)
 const editorShellRef = ref<HTMLDivElement | null>(null)
 const editorScrollRef = ref<HTMLDivElement | null>(null)
@@ -335,6 +337,75 @@ function togglePreview(): void {
   syncPreviewToggle()
   emit('preview-change', previewMode.value)
   void nextTick(updateActiveOutline)
+}
+
+/**
+ * 处理编辑器中的链接点击。
+ *
+ * 编辑模式仅允许按住 Command/Ctrl 后跳转，预览或只读模式可直接跳转；
+ * 站内笔记链接交由 Vue Router 处理，避免整页刷新。
+ *
+ * :param event: 编辑器链接点击事件。
+ * :return: 无返回值。
+ */
+function handleEditorLinkClick(event: MouseEvent): void {
+  const target = event.target
+  if (!(target instanceof Element)) return
+  const anchor = target.closest<HTMLAnchorElement>('a[href]')
+  if (!anchor || !editorRootRef.value?.contains(anchor)) return
+
+  const requiresModifier = !props.readonly && !previewMode.value
+  if (requiresModifier && !event.metaKey && !event.ctrlKey) {
+    event.preventDefault()
+    return
+  }
+
+  const targetUrl = new URL(anchor.href, window.location.href)
+  if (targetUrl.origin !== window.location.origin || !/^\/notes\/[^/]+\/?$/.test(targetUrl.pathname)) return
+  event.preventDefault()
+  void router.push(`${targetUrl.pathname}${targetUrl.search}${targetUrl.hash}`)
+}
+
+/**
+ * 解析剪贴板中的单个网页地址。
+ *
+ * :param value: 剪贴板纯文本。
+ * :return: 有效的 HTTP/HTTPS 地址；其他内容返回 null。
+ */
+function parseStandaloneWebUrl(value: string): string | null {
+  const candidate = value.trim()
+  if (!candidate || /\s/.test(candidate)) return null
+  try {
+    const url = new URL(candidate)
+    return url.protocol === 'http:' || url.protocol === 'https:' ? candidate : null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * 将单独粘贴的网页地址插入为真正的 Markdown 链接节点。
+ *
+ * :param event: 编辑器粘贴事件。
+ * :return: 无返回值。
+ */
+function handleEditorLinkPaste(event: ClipboardEvent): void {
+  if (props.readonly || previewMode.value || !editor || !event.clipboardData) return
+  if (event.clipboardData.getData('text/html')) return
+  const href = parseStandaloneWebUrl(event.clipboardData.getData('text/plain'))
+  if (!href) return
+
+  let inserted = false
+  editor.editor.action((context) => {
+    const view = context.get(editorViewCtx)
+    if (view.state.selection.$from.parent.type.spec.code) return
+    const mark = linkSchema.type(context).create({ href })
+    view.dispatch(view.state.tr.replaceSelectionWith(view.state.schema.text(href, [mark]), false))
+    inserted = true
+  })
+  if (!inserted) return
+  event.preventDefault()
+  event.stopPropagation()
 }
 
 /**
@@ -950,11 +1021,15 @@ watch(() => props.readonly, () => syncPreviewReadonly())
 
 onMounted(() => {
   outlineOpen.value = props.showOutline && localStorage.getItem(OUTLINE_STORAGE_KEY) !== 'false'
+  editorRootRef.value?.addEventListener('click', handleEditorLinkClick, true)
+  editorRootRef.value?.addEventListener('paste', handleEditorLinkPaste, true)
   void createEditor()
 })
 
 onBeforeUnmount(() => {
   destroyed = true
+  editorRootRef.value?.removeEventListener('click', handleEditorLinkClick, true)
+  editorRootRef.value?.removeEventListener('paste', handleEditorLinkPaste, true)
   document.body.classList.remove('markdown-editor-focus-mode')
   if (focusMode.value) emit('focus-mode-change', false)
   focusMode.value = false
@@ -1075,6 +1150,22 @@ body.markdown-editor-focus-mode {
   border-bottom: 1px solid var(--milkdown-toolbar-divider);
   background: rgb(255 255 255 / 94%);
   backdrop-filter: blur(14px);
+}
+
+.milkdown-editor-root .milkdown .milkdown-link-preview,
+.milkdown-editor-root .milkdown .milkdown-link-edit {
+  z-index: 30;
+  max-width: calc(100% - 24px);
+}
+
+.milkdown-editor-root .milkdown .milkdown-link-preview > .link-preview,
+.milkdown-editor-root .milkdown .milkdown-link-edit > .link-edit {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+.milkdown-editor-root .milkdown .milkdown-link-preview > .link-preview > .link-display {
+  min-width: 0;
 }
 
 .milkdown-editor-root .milkdown .milkdown-top-bar .top-bar-divider {

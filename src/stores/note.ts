@@ -239,7 +239,7 @@ export const useNoteStore = defineStore('note', () => {
    *
    * :return: 是否加载成功。
    */
-  async function loadWorkspace(): Promise<boolean> {
+  async function loadWorkspace(initialNoteId?: ApiId): Promise<boolean> {
     const requestId = ++listRequestId
     const generation = storeGeneration
     loading.value = true
@@ -260,8 +260,9 @@ export const useNoteStore = defineStore('note', () => {
         pinned: noteResponse.filter((note) => note.isPinned).length,
         recycle: recycleCountResponse.data.total
       }
-      if (!activeNote.value && noteResponse.length > 0) {
-        await selectNote(noteResponse[0].id)
+      const targetNoteId = initialNoteId ?? noteResponse[0]?.id
+      if (targetNoteId !== undefined && !sameId(activeNote.value?.id, targetNoteId)) {
+        await selectNote(targetNoteId)
       }
       return true
     } catch (error) {

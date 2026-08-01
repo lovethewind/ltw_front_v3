@@ -101,7 +101,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox, ElScrollbar } from 'element-plus'
 import type { ScrollbarInstance } from 'element-plus'
 import { Icon } from '@iconify/vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import NoteEditor from '@/components/note/NoteEditor.vue'
 import NoteHistoryDrawer from '@/components/note/NoteHistoryDrawer.vue'
 import NoteSidebar from '@/components/note/NoteSidebar.vue'
@@ -119,6 +119,7 @@ const commonStore = useCommonStore()
 const modalStore = useModalStore()
 const userStore = useUserStore()
 const route = useRoute()
+const router = useRouter()
 let unmounted = false
 let workspaceActive = false
 let desktopAuthRequested = false
@@ -271,6 +272,31 @@ function getDesktopAuthState(): string {
 }
 
 /**
+ * 从当前路由中读取待打开的笔记标识。
+ *
+ * :return: 合法笔记标识；路由未指定笔记时返回 undefined。
+ */
+function getRouteNoteId(): ApiId | undefined {
+  const noteId = route.params.noteId
+  return typeof noteId === 'string' && noteId.trim() ? noteId : undefined
+}
+
+/**
+ * 将当前笔记同步到浏览器地址栏，同时保留登录授权参数。
+ *
+ * :param noteId: 当前笔记标识。
+ * :return: 无返回值。
+ */
+function replaceNoteRoute(noteId: ApiId): void {
+  if (String(route.params.noteId || '') === String(noteId)) return
+  void router.replace({
+    name: 'notes',
+    params: { noteId: String(noteId) },
+    query: route.query
+  })
+}
+
+/**
  * 为已登录用户签发一次性授权码并返回桌面应用。
  *
  * :return: 授权跳转完成后的 Promise。
@@ -300,7 +326,7 @@ async function completeDesktopAuth(): Promise<void> {
 function activateWorkspace(): void {
   if (workspaceActive) return
   workspaceActive = true
-  void store.loadWorkspace()
+  void store.loadWorkspace(getRouteNoteId())
   window.addEventListener('keydown', handleSaveShortcut)
 }
 
@@ -336,6 +362,18 @@ watch(() => store.activeNote?.id, () => {
   historyVisible.value = false
   historyRequestId += 1
   historyDetailRequestId += 1
+  if (store.activeNote) replaceNoteRoute(store.activeNote.id)
+})
+
+watch(() => route.fullPath, () => {
+  const noteId = getRouteNoteId()
+  if (
+    !workspaceActive
+    || !user.value
+    || noteId === undefined
+    || String(store.activeNote?.id || '') === String(noteId)
+  ) return
+  selectNote(noteId)
 })
 
 /**
@@ -370,7 +408,12 @@ function showTree(action: () => Promise<boolean>): void {
  */
 function selectNote(id: ApiId): void {
   void store.selectNote(id).then((ok) => {
-    if (ok) mobilePanel.value = 'editor'
+    if (ok) {
+      mobilePanel.value = 'editor'
+      return
+    }
+    if (store.activeNote) replaceNoteRoute(store.activeNote.id)
+    ElMessage.error(store.actionError || '无法打开指定笔记')
   })
 }
 
@@ -411,6 +454,9 @@ onMounted(() => {
   } else if (desktopAuthState) {
     openLogin()
     ElMessage.info('请登录并授权心悦笔记，完成后会自动返回应用')
+  } else if (getRouteNoteId()) {
+    openLogin()
+    ElMessage.info('登录后将自动打开链接中的笔记')
   }
 })
 onBeforeUnmount(() => {

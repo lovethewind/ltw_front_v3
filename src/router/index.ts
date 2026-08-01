@@ -90,7 +90,7 @@ const routers = [
     }
   },
   {
-    path: '/notes',
+    path: '/notes/:noteId?',
     name: 'notes',
     component: () => import('@/views/note/NoteWorkspace.vue'),
     meta: {

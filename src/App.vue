@@ -6,7 +6,7 @@
     </el-header>
     <el-main ref="mainRef">
       <!-- 内容 -->
-      <router-view v-if="isReady" :key="$route.fullPath" />
+      <router-view v-if="isReady" :key="$route.name === 'notes' ? 'notes' : $route.fullPath" />
     </el-main>
     <el-footer v-if="commonStore.websiteInfo.showFooter">
       <!-- 页脚 -->

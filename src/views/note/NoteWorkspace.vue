@@ -58,6 +58,23 @@
           @permanent-delete-note="store.permanentDeleteNote"
         />
       </ElScrollbar>
+      <a
+        class="note-sidebar-desktop-download"
+        href="https://github.com/lovethewind/ltw_notes_desktop/releases"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="下载笔记桌面版"
+        title="下载笔记桌面版"
+      >
+        <span class="note-sidebar-desktop-download__icon">
+          <Icon icon="material-symbols:desktop-windows-outline-rounded" />
+        </span>
+        <span class="note-sidebar-desktop-download__copy">
+          <strong>心悦笔记桌面版</strong>
+          <small>离线记录，随时同步</small>
+        </span>
+        <Icon class="note-sidebar-desktop-download__arrow" icon="material-symbols:arrow-outward-rounded" />
+      </a>
     </aside>
     <section class="note-workspace-editor">
       <button

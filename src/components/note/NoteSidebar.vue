@@ -224,6 +224,7 @@
         </el-dropdown>
       </div>
     </section>
+
   </aside>
 </template>
 
@@ -346,7 +347,8 @@ const treeData = computed<ExplorerNode[]>(() => {
     isFilteredView:
       !props.filter.isDeleted &&
       (props.filter.isPinned === true ||
-        (props.filter.tagId !== null && props.filter.tagId !== undefined))
+        (props.filter.tagId !== null && props.filter.tagId !== undefined) ||
+        Boolean(props.filter.keyword?.trim()))
   })
 })
 
@@ -647,9 +649,10 @@ async function removeTag(id: ApiId): Promise<void> {
 
 <style scoped lang="scss">
 .note-sidebar {
-  display: grid;
-  align-content: start;
+  display: flex;
+  flex-direction: column;
   gap: 14px;
+  min-height: 100%;
   padding: 18px 16px 30px;
 }
 

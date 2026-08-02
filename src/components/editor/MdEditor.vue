@@ -996,14 +996,15 @@ async function createEditor(): Promise<void> {
  * :return: 无返回值。
  */
 function setContent(value: string, resetScroll = false): void {
+  const contentChanged = contentValue.value !== value
   contentValue.value = value
-  updateOutline(value)
+  if (contentChanged) updateOutline(value)
   if (!editor || !editorReady) {
     pendingContent = value
     if (resetScroll) resetEditorScroll()
     return
   }
-  if (editor.getMarkdown() !== value) replaceContentSilently(value, editor)
+  if (contentChanged) replaceContentSilently(value, editor)
   if (resetScroll) resetEditorScroll()
 }
 
@@ -1703,15 +1704,15 @@ html.dark .milkdown-editor-root .milkdown .milkdown-top-bar {
 }
 
 .note-milkdown-editor .milkdown-editor-root .milkdown .milkdown-top-bar {
-  height: 52px;
-  min-height: 52px;
+  height: 48px;
+  min-height: 48px;
   border-color: color-mix(in srgb, var(--milkdown-toolbar-divider) 72%, transparent);
   background: color-mix(in srgb, var(--markdown-outline-background) 95%, transparent);
   box-shadow: 0 5px 16px rgb(15 23 42 / 3%);
 }
 
 .note-milkdown-editor .milkdown-editor-root .milkdown .milkdown-top-bar .top-bar-inner {
-  height: 51px;
+  height: 47px;
   padding: 0 3px;
 }
 
@@ -1725,7 +1726,7 @@ html.dark .milkdown-editor-root .milkdown .milkdown-top-bar {
 
 .note-milkdown-editor .milkdown-editor-root .milkdown .milkdown-top-bar .top-bar-item {
   gap: 0;
-  height: 46px;
+  height: 42px;
   margin: 2px 1px;
   padding: 2px 3px;
   border-radius: 7px;
@@ -1736,8 +1737,8 @@ html.dark .milkdown-editor-root .milkdown .milkdown-top-bar {
 }
 
 .note-milkdown-editor .milkdown-editor-root .milkdown .milkdown-top-bar .top-bar-item svg {
-  width: 19px;
-  height: 19px;
+  width: 18px;
+  height: 18px;
   transition: color 0.16s ease, fill 0.16s ease, transform 0.18s ease;
 }
 
@@ -1757,7 +1758,7 @@ html.dark .milkdown-editor-root .milkdown .milkdown-top-bar {
 }
 
 .note-milkdown-editor .milkdown-editor-root .milkdown .milkdown-top-bar .top-bar-heading-button {
-  height: 38px;
+  height: 34px;
   border-radius: 7px;
   transition: color 0.16s ease, background 0.16s ease;
 }
@@ -1769,20 +1770,20 @@ html.dark .milkdown-editor-root .milkdown .milkdown-top-bar {
 }
 
 .note-milkdown-editor .milkdown-editor-root .milkdown .milkdown-top-bar .top-bar-divider {
-  height: 24px;
+  height: 22px;
   margin: 0 3px;
   opacity: 0.68;
 }
 
 .note-milkdown-editor .markdown-outline {
-  top: 52px;
+  top: 48px;
   padding: 0 14px 22px;
   scrollbar-color: color-mix(in srgb, var(--markdown-outline-text) 28%, transparent) transparent;
   scrollbar-width: thin;
 }
 
 .note-milkdown-editor .markdown-outline__header {
-  height: 52px;
+  height: 48px;
   background: color-mix(in srgb, var(--markdown-outline-background) 95%, transparent);
   backdrop-filter: blur(12px);
 }

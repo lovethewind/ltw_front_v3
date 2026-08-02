@@ -20,6 +20,8 @@ import {
 
 const TREE_PAGE_SIZE = 100
 const UNCATEGORIZED_FOLDER_ID = 0
+const NOTE_DETAIL_CACHE_MAX_ENTRIES = 6
+const NOTE_DETAIL_CACHE_MAX_CHARS = 32 * 1024 * 1024
 
 interface AutosaveSession {
   controller: NoteAutosaveController
@@ -96,6 +98,58 @@ export const useNoteStore = defineStore('note', () => {
   let sessionGeneration = 0
   let storeGeneration = 0
   let autosaveSession: AutosaveSession | undefined
+  const noteDetailCache = new Map<string, INote>()
+  let noteDetailCacheChars = 0
+
+  /**
+   * 将笔记详情写入有界的最近使用缓存。
+   *
+   * :param note: 待缓存的笔记详情。
+   * :return: 无返回值。
+   */
+  function rememberNoteDetail(note: INote): void {
+    const key = String(note.id)
+    const existing = noteDetailCache.get(key)
+    if (existing) noteDetailCacheChars -= existing.content.length
+    noteDetailCache.delete(key)
+    noteDetailCache.set(key, note)
+    noteDetailCacheChars += note.content.length
+    while (
+      noteDetailCache.size > NOTE_DETAIL_CACHE_MAX_ENTRIES ||
+      (noteDetailCacheChars > NOTE_DETAIL_CACHE_MAX_CHARS && noteDetailCache.size > 1)
+    ) {
+      const oldestKey = noteDetailCache.keys().next().value as string | undefined
+      if (oldestKey === undefined) break
+      const oldest = noteDetailCache.get(oldestKey)
+      noteDetailCache.delete(oldestKey)
+      noteDetailCacheChars -= oldest?.content.length ?? 0
+    }
+  }
+
+  /**
+   * 从最近使用缓存读取笔记详情并刷新淘汰顺序。
+   *
+   * :param noteId: 笔记标识。
+   * :return: 已缓存详情；未命中时返回空值。
+   */
+  function readRememberedNoteDetail(noteId: ApiId): INote | undefined {
+    const key = String(noteId)
+    const note = noteDetailCache.get(key)
+    if (!note) return undefined
+    noteDetailCache.delete(key)
+    noteDetailCache.set(key, note)
+    return note
+  }
+
+  /**
+   * 清空最近笔记详情缓存。
+   *
+   * :return: 无返回值。
+   */
+  function clearRememberedNoteDetails(): void {
+    noteDetailCache.clear()
+    noteDetailCacheChars = 0
+  }
 
   /**
    * 记录操作失败信息。
@@ -288,14 +342,19 @@ export const useNoteStore = defineStore('note', () => {
     const requestId = ++detailRequestId
     actionError.value = ''
     try {
-      const response = await noteApi.getDetail(noteId)
+      const rememberedNote = readRememberedNoteDetail(noteId)
+      const nextNote = rememberedNote ?? (await noteApi.getDetail(noteId)).data
       if (requestId !== detailRequestId) return false
+      const previousNote = activeNote.value
       await closeAutosaveSession()
-      activeNote.value = response.data
+      if (requestId !== detailRequestId) return false
+      if (previousNote) rememberNoteDetail(previousNote)
+      rememberNoteDetail(nextNote)
+      activeNote.value = nextNote
       saveStatus.value = 'idle'
-      recoverySnapshot.value = readRecoverySnapshot(response.data.id)
+      recoverySnapshot.value = readRecoverySnapshot(nextNote.id)
       hasRecoverySnapshot.value = recoverySnapshot.value !== null
-      startAutosaveSession(response.data)
+      startAutosaveSession(nextNote)
       return true
     } catch (error) {
       if (requestId === detailRequestId) setError(error)
@@ -537,6 +596,7 @@ export const useNoteStore = defineStore('note', () => {
       if (autosaveSession === session) autosaveSession = undefined
       await noteApi.restoreHistory(noteId, historyId)
       const response = await noteApi.getDetail(noteId)
+      rememberNoteDetail(response.data)
       activeNote.value = response.data
       notes.value = notes.value.map((note) =>
         sameId(note.id, noteId) ? toListItem(response.data) : note
@@ -933,6 +993,7 @@ export const useNoteStore = defineStore('note', () => {
     detailRequestId += 1
     autosaveSession?.controller.destroy()
     autosaveSession = undefined
+    clearRememberedNoteDetails()
   }
 
   return {

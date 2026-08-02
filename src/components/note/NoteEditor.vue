@@ -65,6 +65,7 @@
         </el-tooltip>
         <el-button
           v-if="saveStatus === 'failed' || saveStatus === 'offline'"
+          class="note-editor-retry-button"
           size="small"
           type="primary"
           plain
@@ -72,7 +73,6 @@
         >
           重试保存
         </el-button>
-      </header>
 
       <div class="note-editor-meta" aria-label="笔记属性">
         <div class="note-editor-property">
@@ -108,7 +108,7 @@
                 <Icon v-if="note.folderId === null" icon="material-symbols:check-rounded" />
               </button>
               <div class="note-editor-popover-divider" />
-              <div class="note-editor-popover-scroll">
+              <el-scrollbar class="note-editor-popover-scroll" max-height="240px" always>
                 <button
                   v-for="folder in folderOptions"
                   :key="folder.id"
@@ -125,7 +125,7 @@
                     icon="material-symbols:check-rounded"
                   />
                 </button>
-              </div>
+              </el-scrollbar>
             </div>
           </div>
         </div>
@@ -184,6 +184,7 @@
           </div>
         </div>
       </div>
+      </header>
 
       <MdEditor ref="editorRef" class="note-milkdown-editor" @change="updateContent" />
     </template>
@@ -452,12 +453,13 @@ function toggleTag(tagId: ApiId): void {
 
 <style scoped lang="scss">
 .note-editor {
+  container-type: inline-size;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   height: 100%;
   min-height: 0;
-  padding: 8px 14px 14px;
+  padding: 6px 14px 10px;
   overflow: hidden;
 }
 
@@ -482,15 +484,17 @@ function toggleTag(tagId: ApiId): void {
 .note-editor-header {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .note-editor-header .el-input {
-  flex: 1;
+  order: 0;
+  flex: 1 1 280px;
+  min-width: 180px;
 }
 
 .note-editor-header :deep(.el-input__wrapper) {
-  min-height: 40px;
+  min-height: 36px;
   padding: 0 2px;
   border-radius: 0;
   background: transparent;
@@ -503,7 +507,7 @@ function toggleTag(tagId: ApiId): void {
 
 .note-editor-header :deep(.el-input__inner) {
   color: var(--note-text);
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
 }
 
@@ -512,6 +516,7 @@ function toggleTag(tagId: ApiId): void {
 }
 
 .note-editor-save-status {
+  order: 2;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -543,6 +548,7 @@ function toggleTag(tagId: ApiId): void {
 }
 
 .note-editor-save-button {
+  order: 3;
   flex: 0 0 auto;
   height: 30px;
   padding: 0 9px;
@@ -589,6 +595,7 @@ function toggleTag(tagId: ApiId): void {
 }
 
 .note-editor-history-button {
+  order: 3;
   flex: 0 0 auto;
   width: 32px;
   height: 32px;
@@ -597,6 +604,11 @@ function toggleTag(tagId: ApiId): void {
   background: var(--note-surface-subtle);
   transition: color 0.16s ease, background 0.16s ease, box-shadow 0.18s ease,
     transform 0.18s ease;
+}
+
+.note-editor-retry-button {
+  order: 3;
+  flex: 0 0 auto;
 }
 
 .note-editor-history-button:hover,
@@ -612,13 +624,15 @@ function toggleTag(tagId: ApiId): void {
   height: 19px;
 }
 
-.note-editor-meta {
+.note-editor-header > .note-editor-meta {
+  order: 1;
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-height: 32px;
-  padding: 1px 4px 4px;
-  border-bottom: 1px solid var(--note-border);
+  flex: 0 1 400px;
+  gap: 8px;
+  min-width: 260px;
+  min-height: 30px;
+  padding: 0 3px;
   background: transparent;
 }
 
@@ -631,7 +645,8 @@ function toggleTag(tagId: ApiId): void {
 
 .note-editor-property--tags {
   flex: 1;
-  padding-left: 14px;
+  min-width: 130px;
+  padding-left: 8px;
   border-left: 1px solid var(--note-border);
 }
 
@@ -640,7 +655,7 @@ function toggleTag(tagId: ApiId): void {
   align-items: center;
   gap: 4px;
   color: var(--note-text-muted);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 650;
   white-space: nowrap;
 }
@@ -674,7 +689,8 @@ function toggleTag(tagId: ApiId): void {
 }
 
 .note-editor-property-button {
-  min-width: 120px;
+  width: 108px;
+  min-width: 0;
   height: 28px;
   border: 1px solid var(--note-border);
   border-radius: 9px;
@@ -765,7 +781,7 @@ function toggleTag(tagId: ApiId): void {
 
 .note-editor-property-picker.is-tags {
   flex: 1;
-  min-width: 180px;
+  min-width: 120px;
 }
 
 .note-editor-property-popover {
@@ -815,6 +831,20 @@ function toggleTag(tagId: ApiId): void {
   max-height: 240px;
   gap: 2px;
   overflow-y: auto;
+}
+
+.note-editor-popover-scroll {
+  display: block;
+  overflow: hidden;
+}
+
+.note-editor-popover-scroll :deep(.el-scrollbar__view) {
+  display: grid;
+  gap: 2px;
+}
+
+.note-editor-popover-scroll :deep(.el-scrollbar__bar.is-vertical) {
+  width: 5px;
 }
 
 .note-editor-folder-option,
@@ -918,6 +948,18 @@ function toggleTag(tagId: ApiId): void {
   .note-editor *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+@container (max-width: 760px) {
+  .note-editor-header {
+    flex-wrap: wrap;
+  }
+
+  .note-editor-header > .note-editor-meta {
+    order: 4;
+    flex: 1 0 100%;
+    padding-top: 2px;
   }
 }
 

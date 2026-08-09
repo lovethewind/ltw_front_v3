@@ -5,3 +5,5 @@
 - [2026-08-02：大笔记切换优化](entries/2026-08-02-large-note-switch-performance.md)——网页端使用有界LRU缓存最近完整正文，来回切换不重复请求；Milkdown替换前不再序列化整篇旧正文。
 - [2026-08-02：笔记路由复用工作区](entries/2026-08-02-note-route-workspace-reuse.md)——根路由视图对notes使用稳定key，切换noteId只加载详情，不再销毁工作区并重拉文件夹、标签和列表。
 - [2026-08-02：笔记桌面版下载入口](entries/2026-08-02-note-desktop-download-entry.md)——下载卡片仅放在网页笔记侧栏标签下方并固定于底部，跳转桌面笔记项目的GitHub Releases。
+- [2026-08-09：桌面端授权后清理 URL 参数](entries/2026-08-09-desktop-auth-query-cleanup.md)——唤起桌面应用后移除临时授权参数，避免刷新网页重复弹窗。
+- [2026-08-09：Web 端版本更新弹窗美化](entries/2026-08-09-update-dialog-polish.md)——增加刷新图标、说明卡片、清晰按钮和深色/窄屏适配。

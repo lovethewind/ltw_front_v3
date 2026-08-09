@@ -768,6 +768,45 @@ export const useNoteStore = defineStore('note', () => {
   }
 
   /**
+   * 永久清空回收站中的全部笔记、文件夹和历史版本。
+   *
+   * :return: 是否操作成功。
+   */
+  async function clearRecycleBin(): Promise<boolean> {
+    actionError.value = ''
+    const deletingActive =
+      filter.value.isDeleted === true &&
+      activeNote.value !== null &&
+      notes.value.some((note) => sameId(note.id, activeNote.value?.id))
+    if (deletingActive) {
+      editorLocked.value = true
+      await closeAutosaveSession()
+    }
+    try {
+      await noteApi.clearRecycleBin()
+      if (filter.value.isDeleted) {
+        notes.value = []
+        folders.value = []
+      }
+      navigationCounts.value = { ...navigationCounts.value, recycle: 0 }
+      if (deletingActive) {
+        activeNote.value = null
+        saveStatus.value = 'idle'
+        recoverySnapshot.value = null
+        hasRecoverySnapshot.value = false
+        clearRememberedNoteDetails()
+      }
+      editorLocked.value = false
+      return true
+    } catch (error) {
+      if (deletingActive && activeNote.value) startAutosaveSession(activeNote.value)
+      editorLocked.value = false
+      setError(error)
+      return false
+    }
+  }
+
+  /**
    * 新建文件夹。
    *
    * :param name: 文件夹名称。
@@ -1032,6 +1071,7 @@ export const useNoteStore = defineStore('note', () => {
     removeNote,
     restoreNote,
     permanentDeleteNote,
+    clearRecycleBin,
     restoreFolder,
     permanentDeleteFolder,
     createFolder,

@@ -40,6 +40,7 @@
           @show-all="showTree(store.showAll)"
           @show-pinned="showTree(store.showPinned)"
           @show-recycle="showTree(store.showRecycleBin)"
+          @clear-recycle="clearRecycleBin"
           @select-folder="store.selectFolder"
           @select-tag="store.selectTag"
           @select-note="selectNote"
@@ -289,6 +290,19 @@ function getDesktopAuthState(): string {
 }
 
 /**
+ * 清理桌面端授权完成后的临时查询参数，避免刷新页面重复触发授权弹窗。
+ *
+ * :return: 无返回值。
+ */
+function clearDesktopAuthQuery(): void {
+  if (route.query.desktop_login !== '1' && route.query.state === undefined) return
+  const query = { ...route.query }
+  delete query.desktop_login
+  delete query.state
+  void router.replace({ path: route.path, query })
+}
+
+/**
  * 从当前路由中读取待打开的笔记标识。
  *
  * :return: 合法笔记标识；路由未指定笔记时返回 undefined。
@@ -326,6 +340,7 @@ async function completeDesktopAuth(): Promise<void> {
     const response = await userApi.createDesktopAuthCode({ state })
     const code = String(response.data?.code || '')
     if (!/^[A-Za-z0-9_-]{32,128}$/.test(code)) throw new Error('服务未返回有效授权码')
+    clearDesktopAuthQuery()
     window.location.assign(
       `xinyue-notes://auth/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`
     )
@@ -415,6 +430,27 @@ function showTree(action: () => Promise<boolean>): void {
   void action().then((ok) => {
     if (ok) mobilePanel.value = 'sidebar'
   })
+}
+
+/**
+ * 确认并永久清空回收站中的全部内容。
+ *
+ * :return: 无返回值。
+ */
+async function clearRecycleBin(): Promise<void> {
+  if (!store.navigationCounts.recycle && !store.folders.length) return
+  try {
+    await ElMessageBox.confirm(
+      '回收站中的笔记、文件夹和历史版本都会永久删除，无法恢复，是否继续？',
+      '清空回收站',
+      { type: 'warning', confirmButtonText: '清空', cancelButtonText: '取消' }
+    )
+  } catch {
+    return
+  }
+  const cleared = await store.clearRecycleBin()
+  if (cleared) ElMessage.success('回收站已清空')
+  else ElMessage.error(store.actionError || '回收站清空失败')
 }
 
 /**

@@ -56,7 +56,19 @@
       <div class="note-sidebar-section__heading">
         <h2>{{ filter.isDeleted ? '已删除项目' : '文件夹' }}</h2>
         <el-button
-          v-if="!filter.isDeleted"
+          v-if="filter.isDeleted && (counts.recycle > 0 || folders.length > 0)"
+          class="note-sidebar-clear-recycle"
+          plain
+          type="danger"
+          size="small"
+          aria-label="清空回收站"
+          @click="emit('clear-recycle')"
+        >
+          <Icon icon="material-symbols:delete-sweep-rounded" />
+          清空
+        </el-button>
+        <el-button
+          v-else-if="!filter.isDeleted"
           text
           circle
           aria-label="快捷新建文件夹"
@@ -271,6 +283,7 @@ const emit = defineEmits<{
   (event: 'show-all'): void
   (event: 'show-pinned'): void
   (event: 'show-recycle'): void
+  (event: 'clear-recycle'): void
   (event: 'select-folder', id: ApiId | null): void
   (event: 'select-tag', id: ApiId): void
   (event: 'select-note', id: ApiId): void
@@ -769,6 +782,29 @@ async function removeTag(id: ApiId): Promise<void> {
 .note-sidebar-section__heading .el-button:focus-visible {
   color: var(--note-primary);
   background: var(--note-surface-active);
+}
+
+.note-sidebar-section__heading .note-sidebar-clear-recycle {
+  width: auto;
+  padding: 0 9px;
+  color: var(--note-danger);
+  border-color: color-mix(in srgb, var(--note-danger) 28%, var(--note-border));
+  background: color-mix(in srgb, var(--note-danger) 6%, transparent);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.note-sidebar-section__heading .note-sidebar-clear-recycle:hover,
+.note-sidebar-section__heading .note-sidebar-clear-recycle:focus-visible {
+  color: var(--note-danger);
+  border-color: color-mix(in srgb, var(--note-danger) 42%, var(--note-border));
+  background: color-mix(in srgb, var(--note-danger) 11%, transparent);
+}
+
+.note-sidebar-clear-recycle svg {
+  width: 15px;
+  height: 15px;
+  margin-right: 3px;
 }
 
 .note-sidebar-section__heading h2 {

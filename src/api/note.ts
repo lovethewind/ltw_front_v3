@@ -171,5 +171,14 @@ export default {
    */
   permanentDelete(noteId: ApiId): Promise<ApiResponse<null>> {
     return requestApi<null>({ url: `${apiName}/${noteId}/permanent`, method: 'delete' })
+  },
+
+  /**
+   * 永久清空当前用户的笔记回收站。
+   *
+   * :return: 操作结果。
+   */
+  clearRecycleBin(): Promise<ApiResponse<null>> {
+    return requestApi<null>({ url: `${apiName}/recycle-bin`, method: 'delete' })
   }
 }

@@ -686,7 +686,32 @@ function parseImages() {
       previewImgUrl.value = img.src
       previewImgVisible.value = true
     })
+    img.addEventListener('error', handleArticleImageError)
+    // 图片可能在监听器挂载前就已经失败，补一次同步检查。
+    if (img.complete && img.naturalWidth === 0) {
+      markArticleImageError(img)
+    }
   })
+}
+
+function handleArticleImageError(event: Event): void {
+  const image = event.currentTarget as HTMLImageElement | null
+  if (image) markArticleImageError(image)
+}
+
+function markArticleImageError(image: HTMLImageElement): void {
+  if (image.dataset.loadError === 'true') return
+
+  image.dataset.loadError = 'true'
+  image.alt = ''
+  image.style.display = 'none'
+
+  const fallback = document.createElement('span')
+  fallback.className = 'article-image-load-error'
+  fallback.setAttribute('role', 'img')
+  fallback.setAttribute('aria-label', '图片加载失败')
+  fallback.textContent = '图片加载失败'
+  image.insertAdjacentElement('afterend', fallback)
 }
 
 function closePreviewImg() {

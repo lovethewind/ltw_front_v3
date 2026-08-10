@@ -7,3 +7,4 @@
 - [2026-08-02：笔记桌面版下载入口](entries/2026-08-02-note-desktop-download-entry.md)——下载卡片仅放在网页笔记侧栏标签下方并固定于底部，跳转桌面笔记项目的GitHub Releases。
 - [2026-08-09：桌面端授权后清理 URL 参数](entries/2026-08-09-desktop-auth-query-cleanup.md)——唤起桌面应用后移除临时授权参数，避免刷新网页重复弹窗。
 - [2026-08-09：Web 端版本更新弹窗美化](entries/2026-08-09-update-dialog-polish.md)——增加刷新图标、说明卡片、清晰按钮和深色/窄屏适配。
+- [2026-08-09：文章图片加载失败兜底](entries/2026-08-09-article-image-load-fallback.md)——文章正文图片失败时隐藏浏览器破图并显示“图片加载失败”，正常图片和预览逻辑不变。

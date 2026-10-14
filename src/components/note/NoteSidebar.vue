@@ -42,6 +42,17 @@
             <Icon icon="material-symbols:search-rounded" />
           </template>
         </el-input>
+        <el-tooltip v-if="!filter.isDeleted" content="快速打开（⌘/Ctrl + K）" placement="bottom" :show-after="400">
+          <el-button
+            class="note-sidebar-quick-open"
+            text
+            circle
+            aria-label="快速打开笔记"
+            @click="emit('quick-open')"
+          >
+            <Icon icon="material-symbols:search-insights-rounded" />
+          </el-button>
+        </el-tooltip>
       </div>
 
       <NoteNavigation
@@ -177,6 +188,18 @@
                     </el-dropdown-item>
                   </template>
                   <template v-else>
+                    <el-dropdown-item command="open-new-tab">
+                      <Icon icon="material-symbols:tab-new-right-outline-rounded" />
+                      在新标签页打开
+                    </el-dropdown-item>
+                    <el-dropdown-item command="move-to">
+                      <Icon icon="material-symbols:drive-file-move-outline-rounded" />
+                      移动到…
+                    </el-dropdown-item>
+                    <el-dropdown-item command="duplicate-to">
+                      <Icon icon="material-symbols:content-copy-outline-rounded" />
+                      复制到…
+                    </el-dropdown-item>
                     <el-dropdown-item command="copy-link">
                       <Icon icon="material-symbols:link-rounded" />
                       复制链接
@@ -287,6 +310,10 @@ const emit = defineEmits<{
   (event: 'select-folder', id: ApiId | null): void
   (event: 'select-tag', id: ApiId): void
   (event: 'select-note', id: ApiId): void
+  (event: 'open-in-new-tab', id: ApiId): void
+  (event: 'move-note', id: ApiId, currentFolderId: ApiId | null): void
+  (event: 'duplicate-note', id: ApiId, currentFolderId: ApiId | null): void
+  (event: 'quick-open'): void
   (event: 'search', keyword: string): void
   (event: 'retry'): void
   (event: 'create-folder', name: string, parentId: ApiId | null): void
@@ -558,8 +585,20 @@ async function handleFolderCommand(command: string, node: ExplorerNode): Promise
  */
 async function handleNoteCommand(command: string, node: ExplorerNode): Promise<void> {
   if (!node.note) return
+  if (command === 'open-new-tab') {
+    emit('open-in-new-tab', node.note.id)
+    return
+  }
   if (command === 'copy-link') {
     await copyNoteLink(node.note)
+    return
+  }
+  if (command === 'move-to') {
+    emit('move-note', node.note.id, node.note.folderId ?? null)
+    return
+  }
+  if (command === 'duplicate-to') {
+    emit('duplicate-note', node.note.id, node.note.folderId ?? null)
     return
   }
   if (command === 'pin') {
@@ -683,12 +722,34 @@ async function removeTag(id: ApiId): Promise<void> {
 
 .note-sidebar-toolbar {
   display: grid;
-  grid-template-columns: 96px minmax(0, 1fr);
+  grid-template-columns: 96px minmax(0, 1fr) 38px;
   gap: 8px;
 }
 
 .note-sidebar-toolbar.is-recycle {
   grid-template-columns: minmax(0, 1fr);
+}
+
+.note-sidebar-quick-open {
+  width: 38px;
+  height: 38px;
+  margin: 0;
+  border-radius: 8px;
+  border: 1px solid var(--note-border);
+  color: var(--note-text-muted);
+  transition: box-shadow 0.18s ease, color 0.18s ease, background 0.18s ease;
+}
+
+.note-sidebar-quick-open:hover,
+.note-sidebar-quick-open:focus-visible {
+  color: var(--note-primary);
+  background: color-mix(in srgb, var(--note-surface) 88%, #f8fbff);
+  box-shadow: 0 0 0 1px rgb(47 128 237 / 32%);
+}
+
+.note-sidebar-quick-open svg {
+  width: 18px;
+  height: 18px;
 }
 
 .note-sidebar-create-dropdown,

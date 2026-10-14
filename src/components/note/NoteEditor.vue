@@ -186,7 +186,77 @@
       </div>
       </header>
 
-      <MdEditor ref="editorRef" class="note-milkdown-editor" @change="updateContent" />
+      <!--
+        视图与文档操作行：整行靠右。左边切「富文本 / 预览 / 源码」，右边是「把这篇笔记拿出去」。
+        两者都是整篇级操作 —— 与光标、选区无关 —— 所以都独立成行，不挤进上面的标题行，
+        也不塞进编辑工具栏（那一排是加粗、列表、插入之类的编辑动作，混排会把工具栏撑得很长）。
+        按钮只写「复制 / 下载」，完整语义写进 aria-label：不放浮层提示，避免来回悬停打扰。
+      -->
+      <div class="note-editor-doc-actions">
+        <el-radio-group
+          v-model="editorMode"
+          class="note-editor-mode"
+          size="small"
+          aria-label="编辑模式"
+        >
+          <el-radio-button value="rich">富文本</el-radio-button>
+          <el-radio-button value="preview">预览</el-radio-button>
+          <el-radio-button value="source">源码</el-radio-button>
+        </el-radio-group>
+        <div class="note-editor-doc-buttons">
+          <el-button
+            text
+            class="note-editor-doc-action"
+            aria-label="复制 Markdown 原文（保留嵌入卡等本应用写法）"
+            @click="copyMarkdown"
+          >
+            <Icon icon="material-symbols:content-copy-outline-rounded" />
+            <span>复制</span>
+          </el-button>
+          <el-button
+            text
+            class="note-editor-doc-action"
+            aria-label="下载为纯净 Markdown（任何编辑器都能正常显示）"
+            @click="downloadMarkdown"
+          >
+            <Icon icon="material-symbols:download-rounded" />
+            <span>下载</span>
+          </el-button>
+        </div>
+      </div>
+
+      <!--
+        富文本用 v-show 保住 Crepe 实例：它的创建成本高（数百毫秒），每次切模式重建会很卡；
+        而 CODE 这边（源码模式）反过来 —— 见下面的说明。
+      -->
+      <MdEditor
+        v-show="editorMode === 'rich'"
+        ref="editorRef"
+        class="note-milkdown-editor"
+        :title="note?.title ?? ''"
+        @change="updateContent"
+      />
+      <!--
+        预览：marked 只读渲染当前正文（见 NoteMarkdownPreview.vue）。
+        用 v-if 而不是 v-show —— 渲染成本低，且它没有需要保住的编辑态。
+      -->
+      <NoteMarkdownPreview
+        v-if="editorMode === 'preview'"
+        class="note-editor-preview"
+        :value="note?.content ?? ''"
+      />
+      <!--
+        源码模式：直接编辑 Markdown 原文，逐字符保真（见 NoteSourceEditor.vue）。
+        这里用 v-if 而不是 v-show —— CodeMirror 在 display:none 的容器里初始化会量不到尺寸、
+        渲染错乱；它的创建成本远低于 Crepe，每次切换重建可以接受。
+      -->
+      <NoteSourceEditor
+        v-if="editorMode === 'source'"
+        class="note-editor-source"
+        :value="note?.content ?? ''"
+        :readonly="locked"
+        @change="updateContent"
+      />
     </template>
     <el-empty v-else description="从列表中选择一篇笔记" :image-size="110" />
   </section>
@@ -195,13 +265,33 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
 import { Icon } from '@iconify/vue'
+import { ElMessage } from 'element-plus'
 import MdEditor from '@/components/editor/MdEditor.vue'
+import NoteMarkdownPreview from '@/components/note/NoteMarkdownPreview.vue'
+import NoteSourceEditor from '@/components/note/NoteSourceEditor.vue'
 import type { ApiId, INote, INoteFolder, INoteTag } from '@/interface/note'
 import type { NoteSaveStatus } from '@/utils/note-autosave'
+import {
+  buildExportFileName,
+  buildExportMarkdown,
+  downloadTextFile
+} from '@/utils/note-markdown-export'
 
 interface EditorInstance {
   setContent(value: string, resetScroll?: boolean): void
 }
+
+/**
+ * 编辑 / 查看模式。
+ *
+ * - `rich`：Crepe 富文本（默认）；
+ * - `preview`：marked 只读渲染，看最终效果（见 `NoteMarkdownPreview.vue`）；
+ * - `source`：CodeMirror 源码，逐字符保真，用于修正富文本往返会「顺平」的写法
+ *   （表格对齐、行内 `*`、刻意的空行）。
+ *
+ * 不持久化：每次进笔记都从富文本开始 —— 预览与源码都是「辅助视图」，不是主编辑方式。
+ */
+type EditorMode = 'rich' | 'preview' | 'source'
 
 interface Props {
   note: INote | null
@@ -226,6 +316,8 @@ const emit = defineEmits<{
 }>()
 
 const editorRef = ref<EditorInstance | null>(null)
+/** 当前编辑模式（富文本 / 预览 / 源码）。不持久化，见 `EditorMode` 的说明。 */
+const editorMode = ref<EditorMode>('rich')
 const lastSavedTime = ref('')
 const folderPickerVisible = ref(false)
 const tagPickerVisible = ref(false)
@@ -342,6 +434,20 @@ function syncEditor(content: string | undefined, resetScroll: boolean): void {
   })
 }
 
+/**
+ * 从源码模式切回富文本时补一次内容同步。
+ *
+ * 源码模式下正文可能被改过（`updateContent` 已经把改动上抛给 store），这里等 DOM 切回来
+ * 再喂一次，确保 ProseMirror 拿到的是最新内容。`setContent` 内部有「内容未变则跳过」的
+ * 守卫，所以这次调用不会造成额外的文档重建。
+ */
+watch(editorMode, (mode) => {
+  if (mode !== 'rich') return
+  void nextTick(() => {
+    editorRef.value?.setContent(props.note?.content ?? '', false)
+  })
+})
+
 watch(
   () => [props.note?.id, props.note?.content] as const,
   ([noteId, content], previous) => {
@@ -378,6 +484,41 @@ function updateTitle(title: string): void {
  */
 function updateContent(content: string): void {
   if (content !== props.note?.content) emit('update-note', { content })
+}
+
+/**
+ * 复制当前 Markdown 原文到剪贴板。
+ *
+ * 内容取自 `props.note.content`：三种模式下 `@change` 都会把最新正文上抛进来，
+ * 所以这里拿到的与编辑器里看到的一致（源码模式改到一半的文字也在）。
+ *
+ * 与「下载」的分工是**刻意**的，两者不要合并：
+ *   - 复制走原文，保留嵌入卡等本应用私有写法，便于粘回本应用；
+ *   - 下载走降级后的纯净格式（去掉私有标签、嵌入卡变一行引用），任何 Markdown 编辑器都能正常显示。
+ *
+ * :return: 异步操作完成后无返回值。
+ */
+async function copyMarkdown(): Promise<void> {
+  try {
+    await navigator.clipboard.writeText(props.note?.content ?? '')
+    ElMessage({ message: 'Markdown 已复制', type: 'success', plain: true })
+  } catch {
+    ElMessage({ message: '复制失败，请检查浏览器剪贴板权限', type: 'error', plain: true })
+  }
+}
+
+/**
+ * 将当前笔记导出为「纯净 Markdown」并触发浏览器下载。
+ *
+ * :return: 无返回值。
+ */
+function downloadMarkdown(): void {
+  const title = props.note?.title ?? ''
+  downloadTextFile(
+    buildExportFileName(title),
+    buildExportMarkdown({ title, content: props.note?.content ?? '' })
+  )
+  ElMessage({ message: '已开始下载 Markdown', type: 'success', plain: true })
 }
 
 /**
@@ -936,10 +1077,99 @@ function toggleTag(tagId: ApiId): void {
   text-align: center;
 }
 
+/* 视图与文档操作行：紧贴标题行下方，整行靠右 —— 模式切换在左、导出动作在右，合成一簇。 */
+.note-editor-doc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: -2px;
+}
+
+.note-editor-doc-buttons {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 0 0 auto;
+}
+
+/* 🔴 Element Plus 给相邻 el-button 默认加了 `margin-left: 12px`，特异性高于本组件的
+   flex gap，会把「复制 / 下载」之间撑到 14px —— 必须显式清零，否则调 gap 没有效果。
+   同一手法见 src/assets/css/dialog.scss 的 .app-dialog-footer。 */
+.note-editor-doc-actions .note-editor-doc-buttons .el-button + .el-button {
+  margin-left: 0;
+}
+
+.note-editor-doc-actions .el-button {
+  height: 26px;
+  padding: 0 8px;
+  border-radius: 7px;
+  color: var(--note-text-muted);
+  font-size: 12px;
+  font-weight: 650;
+  transition: color 0.16s ease, background 0.16s ease;
+}
+
+.note-editor-doc-actions .el-button:hover,
+.note-editor-doc-actions .el-button:focus-visible {
+  color: var(--note-primary);
+  background: var(--note-surface-active);
+}
+
+.note-editor-doc-actions .el-button svg {
+  width: 15px;
+  height: 15px;
+}
+
+.note-editor-doc-actions .el-button span {
+  margin-left: 4px;
+}
+
 .note-milkdown-editor {
   flex: 1;
   min-width: 0;
   min-height: 0;
+}
+
+/* 三种模式占同一块区域，互斥显示，尺寸规则保持一致。 */
+.note-editor-source,
+.note-editor-preview {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* 富文本 / 预览 / 源码切换：收成紧凑的分段控件，与同行右侧的复制 / 下载同高。 */
+.note-editor-mode {
+  flex: 0 0 auto;
+}
+
+.note-editor-mode :deep(.el-radio-button__inner) {
+  height: 26px;
+  border-color: var(--note-border);
+  padding: 0 10px;
+  color: var(--note-text-muted);
+  background: transparent;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 24px;
+  box-shadow: none;
+}
+
+.note-editor-mode :deep(.el-radio-button:first-child .el-radio-button__inner) {
+  border-radius: 7px 0 0 7px;
+}
+
+.note-editor-mode :deep(.el-radio-button:last-child .el-radio-button__inner) {
+  border-radius: 0 7px 7px 0;
+}
+
+.note-editor-mode :deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) {
+  border-color: var(--note-border);
+  color: var(--note-primary);
+  background: var(--note-surface-active);
+  box-shadow: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

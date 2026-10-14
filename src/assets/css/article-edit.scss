@@ -1233,34 +1233,46 @@
 
 html.dark {
 
+  // 整页与全站通用夜间底同色（$dark-main-color），不再带蓝紫渐变与光晕 ——
+  // 与顶栏（#24262b）、页脚、body/.el-main 一路中性灰。
   .article-edit-page {
-    background:
-      radial-gradient(circle at 16% 2%, rgb(59 130 246 / 15%), transparent 26vw),
-      radial-gradient(circle at 86% 12%, rgb(20 184 166 / 10%), transparent 24vw),
-      linear-gradient(180deg, #101620 0%, #111827 52%, #0f172a 100%);
+    background: $dark-main-color;
     color: #f3f4f6;
   }
 
   .article-title-item {
     border-color: rgb(255 255 255 / 12%);
-    background:
-      linear-gradient(135deg, rgb(31 41 55 / 88%), rgb(15 23 42 / 72%)),
-      linear-gradient(90deg, rgb(59 130 246 / 13%), rgb(20 184 166 / 9%));
+    background: $dark-surface-color;
     box-shadow: 0 18px 42px rgb(0 0 0 / 24%);
   }
 
   .article-side-panel {
     border-color: rgb(255 255 255 / 12%);
-    background:
-      linear-gradient(180deg, rgb(31 41 55 / 90%), rgb(15 23 42 / 82%)),
-      radial-gradient(circle at top right, rgb(59 130 246 / 12%), transparent 150px);
+    background: $dark-surface-color;
     box-shadow: 0 18px 42px rgb(0 0 0 / 24%);
   }
 
+  // 面板的折叠 / 展开按钮。
+  // ⚠️ 这个按钮日间是浅灰白底（rgb(241 245 249 / 82%)）+ slate-500 图标，
+  // **原先完全没有夜间覆盖** —— 于是深色面板上顶着一块亮白按钮（用户报障）。
+  // 夜间换成「半透明白抬升 + 浅灰图标」；hover 沿用日间那抹蓝的语义，
+  // 只是把 #2f80ed 换成深色底上更亮的 #93c5fd（与附件图标同色）。
+  // 日间规则里的 transition / transform 不在覆盖范围内，动效照旧生效。
+  .article-side-panel-toggle {
+    color: #94a3b8;
+    background: rgb(255 255 255 / 6%);
+
+    &:hover,
+    &:focus-visible {
+      color: #93c5fd;
+      background: rgb(147 197 253 / 14%);
+    }
+  }
+
+  // 面板里最后一块（字数 / 保存 · 发布），在面板表面上再抬一档，
+  // 靠半透明白叠加而不是另开色值，避免又出现第二套色系。
   .article-publish-section {
-    background:
-      linear-gradient(180deg, rgb(31 41 55 / 78%), rgb(31 41 55 / 96%)),
-      linear-gradient(90deg, rgb(59 130 246 / 10%), rgb(34 197 94 / 8%));
+    background: rgb(255 255 255 / 4%);
     box-shadow: none;
   }
 
@@ -1279,16 +1291,28 @@ html.dark {
   }
 
   .cover-empty,
-  .article-side-panel,
-  .article-rich-editor {
-    background: $dark-main-color;
+  .article-side-panel {
     border-color: rgb(255 255 255 / 12%);
   }
 
+  // 富文本编辑区走夜间「抬升表面」（$dark-surface-color）。
+  // ⚠️ 这个位置别再给右侧面板补一遍底色 —— 上一版正是在这里又写了一次，特异性相同、
+  // 位置更靠后，把上面那条表面色整条盖成了死代码（右侧面板因此一直是中性灰）。
+  .article-rich-editor {
+    background: $dark-surface-color;
+    border-color: rgb(255 255 255 / 12%);
+
+    // wangEditor 内部背景走这几个 CSS 变量，main.scss 在 html.dark 下统一设成了
+    // $dark-main-color；这里局部覆盖（变量会继承到组件内部动态创建的元素上）。
+    --w-e-textarea-bg-color: #{$dark-surface-color};
+    --w-e-toolbar-bg-color: #{$dark-surface-color};
+    --w-e-modal-button-bg-color: #{$dark-surface-color};
+    --w-e-textarea-slight-bg-color: #{$dark-surface-color};
+  }
+
   .cover-empty {
-    background:
-      linear-gradient(135deg, rgb(31 41 55 / 94%), rgb(15 23 42 / 92%)),
-      radial-gradient(circle at 50% 20%, rgb(59 130 246 / 14%), transparent 100px);
+    border-color: rgb(255 255 255 / 18%);
+    background: rgb(255 255 255 / 3%);
   }
 
   .article-md-editor,
@@ -1300,11 +1324,16 @@ html.dark {
     border-color: rgb(255 255 255 / 12%);
   }
 
+  // Markdown 模式（Crepe）的壳与 Crepe 调色板**不在这里覆盖** ——
+  // MdEditor.vue 的 html.dark 规则（本组件样式非 scoped，两端共用）已经是中性灰真源，
+  // 文章页与笔记页要的就是同一套色，再压一层只会多一个要同步维护的地方。
+  // （若将来确实要按页覆写：`.milkdown-editor-shell` 是 MdEditor 的根元素，父级传的 class
+  //   会并到同一元素上，所以要用同元素复合选择器 `.article-md-editor.milkdown-editor-shell`；
+  //   再往里必须 :deep()，否则 scoped 会把作用域属性挂到 MdEditor 内部没有该属性的元素上。）
+
   .attachment-uploading {
     border-color: rgb(255 255 255 / 12%);
-    background:
-      linear-gradient(180deg, rgb(31 41 55 / 94%), rgb(15 23 42 / 92%)),
-      radial-gradient(circle at top right, rgb(59 130 246 / 18%), transparent 150px);
+    background: $dark-surface-color;
     box-shadow: 0 24px 58px rgb(0 0 0 / 34%);
   }
 
@@ -1320,7 +1349,7 @@ html.dark {
 
   .attachment-uploading__item {
     border-color: rgb(255 255 255 / 10%);
-    background: rgb(15 23 42 / 48%);
+    background: rgb(255 255 255 / 4%);
   }
 
   .attachment-uploading__file-icon {
@@ -1353,7 +1382,7 @@ html.dark {
 
   .attachment-list__item {
     border-color: rgb(255 255 255 / 10%);
-    background: rgb(15 23 42 / 38%);
+    background: rgb(255 255 255 / 4%);
 
     &:hover {
       border-color: rgb(59 130 246 / 28%);
@@ -1381,15 +1410,13 @@ html.dark {
 
 :global(html.dark .article-tag-popover) {
   border-color: rgb(255 255 255 / 11%) !important;
-  background:
-    linear-gradient(145deg, rgb(31 41 55 / 97%), rgb(15 23 42 / 95%)),
-    radial-gradient(circle at top right, rgb(59 130 246 / 18%), transparent 180px) !important;
+  background: $dark-surface-color !important;
   box-shadow: 0 26px 64px rgb(0 0 0 / 40%) !important;
 }
 
 :global(html.dark .article-tag-popover .el-popper__arrow::before) {
   border-color: rgb(255 255 255 / 10%) !important;
-  background: #1d2634 !important;
+  background: $dark-surface-color !important;
 }
 
 :global(html.dark .article-tag-popover .article-tag-picker__heading strong) {
@@ -1408,7 +1435,7 @@ html.dark {
 }
 
 :global(html.dark .article-tag-popover .article-tag-picker__search .el-input__wrapper) {
-  background: rgb(15 23 42 / 76%);
+  background: rgb(255 255 255 / 6%);
   box-shadow: 0 0 0 1px rgb(148 163 184 / 22%) inset;
 }
 
@@ -1453,14 +1480,12 @@ html.dark {
 
 :global(html.dark .article-tag-popover .article-tag-picker__tip) {
   border-top-color: rgb(255 255 255 / 9%);
-  background: rgb(15 23 42 / 38%);
+  background: rgb(255 255 255 / 4%);
 }
 
 :global(html.dark .attachment-dialog.app-form-dialog) {
   border-color: rgb(255 255 255 / 11%);
-  background:
-    linear-gradient(150deg, rgb(31 41 55 / 97%), rgb(15 23 42 / 96%)),
-    radial-gradient(circle at top right, rgb(59 130 246 / 18%), transparent 220px) !important;
+  background: $dark-surface-color !important;
   box-shadow: 0 30px 84px rgb(0 0 0 / 46%) !important;
 }
 
@@ -1477,10 +1502,8 @@ html.dark {
 }
 
 :global(html.dark .attachment-dialog .el-upload-dragger) {
-  border-color: #334155;
-  background:
-    linear-gradient(135deg, rgb(15 23 42 / 88%), rgb(30 41 59 / 82%)),
-    radial-gradient(circle at 50% 0, rgb(59 130 246 / 17%), transparent 130px);
+  border-color: rgb(255 255 255 / 16%);
+  background: rgb(255 255 255 / 4%);
 }
 
 :global(html.dark .attachment-dialog .el-upload-dragger:hover) {
@@ -1489,8 +1512,8 @@ html.dark {
 }
 
 :global(html.dark .attachment-dialog .attach-upload__icon) {
-  border-color: rgb(96 165 250 / 18%);
-  background: rgb(15 23 42 / 76%);
+  border-color: rgb(255 255 255 / 12%);
+  background: rgb(255 255 255 / 6%);
   color: #93c5fd;
 }
 
@@ -1503,13 +1526,13 @@ html.dark {
 }
 
 :global(html.dark .attachment-dialog .el-upload-list__item) {
-  background: rgb(59 130 246 / 12%);
-  color: #dbeafe;
+  background: rgb(255 255 255 / 5%);
+  color: #e5e7eb;
 }
 
 :global(html.dark .attachment-dialog .attachment-dialog__hint) {
-  border-color: rgb(96 165 250 / 15%);
-  background: rgb(59 130 246 / 11%);
+  border-color: rgb(255 255 255 / 12%);
+  background: rgb(255 255 255 / 4%);
   color: #aebbd0;
 }
 

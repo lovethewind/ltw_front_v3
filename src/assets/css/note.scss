@@ -1,3 +1,5 @@
+@import "variables";
+
 .note-guest-page {
   display: grid;
   place-items: center;
@@ -113,17 +115,18 @@
   height: 18px;
 }
 
+// 夜间与全站同源：页面底走 $dark-main-color，卡片抬升一档到 $dark-surface-color。
+// 原先底色是海军蓝 #101425、卡片是半透明蓝 rgb(23 27 45 / 90%)，还叠了两团
+// 蓝/青光晕（rgb(59 130 246) 与 rgb(20 184 166)）—— 与页面框架的中性灰撞色。
+// 光晕是浅色模式那套装饰的一部分，夜间不再保留，观感才对得上其他页面。
 html.dark .note-guest-page {
   color: #e7ebf5;
-  background:
-    radial-gradient(circle at 20% 12%, rgb(59 130 246 / 17%), transparent 32vw),
-    radial-gradient(circle at 82% 78%, rgb(20 184 166 / 12%), transparent 30vw),
-    #101425;
+  background: $dark-main-color;
 }
 
 html.dark .note-guest-card {
-  border-color: #303958;
-  background: rgb(23 27 45 / 90%);
+  border-color: $dark-border-color;
+  background: $dark-surface-color;
   box-shadow: 0 28px 70px rgb(0 0 0 / 28%);
 }
 
@@ -158,15 +161,20 @@ html.dark .note-guest-features {
   background: var(--note-surface-subtle);
 }
 
+// 夜间配色与全站同源（原来是一套海军蓝：底 #101425 / 表面 #171b2d / 选中 #263653 /
+// 描边 #303958）—— 与顶栏、页脚、文章编辑页的中性灰撞色，整站两套色系。
+// 现在：页面底 $dark-main-color、抬升表面 $dark-surface-color、选中 $dark-hover-color、
+// 描边 $dark-border-color；**蓝只留在强调色上**（--note-primary 系列与删除色），
+// 那是链接 / 选中文字 / 图标的语义色，不是背景。
 html.dark .note-workspace {
-  --note-surface: #171b2d;
-  --note-surface-subtle: #101425;
-  --note-surface-active: #263653;
+  --note-surface: #{$dark-surface-color};
+  --note-surface-subtle: #{$dark-main-color};
+  --note-surface-active: #{$dark-hover-color};
   --note-text: #e7ebf5;
   --note-text-muted: #a9b3c9;
   --note-primary: #8ab8ff;
   --note-primary-hover: #b5d2ff;
-  --note-border: #303958;
+  --note-border: #{$dark-border-color};
   --note-danger: #fca5a5;
   --note-shadow: 0 14px 32px rgb(0 0 0 / 22%);
   --note-shadow-hover: 0 18px 38px rgb(0 0 0 / 32%);
@@ -304,14 +312,34 @@ html.dark .note-workspace {
 }
 
 .note-workspace-editor {
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
 }
 
-.note-workspace-editor .milkdown-editor-scroll {
+/* 标签栏占掉固定高度后，编辑器必须吃掉剩余空间：`.note-editor` 自带的 height: 100%
+   是按父元素整体高度算的，不改成 flex 分配就会连标签栏一起撑出可视区、底部被裁掉。 */
+.note-workspace > .note-workspace-editor > .note-editor {
+  flex: 1;
+  min-height: 0;
+}
+
+/* 三档（富文本 / 预览 / 源码）的滚动容器共用一套**常驻细滚动条**。
+   ⚠️ macOS 默认走 overlay 滚动条：不滚动就不出现，也没有可抓的条。WebKit 里只要给
+   `::-webkit-scrollbar` 设过宽高，它就从浮层切成常驻的经典滚动条 —— 此前只有富文本档
+   （`.milkdown-editor-scroll`）设过，于是同一块区域里三档观感不一致：预览 / 源码档
+   看起来根本没有滚动条、也就没法拖着下拉。
+   ⚠️ 源码档的滚动发生在 CodeMirror 自己的 `.cm-scroller` 上（外层 `__code` 是
+   `overflow: hidden`），所以要挂在那个元素上。 */
+.note-workspace-editor .milkdown-editor-scroll,
+.note-workspace-editor .note-markdown-preview,
+.note-workspace-editor .note-source-editor__code .cm-scroller {
   scrollbar-width: thin;
 }
 
-.note-workspace-editor .milkdown-editor-scroll::-webkit-scrollbar {
+.note-workspace-editor .milkdown-editor-scroll::-webkit-scrollbar,
+.note-workspace-editor .note-markdown-preview::-webkit-scrollbar,
+.note-workspace-editor .note-source-editor__code .cm-scroller::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
@@ -378,6 +406,360 @@ html.dark .note-workspace {
   display: none;
 }
 
+/* ------------------------------------------------------------------ *
+ * 快速打开（Cmd/Ctrl + K）
+ * 弹窗挂在 body 上（append-to-body），拿不到 `.note-workspace` 的变量，
+ * 因此这里自带一套同源配色，并按 html.dark 切暗色。
+ * ------------------------------------------------------------------ */
+.note-quick-open-dialog {
+  --qo-surface: #ffffff;
+  --qo-subtle: #f7f9fd;
+  --qo-active: #eaf2ff;
+  --qo-text: #243047;
+  --qo-muted: #69758a;
+  --qo-primary: #2f80ed;
+  --qo-border: #e1e7f0;
+
+  border-radius: 14px !important;
+  background: var(--qo-surface) !important;
+  box-shadow: 0 24px 64px rgb(33 56 92 / 20%) !important;
+  overflow: hidden;
+}
+
+html.dark .note-quick-open-dialog {
+  --qo-surface: #{$dark-surface-color};
+  --qo-subtle: #{$dark-main-color};
+  --qo-active: #{$dark-hover-color};
+  --qo-text: #e7ebf5;
+  --qo-muted: #a9b3c9;
+  --qo-primary: #8ab8ff;
+  --qo-border: #{$dark-border-color};
+
+  box-shadow: 0 24px 64px rgb(0 0 0 / 42%) !important;
+}
+
+.note-quick-open-dialog .el-dialog__header {
+  display: none;
+}
+
+.note-quick-open-dialog .el-dialog__body {
+  padding: 0;
+}
+
+.note-quick-open {
+  display: flex;
+  max-height: min(560px, 82vh);
+  flex-direction: column;
+  color: var(--qo-text);
+}
+
+.note-quick-open__search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--qo-border);
+}
+
+.note-quick-open__search > svg {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  color: var(--qo-muted);
+}
+
+.note-quick-open__search input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  color: var(--qo-text);
+  background: transparent;
+  font-size: 15px;
+  outline: none;
+}
+
+.note-quick-open__search input::placeholder {
+  color: var(--qo-muted);
+}
+
+.note-quick-open__search kbd,
+.note-quick-open__footer kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  padding: 1px 6px;
+  border: 1px solid var(--qo-border);
+  border-radius: 5px;
+  color: var(--qo-muted);
+  background: var(--qo-subtle);
+  font-family: inherit;
+  font-size: 11px;
+  line-height: 18px;
+}
+
+.note-quick-open__filter-toggle {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border: 1px solid var(--qo-border);
+  border-radius: 8px;
+  color: var(--qo-muted);
+  background: var(--qo-surface);
+  font-size: 12px;
+  cursor: pointer;
+  transition: color 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+}
+
+.note-quick-open__filter-toggle:hover,
+.note-quick-open__filter-toggle.is-active {
+  color: var(--qo-primary);
+  border-color: color-mix(in srgb, var(--qo-primary) 42%, var(--qo-border));
+  background: color-mix(in srgb, var(--qo-primary) 8%, var(--qo-surface));
+}
+
+.note-quick-open__filter-toggle svg {
+  width: 15px;
+  height: 15px;
+}
+
+.note-quick-open__filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--qo-border);
+  background: var(--qo-subtle);
+}
+
+.note-quick-open__field {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--qo-muted);
+}
+
+.note-quick-open__field .el-select {
+  width: 148px;
+}
+
+.note-quick-open__pinned {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border: 1px solid var(--qo-border);
+  border-radius: 8px;
+  color: var(--qo-muted);
+  background: var(--qo-surface);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.note-quick-open__pinned.is-active {
+  color: var(--qo-primary);
+  border-color: color-mix(in srgb, var(--qo-primary) 42%, var(--qo-border));
+  background: color-mix(in srgb, var(--qo-primary) 8%, var(--qo-surface));
+}
+
+.note-quick-open__pinned svg {
+  width: 15px;
+  height: 15px;
+}
+
+.note-quick-open__filter-clear {
+  margin-left: auto;
+  padding: 5px 10px;
+  border: 0;
+  border-radius: 8px;
+  color: var(--qo-primary);
+  background: transparent;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.note-quick-open__filter-clear:disabled {
+  color: var(--qo-muted);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.note-quick-open__history {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--qo-border);
+}
+
+.note-quick-open__history-title {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--qo-muted);
+  font-size: 12px;
+}
+
+.note-quick-open__history-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.note-quick-open__history-item {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--qo-border);
+  border-radius: 7px;
+  background: var(--qo-surface);
+  overflow: hidden;
+}
+
+.note-quick-open__history-item > button {
+  padding: 4px 9px;
+  border: 0;
+  color: var(--qo-text);
+  background: transparent;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.note-quick-open__history-remove {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 6px !important;
+  color: var(--qo-muted) !important;
+}
+
+.note-quick-open__history-remove svg {
+  width: 13px;
+  height: 13px;
+}
+
+.note-quick-open__history-clear {
+  padding: 4px 9px;
+  border: 1px dashed var(--qo-border);
+  border-radius: 7px;
+  color: var(--qo-muted);
+  background: transparent;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.note-quick-open__results {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.note-quick-open__result {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 9px;
+  color: var(--qo-text);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.note-quick-open__result.active {
+  background: var(--qo-active);
+}
+
+.note-quick-open__result-icon {
+  flex: 0 0 auto;
+  width: 19px;
+  height: 19px;
+  color: var(--qo-muted);
+}
+
+.note-quick-open__result-copy {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.note-quick-open__result-copy strong {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.note-quick-open__result-copy small {
+  overflow: hidden;
+  color: var(--qo-muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.note-quick-open__result em {
+  flex: 0 0 auto;
+  max-width: 34%;
+  overflow: hidden;
+  color: var(--qo-muted);
+  font-size: 12px;
+  font-style: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.note-quick-open__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 40px 16px;
+  color: var(--qo-muted);
+  font-size: 13px;
+}
+
+.note-quick-open__empty svg {
+  width: 20px;
+  height: 20px;
+}
+
+.note-quick-open__footer {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--qo-border);
+  color: var(--qo-muted);
+  font-size: 12px;
+}
+
+.note-quick-open__footer span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.note-quick-open__footer small {
+  margin-left: auto;
+  color: var(--qo-muted);
+  font-size: 12px;
+}
+
+@media (max-width: 767px) {
+  .note-quick-open__field .el-select {
+    width: 120px;
+  }
+
+  .note-quick-open__result em {
+    display: none;
+  }
+}
+
 @media (min-width: 768px) and (max-width: 1199px) {
   .note-workspace {
     grid-template-columns: 260px minmax(0, 1fr);
@@ -420,6 +802,12 @@ html.dark .note-workspace {
     height: 100%;
   }
 
+  /* 移动端同样要让标签栏与编辑器纵向分配高度，否则编辑器按父元素满高渲染会溢出。 */
+  .note-workspace.panel-editor .note-workspace-editor {
+    display: flex;
+    flex-direction: column;
+  }
+
   .note-workspace .note-workspace-back {
     display: inline-flex;
     align-items: center;
@@ -437,6 +825,275 @@ html.dark .note-workspace {
     margin: 12px;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   历史版本对比（NoteDiffViewer）
+   与桌面端 .conflict-diff 同源，只换了前缀、并把夜间收敛到网页端的四档灰。
+   两列共用同一个滚动容器 → 逐行对齐与同步滚动都是结构白送的。
+   --------------------------------------------------------------------------- */
+.note-diff {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid #dce5ef;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 5px 18px rgb(35 57 86 / 5%);
+}
+
+.note-diff__bar {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 6px 12px;
+  border-bottom: 1px solid #e5ebf3;
+}
+
+.note-diff__stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #b3761f;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.note-diff__stat svg {
+  width: 15px;
+  height: 15px;
+}
+
+.note-diff__stat.is-clean {
+  color: #2f8a68;
+}
+
+.note-diff__nav {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.note-diff__nav button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 26px;
+  padding: 0 9px;
+  border: 1px solid #dbe4ee;
+  border-radius: 8px;
+  color: #5b7089;
+  background: #f5f8fb;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.note-diff__nav button:hover:not(:disabled),
+.note-diff__nav button:focus-visible:not(:disabled) {
+  border-color: #9fc4ee;
+  color: #2f75c5;
+  background: #edf5ff;
+}
+
+.note-diff__nav button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.note-diff__nav button svg {
+  width: 14px;
+  height: 14px;
+}
+
+.note-diff__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  background: #fbfcfe;
+  scrollbar-color: #cfdae8 transparent;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+}
+
+.note-diff__scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.note-diff__scroll::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: #cfdae8;
+}
+
+.note-diff__columns,
+.note-diff__row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.note-diff__columns {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  border-bottom: 1px solid #e5ebf3;
+  background: #f5f8fb;
+  box-shadow: 0 4px 10px rgb(35 57 86 / 7%);
+}
+
+.note-diff__column-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 0 10px;
+  color: #5b7089;
+}
+
+.note-diff__column-head + .note-diff__column-head {
+  border-left: 1px solid #e5ebf3;
+}
+
+.note-diff__column-head svg {
+  width: 15px;
+  height: 15px;
+}
+
+.note-diff__column-head.is-left svg {
+  color: #b8791c;
+}
+
+.note-diff__column-head.is-right svg {
+  color: #397fcf;
+}
+
+.note-diff__column-head strong {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.note-diff__column-head small {
+  margin-left: auto;
+  color: #97a6b8;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.note-diff__row {
+  border-bottom: 1px solid rgb(226 233 242 / 60%);
+}
+
+.note-diff__cell {
+  position: relative;
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+  /* 上下各 3px：原来只有 1px，行贴着分隔线、读起来挤。
+     行高由「cell 上下 padding + text 的 line-height」一起决定。 */
+  padding: 3px 8px 3px 0;
+}
+
+.note-diff__cell + .note-diff__cell {
+  border-left: 1px solid #eaeff6;
+}
+
+.note-diff__no {
+  flex: 0 0 32px;
+  padding-right: 6px;
+  color: #a8b6c7;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  user-select: none;
+}
+
+.note-diff__text {
+  flex: 1;
+  min-width: 0;
+  min-height: 1.8em;
+  padding: 1px 0;
+  color: #33465e;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.note-diff__row.is-diff .note-diff__cell::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 3px;
+  content: "";
+}
+
+.note-diff__row.is-diff .note-diff__cell.is-removed { background: #fff8ec; }
+.note-diff__row.is-diff .note-diff__cell.is-removed::before { background: #e5b25f; }
+.note-diff__row.is-diff .note-diff__cell.is-added { background: #f1f7ff; }
+.note-diff__row.is-diff .note-diff__cell.is-added::before { background: #79aee8; }
+.note-diff__row.is-diff .note-diff__cell.is-removed .note-diff__no { color: #c08a2e; }
+.note-diff__row.is-diff .note-diff__cell.is-added .note-diff__no { color: #4a86cf; }
+.note-diff__row.is-current .note-diff__cell.is-removed { background: #ffefd2; }
+.note-diff__row.is-current .note-diff__cell.is-added { background: #e3efff; }
+.note-diff__cell.is-void { background: repeating-linear-gradient(135deg, rgb(226 233 242 / 55%) 0 6px, transparent 6px 12px); }
+
+.note-diff__mark {
+  padding: 0 1px;
+  border-radius: 3px;
+  color: #8a5a12;
+  background: #ffe0a8;
+}
+
+.note-diff__cell.is-added .note-diff__mark {
+  color: #1f5ba8;
+  background: #cfe4ff;
+}
+
+html.dark .note-diff {
+  border-color: $dark-border-color;
+  background: $dark-surface-color;
+  box-shadow: 0 5px 18px rgb(0 0 0 / 35%);
+}
+
+html.dark .note-diff__bar { border-bottom-color: $dark-border-color; }
+html.dark .note-diff__stat { color: #e4ad58; }
+html.dark .note-diff__stat.is-clean { color: #7fd3ab; }
+html.dark .note-diff__nav button { border-color: #3a3f47; color: #b6c5d8; background: #2e3138; }
+html.dark .note-diff__nav button:hover:not(:disabled),
+html.dark .note-diff__nav button:focus-visible:not(:disabled) { border-color: #4779ad; color: #a4ceff; background: #343b47; }
+html.dark .note-diff__scroll { background: #1f2126; scrollbar-color: #3d434d transparent; }
+html.dark .note-diff__scroll::-webkit-scrollbar-thumb { background: #3d434d; }
+html.dark .note-diff__columns { border-bottom-color: $dark-border-color; background: #2a2d33; box-shadow: 0 4px 10px rgb(0 0 0 / 30%); }
+html.dark .note-diff__column-head { color: #9db0c6; }
+html.dark .note-diff__column-head + .note-diff__column-head { border-left-color: $dark-border-color; }
+html.dark .note-diff__column-head.is-left svg { color: #e5ad58; }
+html.dark .note-diff__column-head.is-right svg { color: #82b9f4; }
+html.dark .note-diff__column-head small { color: #7f92a8; }
+html.dark .note-diff__row { border-bottom-color: rgb(61 67 77 / 55%); }
+html.dark .note-diff__cell + .note-diff__cell { border-left-color: #34383f; }
+html.dark .note-diff__no { color: #6b7688; }
+html.dark .note-diff__text { color: #e7ebf5; }
+html.dark .note-diff__row.is-diff .note-diff__cell.is-removed { background: rgb(190 123 25 / 13%); }
+html.dark .note-diff__row.is-diff .note-diff__cell.is-removed::before { background: #b78035; }
+html.dark .note-diff__row.is-diff .note-diff__cell.is-removed .note-diff__no { color: #d8a75a; }
+html.dark .note-diff__row.is-diff .note-diff__cell.is-added { background: rgb(65 126 191 / 16%); }
+html.dark .note-diff__row.is-diff .note-diff__cell.is-added::before { background: #417ebf; }
+html.dark .note-diff__row.is-diff .note-diff__cell.is-added .note-diff__no { color: #82b9f4; }
+html.dark .note-diff__row.is-current .note-diff__cell.is-removed { background: rgb(190 123 25 / 24%); }
+html.dark .note-diff__row.is-current .note-diff__cell.is-added { background: rgb(65 126 191 / 28%); }
+html.dark .note-diff__cell.is-void { background: repeating-linear-gradient(135deg, rgb(61 67 77 / 50%) 0 6px, transparent 6px 12px); }
+html.dark .note-diff__mark { color: #ffd894; background: rgb(190 123 25 / 36%); }
+html.dark .note-diff__cell.is-added .note-diff__mark { color: #bcdcff; background: rgb(65 126 191 / 42%); }
 
 @media (prefers-reduced-motion: reduce) {
   .note-workspace *,

@@ -149,9 +149,20 @@ defineExpose({
   background: #fff;
 }
 
+// 夜间编辑区跟随「编辑器一族」的深蓝底色，而不是全站通用的 $dark-main-color 中性灰：
+// 文章编辑页的页面框架是 slate 深蓝，同页的 Markdown 模式（Crepe）也是 #171b2d，
+// 只有这里是一块灰底，成了整页唯一不带蓝的区域。
 html.dark {
+  // 编辑区走夜间「抬升表面」的中性灰（$dark-surface-color），与文章页整页底色同族。
   .editor-content {
-    background: $dark-main-color;
+    background: $dark-surface-color;
+  }
+
+  // 工具栏默认是 rgb(255 255 255 / 96%) 的白底（见上方 .editor-toolbar），
+  // 夜间一并覆盖，免得在深色编辑区顶上留一条白带；分隔线也跟着换成半透明白。
+  .editor-toolbar {
+    background: $dark-surface-color;
+    border-bottom-color: rgb(255 255 255 / 12%);
   }
 }
 </style>

@@ -168,12 +168,25 @@ function openFeedback(): void {
 
 
 html.dark {
+  // 夜间页脚与页面同色（$dark-main-color），只留一条顶部分隔线。
+  //
+  // 原先是 Tailwind slate 的冷蓝渐变（slate-900 → slate-800，B−R ≈ 22），而页面底色
+  // $dark-main-color 是中性灰（B−R = 2），色相差 20 出头，深色背景下肉眼就是
+  // 「两种颜色」，所以改回与页面同源。
   .footer-wrap {
-    background: linear-gradient(135deg, #111827, #1f2937) !important;
+    background: $dark-main-color !important;
+    // 🔴 内联的 websiteInfo.footerStyle 里还带着彩虹渐变用的
+    // `background-size: 400% 400%` 与 `animation: Gradient 22s`，只覆盖 background
+    // 会漏掉这两项 —— 渐变被放大 4 倍且仍在缓慢平移，页脚内部会浮出深浅两块。
+    // 同色方案下必须一并清掉（内联样式优先级高于普通声明，所以同样需要 !important）。
+    background-size: auto !important;
+    animation: none !important;
+    border-top: 1px solid $dark-border-color;
   }
 
+  // 这层暗蓝叠加是给彩虹渐变压暗用的，同色方案下不需要，留着会重新给页脚染上蓝色。
   .footer-wrap::before {
-    background: rgba(2, 6, 23, 0.3);
+    background: none;
   }
 
   .footer-brand,
@@ -186,9 +199,11 @@ html.dark {
     box-shadow: 0 0 18px rgba(94, 234, 212, 0.45);
   }
 
+  // 备案号胶囊原先是 slate-800（rgba(30, 41, 59, 0.82)，同样偏蓝），
+  // 页脚转中性灰后会成为整块区域里唯一带蓝的元素，一并换成中性灰。
   .footer-record {
     color: #e5e7eb;
-    background: rgba(30, 41, 59, 0.82);
+    background: $dark-hover-color;
   }
 }
 

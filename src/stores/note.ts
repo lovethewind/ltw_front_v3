@@ -389,6 +389,82 @@ export const useNoteStore = defineStore('note', () => {
   }
 
   /**
+   * 读取一篇笔记的可复制/可移动快照。
+   *
+   * 当前正在编辑的笔记优先取内存态（可能含未提交改动），其余走详情接口
+   * —— 目录树里的 `contentPreview` 是服务端截断后的预览，不能当正文用。
+   *
+   * :param noteId: 笔记标识。
+   * :return: 完整笔记详情。
+   */
+  async function readNoteForTransfer(noteId: ApiId): Promise<INote> {
+    if (sameId(activeNote.value?.id, noteId) && activeNote.value) return activeNote.value
+    return (await noteApi.getDetail(noteId)).data
+  }
+
+  /**
+   * 把一篇笔记移动到目标文件夹（正文、标题、标签原样保留）。
+   *
+   * :param noteId: 笔记标识。
+   * :param targetFolderId: 目标文件夹；空值表示未分类。
+   * :return: 是否移动成功。
+   */
+  async function moveNote(noteId: ApiId, targetFolderId: ApiId | null): Promise<boolean> {
+    actionError.value = ''
+    try {
+      const source = await readNoteForTransfer(noteId)
+      await noteApi.update(noteId, {
+        title: source.title,
+        content: source.content,
+        folderId: targetFolderId,
+        tagIds: source.tagList.map((tag) => String(tag.id))
+      })
+      notes.value = notes.value.map((note) =>
+        sameId(note.id, noteId) ? { ...note, folderId: targetFolderId } : note
+      )
+      if (sameId(activeNote.value?.id, noteId) && activeNote.value) {
+        activeNote.value = { ...activeNote.value, folderId: targetFolderId }
+      }
+      rememberNoteDetail({ ...source, folderId: targetFolderId })
+      return true
+    } catch (error) {
+      setError(error)
+      return false
+    }
+  }
+
+  /**
+   * 把一篇笔记复制到目标文件夹（标题追加「副本」）。
+   *
+   * ⚠️ 后端没有「复制」端点，这里用「新建 + 回填内容」两步组合实现；
+   * 两步之间失败会留下一个空笔记，因此不要改成无回滚的并行调用。
+   *
+   * :param noteId: 源笔记标识。
+   * :param targetFolderId: 目标文件夹；空值表示未分类。
+   * :return: 是否复制成功。
+   */
+  async function duplicateNote(noteId: ApiId, targetFolderId: ApiId | null): Promise<boolean> {
+    actionError.value = ''
+    try {
+      const source = await readNoteForTransfer(noteId)
+      const created = await noteApi.create(targetFolderId)
+      const duplicatedId = created.data
+      await noteApi.update(duplicatedId, {
+        title: `${source.title.slice(0, 97)} 副本`,
+        content: source.content,
+        folderId: targetFolderId,
+        tagIds: source.tagList.map((tag) => String(tag.id))
+      })
+      await loadNotes()
+      await selectNote(duplicatedId)
+      return true
+    } catch (error) {
+      setError(error)
+      return false
+    }
+  }
+
+  /**
    * 设置目录树的本地筛选条件。
    *
    * :param nextFilter: 新筛选字段。
@@ -1053,6 +1129,8 @@ export const useNoteStore = defineStore('note', () => {
     loadNotes,
     selectNote,
     createNote,
+    moveNote,
+    duplicateNote,
     setFilter,
     search,
     showAll,

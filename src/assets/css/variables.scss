@@ -1,4 +1,9 @@
 $dark-main-color: #1d1e1f;
 $dark-hover-color: #2e2e2e;
 $a-hover-color: #2f80ed;
-$dark-border-color: #2e2e2e
+$dark-border-color: #2e2e2e;
+
+// 夜间「抬升表面」—— 卡片、面板、编辑器壳、弹层等浮在页面底之上的表面。
+// 与 header.scss 里导航栏 / 用户弹层的 #24262b 同值：页面底是 $dark-main-color，
+// 表面统一抬高这一档。文章编辑页（页面、标题卡、编辑器、右侧面板、弹层）一律走这个色系。
+$dark-surface-color: #24262b;

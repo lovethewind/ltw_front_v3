@@ -22,7 +22,6 @@
               v-if="postForm.isMarkdown"
               ref="editorRef"
               @change="contentChange($event, true)"
-              @focus-mode-change="handleEditorFocusModeChange"
               class="article-md-editor"
             />
             <rich-editor
@@ -442,7 +441,6 @@ const searchTagKeyword = ref('')
 const isTagPopoverVisible = ref(false)
 const customTagCreating = ref(false)
 const sidePanelCollapsed = ref(false)
-const sidePanelCollapsedBeforeFocus = ref(false)
 const isSuccess = ref(false)
 const submitDisabled = ref(false)
 const tips = ref('🍀 在这里填写标题，想写点什么呢~')
@@ -588,21 +586,6 @@ function contentChange(data: string, isMarkdown: boolean) {
  */
 function toggleArticleSidePanel(): void {
   sidePanelCollapsed.value = !sidePanelCollapsed.value
-}
-
-/**
- * 根据编辑器专注模式收起或恢复文章发布设置。
- *
- * :param enabled: 是否进入专注模式。
- * :return: 无返回值。
- */
-function handleEditorFocusModeChange(enabled: boolean): void {
-  if (enabled) {
-    sidePanelCollapsedBeforeFocus.value = sidePanelCollapsed.value
-    sidePanelCollapsed.value = true
-    return
-  }
-  sidePanelCollapsed.value = sidePanelCollapsedBeforeFocus.value
 }
 
 /**

@@ -151,6 +151,17 @@ describe('历史版本抽屉：版式呼吸感', () => {
     expect(drawer).toMatch(/\.note-history-preview :deep\(\.note-diff\) \{\s*\n\s*margin-top: 14px;/)
   })
 
+  it('右侧标题压到 16px，不再抢对比正文的竖向空间', () => {
+    // ⚠️ 用 `[^}]*?` 而不是 `[\s\S]*?`：后者会跨规则块匹配到别处的 `font-size: 16px`，
+    // 回退这条改动时断言不会转红（本次反向验证实测踩到）。
+    expect(drawer).toMatch(/\.note-history-preview h3 \{[^}]*?font-size: 16px;/)
+  })
+
+  it('统计条压薄一档（元信息行不该抢正文高度），跳转按钮跟着收', () => {
+    expect(styles).toMatch(/\.note-diff__bar \{[^}]*?min-height: 30px;[^}]*?padding: 4px 10px;/)
+    expect(styles).toMatch(/\.note-diff__nav button \{[^}]*?height: 22px;/)
+  })
+
   it('对比行的行高：单元格上下各留 3px，正文 12px / 1.8', () => {
     expect(styles).toMatch(/\.note-diff__cell \{[\s\S]*?padding: 3px 8px 3px 0;/)
     expect(styles).toMatch(/\.note-diff__text \{[\s\S]*?font-size: 12px;\s*\n\s*line-height: 1\.8;/)

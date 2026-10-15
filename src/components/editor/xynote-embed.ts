@@ -1,11 +1,11 @@
 /**
  * 笔记嵌入卡片 —— 网页端渲染
  *
- * 桌面端（心悦笔记）把嵌入卡片以标准 HTML 写进正文：
+ * 嵌入卡片以标准 HTML 写进正文，两个标识属性互为补充、**任一存在即算一张卡**：
  *
  *   `<div data-xynote-embed="note:<本机uuid>" data-xynote-embed-server="<serverId>" title="..."></div>`
  *
- * - `data-xynote-embed` 是**桌面端本机**标识，网页端无对应字段与接口，**不要**用它取数；
+ * - `data-xynote-embed` 是**桌面端本机**标识，网页端无对应字段与接口，**既不取数也不生成**；
  * - `data-xynote-embed-server` 是**跨端标识**（服务端主键），网页端只认它。
  *
  * 没有 `data-xynote-embed-server` 的两种情况（目标尚未同步、或卡片是桌面端旧版本插入的存量数据）
@@ -19,10 +19,12 @@ import type { Editor } from '@milkdown/kit/core'
 import { $nodeSchema, $remark, $view } from '@milkdown/kit/utils'
 import { h, render } from 'vue'
 import NoteEmbedCard from '../note/NoteEmbedCard.vue'
+import { dispatchEmbedCardMenu } from '@/utils/note-open-events'
 import {
   EMBED_SERVER_TAG,
   EMBED_TAG,
   buildEmbedHtml,
+  isEmbedHtml,
   parseEmbedHtml,
   parseEmbedServerId,
   parseEmbedTitle
@@ -30,7 +32,15 @@ import {
 
 export const EMBED_MDAST_TYPE = 'xynoteEmbed'
 // 标记的解析/生成在纯函数模块里（可单测），此处仅转出，保持调用方 import 路径稳定。
-export { EMBED_SERVER_TAG, EMBED_TAG, buildEmbedHtml, parseEmbedHtml, parseEmbedServerId, parseEmbedTitle }
+export {
+  EMBED_SERVER_TAG,
+  EMBED_TAG,
+  buildEmbedHtml,
+  isEmbedHtml,
+  parseEmbedHtml,
+  parseEmbedServerId,
+  parseEmbedTitle
+}
 
 /**
  * 深度遍历 mdast 树。回调签名 (node, parent, index)：
@@ -79,10 +89,9 @@ export const embedRemarkTransformer = $remark(
       // 情况一：root 直接子级就是 embed html（本插件若先于内置执行时兜底）
       if (node.type === 'html') {
         const raw = String(node.value ?? '')
-        const noteId = parseEmbedHtml(raw)
-        if (noteId == null) return
+        if (!isEmbedHtml(raw)) return
         node.type = EMBED_MDAST_TYPE
-        node.noteId = noteId
+        node.noteId = parseEmbedHtml(raw) ?? ''
         node.serverId = parseEmbedServerId(raw)
         node.title = parseEmbedTitle(raw)
         return
@@ -92,11 +101,10 @@ export const embedRemarkTransformer = $remark(
         const kids = node.children as Record<string, unknown>[] | undefined
         if (kids && kids.length === 1 && kids[0] && kids[0].type === 'html') {
           const raw = String(kids[0].value ?? '')
-          const noteId = parseEmbedHtml(raw)
-          if (noteId == null) return
+          if (!isEmbedHtml(raw)) return
           const embedNode = kids[0]
           embedNode.type = EMBED_MDAST_TYPE
-          embedNode.noteId = noteId
+          embedNode.noteId = parseEmbedHtml(raw) ?? ''
           embedNode.serverId = parseEmbedServerId(raw)
           embedNode.title = parseEmbedTitle(raw)
           delete embedNode.value
@@ -127,7 +135,8 @@ export const noteEmbedNodeSchema = $nodeSchema('xynoteEmbed', () => ({
   },
   parseDOM: [
     {
-      tag: 'div[data-xynote-embed]',
+      // 两个标识属性**任一存在**即认作嵌入卡：网页端插入的卡片只有 `data-xynote-embed-server`。
+      tag: 'div[data-xynote-embed], div[data-xynote-embed-server]',
       getAttrs: (dom: HTMLElement) => ({
         noteId: dom.getAttribute('data-xynote-embed')?.replace(/^note:/, '') ?? '',
         title: dom.getAttribute('title'),
@@ -138,11 +147,14 @@ export const noteEmbedNodeSchema = $nodeSchema('xynoteEmbed', () => ({
   toDOM: (node) => {
     const noteId = node.attrs.noteId as string
     const title = (node.attrs.title as string | null) ?? '笔记卡片'
-    const attrs: Record<string, string> = { 'data-xynote-embed': `note:${noteId}` }
+    const attrs: Record<string, string> = {}
+    // 本机 ID 为空是网页端插入的卡片的常态（网页端没有本机 uuid），不要写出 `note:` 空值。
+    if (noteId) attrs[EMBED_TAG] = `note:${noteId}`
     const serverId = (node.attrs.serverId as string | null) ?? null
     if (serverId) attrs[EMBED_SERVER_TAG] = String(serverId)
+    const suffix = noteId ? ` (note:${noteId})` : ''
     // ProseMirror 约定：toDOM 返回 DOMOutputSpec（数组描述），不可返回已创建的元素。
-    return ['div', attrs, `[嵌入卡片] ${title} (note:${noteId})`]
+    return ['div', attrs, `[嵌入卡片] ${title}${suffix}`]
   },
   parseMarkdown: {
     match: ({ type }) => type === EMBED_MDAST_TYPE,
@@ -176,46 +188,69 @@ export const noteEmbedNodeSchema = $nodeSchema('xynoteEmbed', () => ({
  * 卡片节点视图：把块节点渲染成只读卡片（取数、跳转都在 NoteEmbedCard 内）。
  *
  * :param node: 当前节点（NodeView 入参，随文档更新被替换）。
+ * :param _view: 编辑器视图（未使用）。
+ * :param getPos: 由 ProseMirror 注入的「取当前节点位置」函数 —— 右键菜单要按位置定位节点，
+ *   且必须**调用时现取**（文档一变位置就变，闭包捕获的旧值会指向别的节点）。
  * :return: NodeView 描述对象。
  */
 export const noteEmbedView = $view(
   noteEmbedNodeSchema.node,
-  () => (node: { attrs: Record<string, unknown>; type: unknown }) => {
-    const container = document.createElement('div')
-    container.className = 'xynote-embed-nodeview'
-    // 卡片为只读展示块，自身不可编辑。
-    container.setAttribute('contenteditable', 'false')
+  () =>
+    (
+      node: { attrs: Record<string, unknown>; type: unknown },
+      _view: unknown,
+      getPos: () => number | undefined
+    ) => {
+      const container = document.createElement('div')
+      container.className = 'xynote-embed-nodeview'
+      // 卡片为只读展示块，自身不可编辑。
+      container.setAttribute('contenteditable', 'false')
 
-    const renderCard = (): void => {
-      render(
-        h(NoteEmbedCard, {
-          noteId: (node.attrs.noteId as string) || '',
-          serverId: (node.attrs.serverId as string | null) ?? null,
-          title: (node.attrs.title as string | null) ?? null
-        }),
-        container
-      )
-    }
-    renderCard()
-
-    return {
-      dom: container,
-      update(nextNode: { attrs: Record<string, unknown>; type: unknown }): boolean {
-        if (nextNode.type !== node.type) return false
-        const changed = (['noteId', 'serverId', 'title'] as const).some(
-          (key) => nextNode.attrs[key] !== node.attrs[key]
+      const renderCard = (): void => {
+        const noteId = (node.attrs.noteId as string) || ''
+        const title = (node.attrs.title as string | null) ?? null
+        const serverId = (node.attrs.serverId as string | null) ?? null
+        render(
+          h(NoteEmbedCard, {
+            noteId,
+            serverId,
+            title,
+            // 右键卡片：nodeView 补上节点位置，把菜单请求穿给宿主编辑器（见 MdEditor 的 handleEmbedCardMenu）。
+            onContextMenu: (payload: { x: number; y: number; available: boolean }) => {
+              dispatchEmbedCardMenu(container, {
+                noteId,
+                serverId,
+                title,
+                pos: getPos() ?? -1,
+                x: payload.x,
+                y: payload.y,
+                available: payload.available
+              })
+            }
+          }),
+          container
         )
-        node = nextNode
-        if (changed) renderCard()
-        return true
-      },
-      destroy(): void {
-        render(null, container)
-      },
-      // 卡片是原子展示块：拦截内部指针/键盘事件交给 Vue，避免 ProseMirror 介入光标/选择。
-      stopEvent: (): boolean => true
+      }
+      renderCard()
+
+      return {
+        dom: container,
+        update(nextNode: { attrs: Record<string, unknown>; type: unknown }): boolean {
+          if (nextNode.type !== node.type) return false
+          const changed = (['noteId', 'serverId', 'title'] as const).some(
+            (key) => nextNode.attrs[key] !== node.attrs[key]
+          )
+          node = nextNode
+          if (changed) renderCard()
+          return true
+        },
+        destroy(): void {
+          render(null, container)
+        },
+        // 卡片是原子展示块：拦截内部指针/键盘事件交给 Vue，避免 ProseMirror 介入光标/选择。
+        stopEvent: (): boolean => true
+      }
     }
-  }
 )
 
 /**

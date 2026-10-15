@@ -1,15 +1,17 @@
 /**
  * 嵌入卡标记的解析与生成 —— **纯函数，无框架与 DOM 依赖**（便于单测）。
  *
- * 桌面端写进正文的形态：
+ * 正文里两个标识属性互为补充，**任一存在即算一张嵌入卡**：
  *
  *   `<div data-xynote-embed="note:<本机uuid>" data-xynote-embed-server="<serverId>" title="标题"></div>`
  *
- * - `data-xynote-embed`：桌面端本机标识，**网页端不用于取数**（网页端没有该字段与接口）；
- * - `data-xynote-embed-server`：跨端标识（服务端主键），网页端唯一可用的取数依据，缺省即降级占位。
+ * - `data-xynote-embed`：**桌面端本机**标识（带 `note:` 前缀）。网页端没有对应字段与接口，
+ *   既不用于取数、也**不生成** —— 插入卡片时该属性整体省略（桌面端据此回落按 serverId 查）；
+ * - `data-xynote-embed-server`：**跨端标识**（服务端主键），网页端唯一可用的取数依据，
+ *   缺省即降级占位。
  *
- * ⚠️ 生成顺序必须是「本机标识 → 跨端标识 → 标题」，与桌面端 `toMarkdown` 逐字节一致；
- * 否则网页端编辑一次就会把所有卡片的序列化形态改写一遍。
+ * ⚠️ 生成顺序必须是「本机标识 → 跨端标识 → 标题」，且缺值属性不输出，
+ * 与桌面端 `toMarkdown` 逐字节一致；否则网页端编辑一次就会把所有卡片的序列化形态改写一遍。
  */
 
 /** 桌面端本机标识属性。 */
@@ -28,7 +30,7 @@ const EMBED_TITLE_PATTERN = /(?:^|\s)title=["']([^"']*)["']/
 
 /** 嵌入卡的三个字段（与桌面端节点 attrs 同名）。 */
 export interface EmbedMarkupFields {
-  /** 桌面端本机笔记 ID。 */
+  /** 桌面端本机笔记 ID（带在 `data-xynote-embed` 上）。网页端插入时留空串，该属性整体省略。 */
   noteId: string
   /** 服务端笔记主键；未同步 / 存量卡片为 null。 */
   serverId?: string | null
@@ -78,13 +80,30 @@ export function parseEmbedTitle(raw: string): string | null {
 }
 
 /**
+ * 判断一段 html 是不是嵌入卡的载体 —— **两个标识属性任一存在**即算。
+ *
+ * 与桌面端 `ltw_notes_desktop/src/editor/xynote-embed.ts` 的 `isEmbedHtml` 同口径：
+ * 网页端插入的卡片只有跨端标识，桌面端插入的卡片才有本机标识。
+ *
+ * :param raw: 承载嵌入卡的 html 原文。
+ * :return: 是嵌入卡载体返回 true。
+ */
+export function isEmbedHtml(raw: string): boolean {
+  return parseEmbedHtml(raw) != null || parseEmbedServerId(raw) != null
+}
+
+/**
  * 生成嵌入卡的 html 表达（与桌面端序列化结果逐字节一致）。
  *
+ * 缺值的属性一律不输出：网页端插入的卡片**没有本机 ID**，写出 `note:` 空值只会污染正文，
+ * 也会让「属性是否存在」这种判定失效。
+ *
  * :param fields: 卡片字段。
- * :return: `<div data-xynote-embed …></div>` 文本；缺省字段不输出对应属性。
+ * :return: `<div …></div>` 文本；缺省字段不输出对应属性。
  */
 export function buildEmbedHtml({ noteId, serverId = null, title = null }: EmbedMarkupFields): string {
+  const idAttr = noteId ? ` ${EMBED_TAG}="note:${noteId}"` : ''
   const serverAttr = serverId ? ` ${EMBED_SERVER_TAG}="${serverId}"` : ''
   const titleAttr = title ? ` title="${title}"` : ''
-  return `<div ${EMBED_TAG}="note:${noteId}"${serverAttr}${titleAttr}></div>`
+  return `<div${idAttr}${serverAttr}${titleAttr}></div>`
 }

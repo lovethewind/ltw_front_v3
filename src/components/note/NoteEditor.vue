@@ -234,6 +234,7 @@
         ref="editorRef"
         class="note-milkdown-editor"
         :title="note?.title ?? ''"
+        note-picker-enabled
         @change="updateContent"
       />
       <!--

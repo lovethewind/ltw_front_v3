@@ -47,6 +47,18 @@ describe('renderNoteEmbeds（预览档的嵌入卡）', () => {
     expect(html).not.toContain('data-xynote-embed="note:')
   })
 
+  it('网页端插入的卡片（只有跨端标识）同样渲染成可点卡片', () => {
+    // 网页端没有本机 uuid，插入时只写 data-xynote-embed-server。
+    // 匹配式只认 data-xynote-embed 的话，这类卡片在预览里会整块消失。
+    const raw = buildEmbedHtml({ noteId: '', serverId: SERVER_ID, title: '插入时的旧标题' })
+    const html = renderNoteEmbeds(raw, { resolveEmbedMeta: () => META })
+
+    expect(html).toContain('class="markdown-embed-placeholder"')
+    expect(html).toContain(`data-note-id="${SERVER_ID}"`)
+    expect(html).toContain(META.title)
+    expect(html).not.toContain('data-xynote-embed')
+  })
+
   it('实时查到的标题覆盖占位 div 上的快照（快照只作兜底）', () => {
     const html = renderNoteEmbeds(card({ title: '改名前的旧标题' }), {
       resolveEmbedMeta: () => META

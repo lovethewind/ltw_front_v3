@@ -81,3 +81,40 @@ export function dispatchOpenNote(noteId: string, newTab: boolean): boolean {
   )
   return handled
 }
+
+/** 由编辑器在挂载后监听、由嵌入卡片发起的「卡片右键菜单」事件名。 */
+export const EMBED_CARD_MENU_EVENT = 'xynote:embed-card-menu'
+
+/** 卡片右键菜单请求：坐标 + 节点位置 + 目标笔记信息（字段与桌面端同名）。 */
+export interface EmbedCardMenuEventDetail {
+  /** 桌面端本机 ID；网页端插入的卡片为空串。 */
+  noteId: string
+  /** 跨端标识（服务端主键）—— 网页端取数与跳转只认它。 */
+  serverId: string | null
+  /** 节点上的标题快照。 */
+  title: string | null
+  /** 卡片节点在文档中的位置（nodeView 的 `getPos()`）；-1 表示不可用。 */
+  pos: number
+  /** 右键时的视口坐标。 */
+  x: number
+  y: number
+  /** 目标笔记是否可打开（未同步 / 取数失败为 false，菜单据此禁用打开类操作）。 */
+  available: boolean
+}
+
+/**
+ * 从卡片 DOM 派发「弹卡片菜单」请求。
+ *
+ * ⚠️ 与桌面端的 window 总线不同：网页端 `MdEditor` 有三处宿主（笔记页 / 文章页 /
+ * 历史版本抽屉），挂 window 上会让同时存在的实例一起弹菜单。这里让事件从卡片 DOM
+ * 冒泡，宿主在自己根元素上监听 —— 天然只落到卡片所属的那个编辑器实例。
+ *
+ * :param host: 派发事件的元素（nodeView 容器）。
+ * :param detail: 卡片信息与坐标。
+ * :return: 无返回值。
+ */
+export function dispatchEmbedCardMenu(host: EventTarget, detail: EmbedCardMenuEventDetail): void {
+  host.dispatchEvent(
+    new CustomEvent<EmbedCardMenuEventDetail>(EMBED_CARD_MENU_EVENT, { detail, bubbles: true })
+  )
+}

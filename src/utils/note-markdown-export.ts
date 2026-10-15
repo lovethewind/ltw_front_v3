@@ -24,9 +24,15 @@
  *  - **围栏代码块内原样保留**（里面的 `<br />` 是用户要看的原文）。
  */
 
-/** 笔记嵌入卡片在正文里的载体（与 `@/components/editor/xynote-embed.ts` 写入的形式一致）。 */
+/**
+ * 笔记嵌入卡片在正文里的载体（与 `@/components/editor/xynote-embed.ts` 写入的形式一致）。
+ *
+ * ⚠️ 两个标识属性**任一存在**即算一张卡（口径与 `embed-markup.ts` 的 `isEmbedHtml` 一致）：
+ * `data-xynote-embed` 是桌面端本机标识，`data-xynote-embed-server` 是跨端标识
+ * （**网页端插入的卡片只有它**）。只认前者会让这类卡片在导出时降级不掉、原样留在文件里。
+ */
 const EMBED_PLACEHOLDER_PATTERN =
-  /<div[^>]*\bdata-xynote-embed=["']note:([^"']+)["'][^>]*>\s*<\/div>/gi
+  /<div[^>]*\bdata-xynote-embed(?:-server)?=["'][^"']*["'][^>]*>\s*<\/div>/gi
 
 /**
  * 嵌入卡上的「线上标识」（服务端数字主键）。

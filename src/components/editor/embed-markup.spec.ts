@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
-import { buildEmbedHtml, parseEmbedHtml, parseEmbedServerId, parseEmbedTitle } from './embed-markup'
+import { buildEmbedHtml, isEmbedHtml, parseEmbedHtml, parseEmbedServerId, parseEmbedTitle } from './embed-markup'
 
 describe('嵌入卡标记解析', () => {
   it('从桌面端写入的 html 里读出本机 ID 与跨端标识', () => {
@@ -19,11 +19,20 @@ describe('嵌入卡标记解析', () => {
     expect(parseEmbedServerId(raw)).toBeNull()
   })
 
-  it('跨端标识不会和本机标识串味', () => {
-    // 只有跨端标识、没有本机标识 → 不构成嵌入卡。
+  it('两个标识各自独立解析，不串味', () => {
+    // 只有跨端标识时本机 ID 必须是 null（卡片是否成立由 isEmbedHtml 判定，见下一条）。
     expect(parseEmbedHtml('<div data-xynote-embed-server="128"></div>')).toBeNull()
     // 只有本机标识 → 跨端标识必须是 null，不能把 note: 前缀的内容当主键。
     expect(parseEmbedServerId('<div data-xynote-embed="note:9f1c-local"></div>')).toBeNull()
+  })
+
+  it('isEmbedHtml：两个标识属性任一存在即算嵌入卡', () => {
+    // 网页端插入的卡片只有跨端标识 —— 只认 data-xynote-embed 会让它退化成源码文本。
+    expect(isEmbedHtml('<div data-xynote-embed-server="128"></div>')).toBe(true)
+    expect(isEmbedHtml('<div data-xynote-embed="note:9f1c-local"></div>')).toBe(true)
+    expect(isEmbedHtml('<div data-xynote-embed="note:a" data-xynote-embed-server="1"></div>')).toBe(true)
+    expect(isEmbedHtml('<div class="x"></div>')).toBe(false)
+    expect(isEmbedHtml('普通段落')).toBe(false)
   })
 
   it('兼容单引号写法，且不匹配普通正文', () => {
@@ -58,6 +67,19 @@ describe('嵌入卡标记生成', () => {
     )
   })
 
+  it('本机 ID 为空（网页端插入）时不输出该属性，只留跨端标识', () => {
+    // 写出 `note:` 空值只会污染正文，也会让「属性有无」这种判定失效。
+    expect(buildEmbedHtml({ noteId: '', serverId: '128', title: '接口文档' })).toBe(
+      '<div data-xynote-embed-server="128" title="接口文档"></div>'
+    )
+    expect(isEmbedHtml(buildEmbedHtml({ noteId: '', serverId: '128' }))).toBe(true)
+  })
+
+  it('两个标识都缺时退化成空 div，不会被误认成嵌入卡', () => {
+    expect(buildEmbedHtml({ noteId: '' })).toBe('<div></div>')
+    expect(isEmbedHtml('<div></div>')).toBe(false)
+  })
+
   it('生成后再解析能原样读回（两端往返一致）', () => {
     const html = buildEmbedHtml({ noteId: 'a', serverId: '128', title: '接口文档' })
 
@@ -72,7 +94,9 @@ describe('网页端接线', () => {
   it('编辑器注册了嵌入卡片 feature，否则卡片仍会显示成源码文本', () => {
     const source = readFileSync(new URL('./MdEditor.vue', import.meta.url), 'utf8')
 
-    expect(source).toMatch(/import \{ installXynoteEmbedFeature \} from '\.\/xynote-embed'/)
+    // 该模块同时供出标记解析/生成（右键菜单的「复制嵌入引用」也用），因此只要求
+    // import 名单里包含 feature 本身，不锁死名单顺序。
+    expect(source).toMatch(/import \{[^}]*installXynoteEmbedFeature[^}]*\} from '\.\/xynote-embed'/)
     expect(source).toMatch(/crepe\.addFeature\(installXynoteEmbedFeature\)/)
     // 必须在 create() 之前挂上，否则首屏内容按默认 schema 解析。
     expect(source.indexOf('crepe.addFeature(installXynoteEmbedFeature)')).toBeLessThan(
@@ -87,6 +111,14 @@ describe('网页端接线', () => {
     // 漏一处，网页端一编辑保存，被漏掉那条路径上的 `title="..."` 就没了。
     expect(source).toMatch(/node\.title = parseEmbedTitle\(raw\)/)
     expect(source).toMatch(/embedNode\.title = parseEmbedTitle\(raw\)/)
+  })
+
+  it('插入卡片时 noteId 留空、只写跨端标识（网页端没有本机 uuid）', () => {
+    const source = readFileSync(new URL('./MdEditor.vue', import.meta.url), 'utf8')
+
+    // 写雪花 ID 进 data-xynote-embed 是「借用桌面端本机 uuid 的槽位」，
+    // 留空后两端都按「两个标识属性任一存在」识别，桌面端按 serverId 回落取数。
+    expect(source).toMatch(/attrs: \{ noteId: '', title, serverId: noteId \}/)
   })
 
   it('卡片只用跨端标识取数，且缺标识时给占位提示', () => {

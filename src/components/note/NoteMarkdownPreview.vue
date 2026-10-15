@@ -21,10 +21,13 @@
  * 源码编辑器因此只负责编辑原文。
  */
 import { marked } from 'marked'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { useNoteStore } from '@/stores/note'
+import { usePreviewImageTools } from '@/composables/usePreviewImageTools'
+import PreviewImageBar from '@/components/editor/PreviewImageBar.vue'
+import PreviewImageViewer from '@/components/editor/PreviewImageViewer.vue'
 import {
   NOTE_EMBED_EXCERPT_LENGTH,
   renderNoteEmbeds,
@@ -41,6 +44,8 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), { value: '' })
 const router = useRouter()
 const store = useNoteStore()
+/** 预览正文容器：图片交互的事件委托目标。 */
+const previewBodyRef = ref<HTMLElement | null>(null)
 
 /**
  * 解析嵌入卡要展示的信息（标题 / 文件夹 / 摘要 / 时间）。
@@ -121,6 +126,14 @@ function handlePreviewClick(event: MouseEvent): void {
 }
 
 /**
+ * 正文图片交互：悬停工具条 + 点击全屏查看。
+ *
+ * 预览正文是 `v-html` 出来的死 HTML，挂不上 Vue 事件，只能在容器上委托
+ * （与富文本档 `MdEditor` 共用同一个 composable）。
+ */
+const previewImageTools = usePreviewImageTools(previewBodyRef)
+
+/**
  * 卡片是 `div[role="button"]`，浏览器不会在回车 / 空格时自动派发 click —— 键盘可达要自己接。
  *
  * :param event: 预览容器的键盘事件。
@@ -140,11 +153,32 @@ function handlePreviewKeydown(event: KeyboardEvent): void {
 <template>
   <div class="note-markdown-preview">
     <div
+      ref="previewBodyRef"
       class="note-markdown-preview__body"
       v-dompurify-html="previewHtml"
       @click="handlePreviewClick"
       @keydown="handlePreviewKeydown"
     ></div>
+    <PreviewImageBar
+      v-if="previewImageTools.barVisible.value"
+      :anchor="previewImageTools.barAnchor.value"
+      :align="previewImageTools.barAlign.value"
+      :can-open-external="previewImageTools.canOpenExternal.value"
+      :notice="previewImageTools.notice.value"
+      @keep="previewImageTools.keepBar()"
+      @dismiss="previewImageTools.dismissBar()"
+      @open="previewImageTools.openViewer()"
+      @copy="previewImageTools.copyImageAddress()"
+      @external="previewImageTools.openInBrowser()"
+      @markdown="previewImageTools.copyImageMarkdown()"
+    />
+    <PreviewImageViewer
+      v-if="previewImageTools.viewerVisible.value"
+      :images="previewImageTools.viewerImages.value"
+      :index="previewImageTools.viewerIndex.value"
+      @close="previewImageTools.closeViewer()"
+      @update:index="previewImageTools.setViewerIndex($event)"
+    />
   </div>
 </template>
 

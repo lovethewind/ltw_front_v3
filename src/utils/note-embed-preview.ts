@@ -63,13 +63,14 @@ const EMBED_ICON_ARROW =
   '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.175 13H5q-.425 0-.712-.288T4 12t.288-.712T5 11h11.175l-4.9-4.9q-.3-.3-.288-.7t.313-.7q.3-.275.7-.288t.7.288l6.6 6.6q.15.15.213.325t.062.375t-.062.375t-.213.325l-6.6 6.6q-.275.275-.687.275T11.3 19.3q-.3-.3-.3-.712t.3-.713z"/></svg>'
 
 /**
- * 匹配渲染结果里的嵌入卡空 div，捕获组是本机 ID。
+ * 匹配渲染结果里的嵌入卡空 div。
  *
- * ⚠️ 正则口径必须与 `components/editor/embed-markup.ts` 的生成侧（`buildEmbedHtml`）
- * 对得上；这条契约不靠对比正则字面来守，而是靠单测里「生成 → 渲染」走一遍（见 spec）。
+ * ⚠️ 两个标识属性**任一存在**即算一张卡（口径与 `components/editor/embed-markup.ts` 的
+ * `isEmbedHtml` 一致）：`data-xynote-embed` 是桌面端本机标识，`data-xynote-embed-server`
+ * 是跨端标识（**网页端插入的卡片只有它**）。只认前者会让网页端自己插入的卡片在预览里整块消失。
  */
 const EMBED_PLACEHOLDER_PATTERN =
-  /<div[^>]*\bdata-xynote-embed=["']note:([^"']+)["'][^>]*>\s*<\/div>/gi
+  /<div[^>]*\bdata-xynote-embed(?:-server)?=["'][^"']*["'][^>]*>\s*<\/div>/gi
 
 /** 从占位 div 里取插入时写在 `title` 属性上的标题快照（可能没有）。 */
 const EMBED_TITLE_PATTERN = /\btitle=["']([^"']*)["']/i

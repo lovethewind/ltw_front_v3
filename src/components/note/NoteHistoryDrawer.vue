@@ -363,7 +363,8 @@ function formatHistoryPreview(value: string): string {
 .note-history-preview h3 {
   margin: 0 0 7px;
   color: var(--el-text-color-primary);
-  font-size: 20px;
+  /* 标题压到 16px：它只标识「这是哪一版」，不该抢占对比内容的竖向空间（与桌面端同口径）。 */
+  font-size: 16px;
   line-height: 1.35;
 }
 

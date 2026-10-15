@@ -8,6 +8,7 @@
     @click="open"
     @keydown.enter.prevent="open"
     @keydown.space.prevent="open"
+    @contextmenu="onContextMenu"
   >
     <div class="note-embed-card__body">
       <span v-if="folderName" class="note-embed-card__meta">
@@ -61,6 +62,16 @@ const props = withDefaults(
   }>(),
   { noteId: '', serverId: null, title: null }
 )
+
+/**
+ * 卡片向宿主（nodeView）上抛的交互事件。
+ *
+ * `context-menu`：右键卡片，由宿主补上节点位置后转交编辑器弹卡片专属菜单；
+ * `available` 表示目标笔记是否可正常打开（未同步 / 取数失败为 false，菜单据此禁用打开类操作）。
+ */
+const emit = defineEmits<{
+  (event: 'context-menu', payload: { x: number; y: number; available: boolean }): void
+}>()
 
 /**
  * 文件夹名要查 store（笔记详情只给 `folderId`）。
@@ -142,6 +153,33 @@ async function loadNote(): Promise<void> {
 function open(): void {
   if (!props.serverId) return
   dispatchOpenNote(String(props.serverId), true)
+}
+
+/**
+ * 右键卡片：拦住浏览器原生菜单，把坐标上抛给宿主 nodeView（由其补节点位置后转交编辑器）。
+ *
+ * ⚠️ 只读态**直接放行原生菜单**：编辑器在只读态不弹卡片菜单，此时若吞掉右键就成了
+ * 「右键什么都没有」，比留着原生的复制 / 查看菜单更糟。判据取自 ProseMirror 根元素的
+ * `contenteditable`（Crepe 的 setReadonly 会把它置为 false），避免为此新增一条跨层 prop。
+ *
+ * 关键：必须 `stopPropagation`。nodeView 的 `stopEvent` 只让 ProseMirror 自己忽略事件，
+ * 管不住挂在编辑器根元素上的原生 contextmenu 监听；不拦冒泡就会「卡片菜单 + 正文菜单」双弹。
+ *
+ * :param event: 原生 contextmenu 事件。
+ * :return: 无返回值。
+ */
+function onContextMenu(event: MouseEvent): void {
+  const root = event.currentTarget instanceof HTMLElement ? event.currentTarget : null
+  if (root?.closest('.ProseMirror')?.getAttribute('contenteditable') === 'false') return
+  event.preventDefault()
+  event.stopPropagation()
+  // 加载中尚未确定目标，不弹菜单（坐标已拿到，只是此时没有可做的操作）。
+  if (loading.value) return
+  emit('context-menu', {
+    x: event.clientX,
+    y: event.clientY,
+    available: canOpen.value && !failed.value
+  })
 }
 
 onMounted(() => {

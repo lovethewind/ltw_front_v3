@@ -760,6 +760,175 @@ html.dark .note-quick-open-dialog {
   }
 }
 
+/* ------------------------------------------------------------------
+ * 笔记选择器（插入笔记链接 / 嵌入笔记）
+ *
+ * 与快速打开同构且**共用配色**：弹窗根节点同时带 `.note-quick-open-dialog`，
+ * 于是 `--qo-*` 变量、圆角、投影、暗色分支全部白拿，这里只铺列表结构。
+ * 改配色请改 `.note-quick-open-dialog` 一处，两个弹窗一起生效。
+ * ------------------------------------------------------------------ */
+.note-picker {
+  display: flex;
+  max-height: min(520px, 80vh);
+  flex-direction: column;
+  color: var(--qo-text);
+}
+
+.note-picker__search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--qo-border);
+}
+
+.note-picker__search > svg {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  color: var(--qo-muted);
+}
+
+.note-picker__search input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  color: var(--qo-text);
+  background: transparent;
+  font-size: 15px;
+  outline: none;
+}
+
+.note-picker__search input::placeholder {
+  color: var(--qo-muted);
+}
+
+.note-picker__search kbd,
+.note-picker__footer kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  padding: 1px 6px;
+  border: 1px solid var(--qo-border);
+  border-radius: 5px;
+  color: var(--qo-muted);
+  background: var(--qo-subtle);
+  font-family: inherit;
+  font-size: 11px;
+  line-height: 18px;
+}
+
+.note-picker__results {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.note-picker__result {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 9px;
+  color: var(--qo-text);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.note-picker__result.active {
+  background: var(--qo-active);
+}
+
+.note-picker__result-icon {
+  flex: 0 0 auto;
+  width: 19px;
+  height: 19px;
+  color: var(--qo-muted);
+}
+
+.note-picker__result-copy {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.note-picker__result-copy strong {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.note-picker__result-copy small {
+  overflow: hidden;
+  color: var(--qo-muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.note-picker__result em {
+  flex: 0 0 auto;
+  max-width: 34%;
+  overflow: hidden;
+  color: var(--qo-muted);
+  font-size: 12px;
+  font-style: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.note-picker__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 40px 16px;
+  color: var(--qo-muted);
+  font-size: 13px;
+}
+
+.note-picker__empty svg {
+  width: 20px;
+  height: 20px;
+}
+
+.note-picker__footer {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--qo-border);
+  color: var(--qo-muted);
+  font-size: 12px;
+}
+
+.note-picker__footer span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.note-picker__footer small {
+  margin-left: auto;
+  color: var(--qo-muted);
+  font-size: 12px;
+}
+
+@media (max-width: 767px) {
+  .note-picker__result em {
+    display: none;
+  }
+}
+
 @media (min-width: 768px) and (max-width: 1199px) {
   .note-workspace {
     grid-template-columns: 260px minmax(0, 1fr);
@@ -849,8 +1018,10 @@ html.dark .note-quick-open-dialog {
   flex: 0 0 auto;
   align-items: center;
   gap: 10px;
-  min-height: 40px;
-  padding: 6px 12px;
+  /* 统计条只报「共几处差异」+ 跳转按钮，不承载正文：压薄一档把高度让给下面的对比内容
+     （与桌面端 `.history-diff .conflict-diff__bar` 同口径）。 */
+  min-height: 30px;
+  padding: 4px 10px;
   border-bottom: 1px solid #e5ebf3;
 }
 
@@ -882,8 +1053,9 @@ html.dark .note-quick-open-dialog {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  height: 26px;
-  padding: 0 9px;
+  /* 跟着统计条一起收一档，否则按钮自己会把 bar 撑回 34px 高。 */
+  height: 22px;
+  padding: 0 8px;
   border: 1px solid #dbe4ee;
   border-radius: 8px;
   color: #5b7089;

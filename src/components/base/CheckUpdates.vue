@@ -189,7 +189,7 @@ onBeforeUnmount(handleBeforeUnmount)
 <style scoped>
 :deep(.version-update-dialog) {
   overflow: hidden;
-  border: 1px solid rgb(47 128 237 / 14%);
+  border: 1px solid var(--el-border-color-lighter);
   border-radius: 22px;
   background: linear-gradient(180deg, #f5f9ff 0%, #ffffff 48%);
   box-shadow: 0 24px 80px rgb(26 65 116 / 22%);
@@ -206,7 +206,7 @@ onBeforeUnmount(handleBeforeUnmount)
 
 :deep(.version-update-dialog .el-dialog__footer) {
   padding: 16px 28px 24px;
-  border-top: 1px solid rgb(47 128 237 / 10%);
+  border-top: 1px solid var(--el-border-color-lighter);
 }
 
 .version-update-header {
@@ -232,7 +232,7 @@ onBeforeUnmount(handleBeforeUnmount)
 .version-update-heading > span {
   display: block;
   margin-bottom: 3px;
-  color: #2f80ed;
+  color: var(--el-color-primary);
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.14em;
@@ -241,7 +241,7 @@ onBeforeUnmount(handleBeforeUnmount)
 
 .version-update-heading h2 {
   margin: 0;
-  color: #20242a;
+  color: var(--el-text-color-primary);
   font-size: 22px;
   font-weight: 800;
   line-height: 1.3;
@@ -249,7 +249,7 @@ onBeforeUnmount(handleBeforeUnmount)
 
 .version-update-description {
   margin: 0;
-  color: #4b5565;
+  color: var(--el-text-color-regular);
   font-size: 15px;
   line-height: 1.7;
 }
@@ -260,17 +260,17 @@ onBeforeUnmount(handleBeforeUnmount)
   gap: 9px;
   margin-top: 18px;
   padding: 12px 14px;
-  border: 1px solid #dbeafe;
+  border: 1px solid var(--el-border-color-lighter);
   border-radius: 13px;
-  color: #526b88;
-  background: rgb(239 246 255 / 82%);
+  color: var(--el-text-color-regular);
+  background: var(--el-fill-color-light);
   font-size: 13px;
   line-height: 1.5;
 }
 
 .version-update-tip :deep(svg) {
   flex: 0 0 auto;
-  color: #2f80ed;
+  color: var(--el-color-primary);
   font-size: 20px;
 }
 
@@ -287,28 +287,24 @@ onBeforeUnmount(handleBeforeUnmount)
   font-weight: 700;
 }
 
-:global(html.dark) :deep(.version-update-dialog) {
-  border-color: rgb(104 164 255 / 18%);
-  background: linear-gradient(180deg, #1d2a40 0%, #151c28 52%);
-  box-shadow: 0 24px 80px rgb(0 0 0 / 42%);
-}
-
-:global(html.dark) :deep(.version-update-dialog .el-dialog__footer) {
-  border-top-color: rgb(148 176 215 / 16%);
-}
-
-:global(html.dark) .version-update-heading h2 {
-  color: #f5f7fb;
-}
-
-:global(html.dark) .version-update-description {
-  color: #c2cede;
-}
-
-:global(html.dark) .version-update-tip {
-  border-color: #314765;
-  color: #b6c8df;
-  background: rgb(34 57 88 / 60%);
+/*
+ * 暗色下换掉亮色渐变底色。
+ *
+ * ⚠️ 这里**必须把整条选择器塞进 `:global(...)`**。写成
+ * `:global(html.dark) :deep(.version-update-dialog)` 会被编译成**裸 `html.dark {}`** ——
+ * 后半截选择器被整个丢掉，暗色规则集体失效（表现为标题发暗、提示条发白），
+ * 更糟的是那些属性会被写到 `html` 元素上、污染全页背景与边框。
+ * 实测（`@vue/compiler-sfc` 的 `compileStyle`）：只有 `:global(整条选择器)` 才保留完整选择器。
+ *
+ * 底色用 `--el-bg-color-overlay`（页面主底色 `#1d1e1f`）而不是 `--el-bg-color`（`#141414`）：
+ * 后者比页面还暗一档，弹窗浮在页面上像「黑洞」。⚠️ 本项目 Element Plus **未定义**
+ * `--el-dialog-bg-color`（实测为空串），所以任何依赖它的 fallback 都会落到 `--el-bg-color`。
+ *
+ * 其余随主题变化的颜色一律走 `--el-*` 变量（随 `html.dark` 自动切换），不写在这里。
+ */
+:global(html.dark .version-update-dialog) {
+  background: var(--el-bg-color-overlay, #1d1e1f);
+  box-shadow: 0 24px 80px rgb(0 0 0 / 45%);
 }
 
 @media (max-width: 520px) {

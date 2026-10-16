@@ -17,8 +17,11 @@ describe('网页版编辑器标题体系', () => {
     // 基数必须与桌面端 src/style.css 的 --markdown-body-font-size 同值（15px），
     // 否则标题会整体偏大一圈 —— 这正是本次修复的问题。
     expect(source).toMatch(/--markdown-body-font-size: 15px;/)
+    // 只认「直接子代」写法：主编辑器的视口级规则（min-height / width / padding）
+    // 若用后代选择器，会漏进 Crepe 行内公式气泡内嵌的第二个 EditorView，
+    // 把气泡撑成 500px 高。见 md-editor-latex-bubble.spec.ts。
     const body = source.match(
-      /\.milkdown-editor-root \.milkdown \.ProseMirror \{([\s\S]*?)\n\}/
+      /\.milkdown-editor-root \.milkdown > \.ProseMirror \{([\s\S]*?)\n\}/
     )
     expect(body?.[1]).toMatch(/font-size: var\(--markdown-body-font-size\)/)
     // 不得再写死像素值，否则标题的 calc 基数与实际正文脱节。

@@ -118,7 +118,7 @@ import {
   setBlockTypeCommand,
   wrapInBlockTypeCommand
 } from '@milkdown/kit/preset/commonmark'
-import { AllSelection, TextSelection } from '@milkdown/kit/prose/state'
+import { AllSelection, NodeSelection, TextSelection } from '@milkdown/kit/prose/state'
 import type { Mark as ProseMirrorMark } from '@milkdown/kit/prose/model'
 import type { EditorView as ProseMirrorView } from '@milkdown/kit/prose/view'
 import { markdownToSlice, replaceAll } from '@milkdown/kit/utils'
@@ -971,6 +971,12 @@ function createToolbarMenu(
   panel.setAttribute('role', 'menu')
   panel.addEventListener('click', (event) => event.stopPropagation())
   items.forEach((button) => {
+    // ⚠️ 搬进面板的按钮必须摘掉 `top-bar-item`（2026-10-16）：紧凑工具栏规则
+    // `.milkdown-editor-shell … .top-bar-item`（5 层类名）特异性高于面板规则
+    // `.milkdown-editor-root … .markdown-toolbar-menu__item`（4 层），不摘的话这批原生按钮
+    // 会被它接管成 10px 字 / 18px 图标 / gap 0，而自研按钮（无 top-bar-item）吃面板规则
+    // 的 13px 字 / 19px 图标 / gap 9px —— 同一个面板里两套观感（用户报「格格不入」）。
+    button.classList.remove('top-bar-item')
     button.classList.add('markdown-toolbar-menu__item')
     button.setAttribute('role', 'menuitem')
     button.addEventListener('click', closeToolbarMenus)
@@ -1929,12 +1935,94 @@ function redoEditor(): void {
 }
 
 /**
+ * 判断当前选区里是否已经存在行内公式节点。
+ *
+ * 用来区分这次点「行内公式」是**包上**还是**拆掉**：选中的本来就是公式节点时，
+ * 即使 `textBetween` 是空串也必须放行（它是原子节点，取不到文字）。
+ *
+ * :param view: ProseMirror 视图。
+ * :return: 选区覆盖到 `math_inline` 节点时返回 true。
+ */
+function selectionHasInlineFormula(view: ProseMirrorView): boolean {
+  const mathType = view.state.schema.nodes.math_inline
+  if (!mathType) return false
+  const { from, to } = view.state.selection
+  let found = false
+  view.state.doc.nodesBetween(from, to, (node) => {
+    if (node.type === mathType) found = true
+    return true
+  })
+  return found
+}
+
+/**
  * 切换当前选区的行内公式格式。
+ *
+ * ## ⚠️ 无选区时**绝不能**直接调 Crepe 的 `ToggleLatex`（2026-10-16 用户报的坑）
+ *
+ * 该命令把 `doc.textBetween(from, to)` 当作公式内容，选区为空时取到空串 →
+ * 插进来一个**空公式节点**：屏幕上零宽、看不见（用户以为「点了没反应」），
+ * 序列化成 Markdown 却是一个孤零零的 `$$` —— 这行若落在行首/独占一行，重新打开笔记时
+ * remark 会把它当作**块级公式**的开头，把后面所有正文一口吞进公式里（数据损坏，
+ * 得手动改源码才能救回）。
+ * 选区落在图片 / 嵌入卡这类原子节点上时 `textBetween` 同样是空串，会直接把卡片换掉。
+ *
+ * 所以先判定「选区里有可包的文字」或「选中的本来就是公式节点（这次是拆掉）」，
+ * 两者都不满足就只给提示，一个字都不动。
  *
  * :return: 无返回值。
  */
 function toggleInlineFormula(): void {
-  editor?.editor.action((ctx) => ctx.get(commandsCtx).call('ToggleLatex'))
+  if (!editor || !editorReady || props.readonly) return
+  const applied = editor.editor.action((ctx) => {
+    const view = ctx.get(editorViewCtx)
+    const { doc, selection } = view.state
+    const hasFormula = selectionHasInlineFormula(view)
+    if (!hasFormula && doc.textBetween(selection.from, selection.to, '\n').trim() === '') return false
+    ctx.get(commandsCtx).call('ToggleLatex')
+    // 命令执行后选区落在公式节点上却已失焦（点击落点被工具栏按钮抢走）；
+    // 把焦点交还编辑器，公式编辑气泡才会展开。
+    view.focus()
+    return true
+  })
+  if (!applied) {
+    ElMessage({ message: '请先选中要转成公式的文字', type: 'warning', plain: true })
+  }
+}
+
+/**
+ * 让「行内公式」编辑气泡的**确认按钮（勾）**顺手把气泡收起。
+ *
+ * ## ⚠️ 点勾为什么关不掉气泡（2026-10-16 用户报的坑）
+ *
+ * Crepe 的 `LatexInlineTooltip` 只给那个按钮挂了 `pointerdown → updateValue`
+ * （把输入框里的文字写回 `math_inline` 节点的 `value`），**一个字都不动选区** ——
+ * 而气泡的显隐判据是 `selection instanceof NodeSelection && node.type.name === math_inline`，
+ * 光标还赖在公式节点上，判据继续成立，于是值写完了气泡还杵在原地。
+ *
+ * 这里补一刀：确认后把光标挪到公式节点**后面**，气泡自然收起
+ * （实测 `data-show` 由 `true` 转 `false`、`display` 转 `none`）。
+ * 想再改就再点一次公式 —— Crepe 会自动重新展开气泡。
+ *
+ * ⚠️ 必须注册在**冒泡**阶段：Crepe 的 handler 挂在那个 button 上，
+ * 冒泡阶段注册的监听一定排在它后面，读到的 `selection` 才是更新后的。
+ *
+ * :param event: 文档上的 pointerdown（事件委托，气泡每次显隐都复用同一个 DOM）。
+ * :return: 无返回值。
+ */
+function handleLatexBubbleConfirm(event: PointerEvent): void {
+  const target = event.target as HTMLElement | null
+  if (!target?.closest?.('.milkdown-latex-inline-edit button')) return
+  if (!editor || !editorReady || props.readonly) return
+  editor.editor.action((ctx) => {
+    const view = ctx.get(editorViewCtx)
+    const { state } = view
+    if (!(state.selection instanceof NodeSelection)) return
+    // 光标落到公式节点之后（`near` 会自动夹到最近的合法文本位置，公式在段末也安全）。
+    const pos = Math.min(state.selection.to, state.doc.content.size)
+    view.dispatch(state.tr.setSelection(TextSelection.near(state.doc.resolve(pos), 1)))
+    view.focus()
+  })
 }
 
 /**
@@ -2155,6 +2243,9 @@ function localizeTopBar(root: HTMLElement): void {
     // 正文右键菜单：点别处收起来（在编辑器里再次右键时，pointerdown 先收旧的、
     // 随后的 contextmenu 再开新的，顺序天然正确）。
     document.addEventListener('pointerdown', closeEditorContextMenu)
+    // 行内公式气泡的确认按钮：Crepe 只管把值写回节点、不管收气泡，这里补一刀
+    // （原因见 handleLatexBubbleConfirm()）。走冒泡，才能排在 Crepe 挂在 button 上的 handler 之后。
+    document.addEventListener('pointerdown', handleLatexBubbleConfirm)
     toolbarEventsBound = true
   }
   syncOutlineToggle()
@@ -2436,6 +2527,7 @@ onBeforeUnmount(() => {
     document.removeEventListener('click', guardBubbleFontSizeClick, true)
     document.removeEventListener('click', closeBubbleFontSizePanel)
     document.removeEventListener('pointerdown', closeEditorContextMenu)
+    document.removeEventListener('pointerdown', handleLatexBubbleConfirm)
     toolbarEventsBound = false
   }
   // 气泡字号面板是 portal 到 body 的，宿主在编辑器内 —— 组件销毁时两边都要摘干净。
@@ -2520,7 +2612,18 @@ defineExpose({
   --crepe-font-default: inherit;
 }
 
-.milkdown-editor-root .milkdown .ProseMirror {
+/*
+  ⚠️ 必须用**直接子代** `>` 选中主编辑器。
+
+  编辑器里不止一个 `.ProseMirror`：Crepe 的行内公式编辑气泡会内嵌**第二个 EditorView**
+  （`.milkdown > .milkdown-latex-inline-edit > .container > div > .ProseMirror`）。主编辑器确实是
+  `.milkdown` 的直接子元素 —— DOM 由 `@milkdown/core` 的 `createViewContainer()` 组装
+  （`div.milkdown` → `appendChild(view.dom)`）。
+  写成后代选择器会把这套「视口级」尺寸也套到那个一行的输入框上：实测（2026-10-16，用户截图
+  标定后 221×503）气泡被这里的 `min-height: 500px` 撑成一个大空框，窄窗口下还有
+  `@media (max-width: 767px)` 里的 `calc(100vh - 310px)`。样式表末尾另有一条兜底规则。
+*/
+.milkdown-editor-root .milkdown > .ProseMirror {
   box-sizing: border-box;
   width: min(100%, var(--markdown-content-width));
   min-height: 500px;
@@ -3612,5 +3715,48 @@ html.dark .milkdown-editor-root .milkdown .milkdown-link-preview > .link-preview
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/*
+  兜底：Crepe 行内公式编辑气泡里的**内层编辑器**复位成「普通一行输入框」。
+
+  上面主编辑器那几条规则是「视口级」尺寸，气泡内嵌的是**第二个 EditorView**，
+  一旦漏进去就是一个 221×503 的大空框（见文件上半部分 `>` 那条注释）。
+  这里不逐个把主编辑器规则改成 `>`，而是用一条更高特异性的规则压住：
+  ⚠️ 写成 **5 层类名**且**放在样式表最末** —— `.milkdown-editor-shell.has-outline …`（同为 5 层）
+  与 `.note-milkdown-editor …`（4 层）都会漏进内层，靠「层数不低于它 + 更靠后」压住；
+  将来再加主编辑器规则也不用回头改。桌面端 `src/style.css` 有同款兜底（4 层）。
+*/
+.milkdown-editor-shell .milkdown-editor-root .milkdown .milkdown-latex-inline-edit .ProseMirror {
+  width: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+}
+
+/*
+  行内公式气泡要和顶栏**同一层比高下**。
+
+  顶栏（`.milkdown-top-bar`）是 sticky + `z-index: 20` + 95% 白底 + `blur()`（见文件上半部分），
+  而 Crepe 没给行内公式气泡任何 z-index（`auto`）→ 公式落在页面靠上时，floating-ui 会把气泡
+  放进顶栏那一条带里，气泡被顶栏糊住，看上去就是「弹窗和顶栏左侧的按钮叠在一起」。
+  链接气泡、选中气泡早就有同款兜底（`.milkdown-link-preview` / `.milkdown-toolbar` 都是 30），
+  这里补齐最后一块 —— 三者同在 `div.milkdown` 这个 stacking context 里，30 > 20 必然置顶。
+*/
+.milkdown-editor-root .milkdown .milkdown-latex-inline-edit {
+  z-index: 30;
+}
+
+/*
+  气泡打开时块手柄让位。
+
+  窄窗口下正文左内边距只有 18px（`@media (max-width: 767px)`），而块手柄本身就有 66px 宽
+  （两个 32px 按钮 + 2px 间隙），两者都往正文左侧挤 —— 叠在一起分不清谁是谁。
+  编辑公式时也用不到块手柄，直接隐掉；`opacity + pointer-events` 与 Crepe 自己收起手柄时的
+  `[data-show='false']` 写法一致，不触发重排。
+*/
+.milkdown-editor-shell .milkdown-editor-root .milkdown:has(.milkdown-latex-inline-edit[data-show='true']) .milkdown-block-handle {
+  opacity: 0;
+  pointer-events: none;
 }
 </style>

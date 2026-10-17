@@ -61,6 +61,41 @@ export function resolveNoteIdFromHref(href: string, base?: string): string | nul
 }
 
 /**
+ * 桌面端私有笔记地址的两种写法，与 `ltw_notes_desktop/electron/local-note-links.cjs`
+ * 的 `LOCAL_NOTE_LINK_PATTERN` **同口径**：
+ *
+ * - 新格式 `https://xinyue-note.local/{本地 uuid}`
+ * - 旧格式 `xinyue-notes://note/{本地 uuid}`（更早的桌面端写入）
+ *
+ * ⚠️ 这里刻意比桌面端那条**宽一点**：桌面端是为了**改写**必须精确到 ID 段，这里是为了**拦截**，
+ * 只要落到 `xinyue-note.local` 这个私有域名就一定是网页端打不开的（含裸域名、带 query 等写法）。
+ * 断言里带 `(?:\/|$)` 是为了不误伤 `xinyue-note.local.example.com` 这类「以它开头」的正常域名。
+ * `xinyue-asset.local`（图片资源域名）不在此列，不要顺手并进来。
+ */
+const LOCAL_NOTE_HREF_PATTERN = /^(?:https?:\/\/xinyue-note\.local(?:\/|$)|xinyue-notes:\/\/note\/)/i
+
+/**
+ * 判断一条地址是不是「桌面端本机笔记地址」。
+ *
+ * 这里的语义是**必须拦住**：这类地址承载的是本机 uuid，网页端既没有这份映射、也不该去解析。
+ * 放任默认行为的话，`<a href>` 上没有 `target` 修饰（预览链路的 `marked` 不加、也没有别的
+ * 后处理）→ 点击会在**当前标签页**直接导航到 `xinyue-note.local` → DNS 失败页，读者正在看的
+ * 那篇笔记一起丢掉。调用方据此 `preventDefault()` 并说明原因。
+ *
+ * ⚠️ 入参要用元素的**原始属性** `getAttribute('href')`，不要用 `anchor.href` —— 后者会被浏览器
+ * 归一，自定义协议下不可靠。
+ *
+ * :param href: 链接地址原文。
+ * :return: 是本机笔记地址时为 true。
+ */
+export function isLocalNoteHref(href: string): boolean {
+  return LOCAL_NOTE_HREF_PATTERN.test(String(href || '').trim())
+}
+
+/** 本机笔记地址被点开时的统一说明文案（预览态与编辑态共用一份）。 */
+export const LOCAL_NOTE_HREF_HINT = '该链接指向桌面端本机笔记，网页端无法打开'
+
+/**
  * 派发「打开笔记」事件。
  *
  * 返回值承载「有没有人接管」的语义：工作区监听器接管后会 `preventDefault()`，

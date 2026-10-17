@@ -141,7 +141,9 @@ import { usePreviewImageTools } from '@/composables/usePreviewImageTools'
 import { type LinkEditAnchor } from '@/utils/link-edit-popover'
 import {
   EMBED_CARD_MENU_EVENT,
+  LOCAL_NOTE_HREF_HINT,
   dispatchOpenNote,
+  isLocalNoteHref,
   resolveNoteIdFromHref,
   type EmbedCardMenuEventDetail
 } from '@/utils/note-open-events'
@@ -721,6 +723,9 @@ function removeLinkEdit(): void {
  * 站内笔记链接交给笔记工作区在**新标签页**打开（口径与桌面端一致）——
  * 编辑器里点链接时当前标签往往停在另一篇笔记的编辑态上，原地换页会把这篇顶掉。
  *
+ * 桌面端本机地址（`xinyue-note.local`）也会在**被拦下**——网页端没有本机 uuid 的映射，
+ * 不拦就是当前标签页跳到不存在的域名（详见下方注释）。
+ *
  * :param event: 编辑器链接点击事件。
  * :return: 无返回值。
  */
@@ -737,6 +742,16 @@ function handleEditorLinkClick(event: MouseEvent): void {
   const requiresModifier = !props.readonly && !insideLinkTooltip
   if (requiresModifier && !event.metaKey && !event.ctrlKey) {
     event.preventDefault()
+    return
+  }
+
+  // 🔴 桌面端本机地址（`xinyue-note.local` / `xinyue-notes://note/`）要单独拦一道：
+  // `resolveNoteIdFromHref` 只认同源 `/notes/<id>`，认不出它 → 不拦就会落到浏览器默认行为
+  // → 当前标签页跳到这个不存在的域名，用户正在编辑的这篇笔记一起丢。
+  // 取原始属性判断：`anchor.href` 会被浏览器归一，自定义协议下不可靠。
+  if (isLocalNoteHref(anchor.getAttribute('href') ?? '')) {
+    event.preventDefault()
+    ElMessage({ message: LOCAL_NOTE_HREF_HINT, type: 'info', plain: true })
     return
   }
 

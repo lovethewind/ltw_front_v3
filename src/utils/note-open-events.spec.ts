@@ -2,8 +2,10 @@
 import { describe, expect, it, vi } from 'vitest'
 
 import {
+  LOCAL_NOTE_HREF_HINT,
   OPEN_NOTE_EVENT,
   dispatchOpenNote,
+  isLocalNoteHref,
   resolveNoteIdFromHref,
   type OpenNoteEventDetail
 } from './note-open-events'
@@ -49,6 +51,54 @@ describe('resolveNoteIdFromHref（认站内笔记链接）', () => {
     // pathname 之外的部分不参与匹配，ID 仍取正。
     expect(resolveNoteIdFromHref('/notes/abc123?from=embed', PAGE)).toBe('abc123')
     expect(resolveNoteIdFromHref('/notes/abc123#section', PAGE)).toBe('abc123')
+  })
+})
+
+describe('isLocalNoteHref（认桌面端本机笔记地址，认出来必须拦）', () => {
+  it('认新格式：xinyue-note.local 上的 http / https 地址', () => {
+    expect(isLocalNoteHref('https://xinyue-note.local/6f1a2b3c-0000-4000-8000-000000000000')).toBe(true)
+    expect(isLocalNoteHref('http://xinyue-note.local/abc')).toBe(true)
+  })
+
+  it('认旧格式：xinyue-notes://note/<id>', () => {
+    expect(isLocalNoteHref('xinyue-notes://note/abc123')).toBe(true)
+  })
+
+  it('裸域名与带 query 的写法也认（网页端一样打不开）', () => {
+    expect(isLocalNoteHref('https://xinyue-note.local')).toBe(true)
+    expect(isLocalNoteHref('https://xinyue-note.local/abc?from=embed')).toBe(true)
+  })
+
+  it('大小写不敏感', () => {
+    expect(isLocalNoteHref('HTTPS://XINYUE-NOTE.LOCAL/abc')).toBe(true)
+  })
+
+  it('不认「以它开头」的正常域名 —— 断言里带 (?:\/|$) 就是为了这个', () => {
+    expect(isLocalNoteHref('https://xinyue-note.local.example.com/abc')).toBe(false)
+  })
+
+  it('不认站内笔记链接、外链、图片资源域名', () => {
+    expect(isLocalNoteHref('/notes/abc123')).toBe(false)
+    expect(isLocalNoteHref(`${ORIGIN}/notes/abc123`)).toBe(false)
+    expect(isLocalNoteHref('https://example.com/notes/abc')).toBe(false)
+    // ⚠️ 同族但不同用途：图片资源域名不属于「笔记地址」，别顺手并进来。
+    expect(isLocalNoteHref('https://xinyue-asset.local/abc')).toBe(false)
+  })
+
+  it('空值与怪输入不抛异常', () => {
+    expect(isLocalNoteHref('')).toBe(false)
+    expect(isLocalNoteHref('   ')).toBe(false)
+    expect(isLocalNoteHref('http://[::1')).toBe(false)
+  })
+
+  it('两类地址互不误判：本机地址不会被当成站内笔记链接', () => {
+    expect(resolveNoteIdFromHref('https://xinyue-note.local/abc', PAGE)).toBe(null)
+    expect(isLocalNoteHref('/notes/abc')).toBe(false)
+  })
+
+  it('提示文案非空 —— 两处点击兜底直接展示它', () => {
+    expect(LOCAL_NOTE_HREF_HINT.length).toBeGreaterThan(0)
+    expect(LOCAL_NOTE_HREF_HINT).toContain('桌面端')
   })
 })
 

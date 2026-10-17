@@ -21,6 +21,7 @@
  * 源码编辑器因此只负责编辑原文。
  */
 import { marked } from 'marked'
+import { ElMessage } from 'element-plus'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -33,7 +34,12 @@ import {
   renderNoteEmbeds,
   type PreviewEmbedMeta
 } from '@/utils/note-embed-preview'
-import { dispatchOpenNote, resolveNoteIdFromHref } from '@/utils/note-open-events'
+import {
+  LOCAL_NOTE_HREF_HINT,
+  dispatchOpenNote,
+  isLocalNoteHref,
+  resolveNoteIdFromHref
+} from '@/utils/note-open-events'
 import { formatNoteCompactDate } from './note-navigation'
 
 interface Props {
@@ -101,10 +107,14 @@ function openNoteFromPreview(serverId: string): void {
 }
 
 /**
- * 预览正文的点击委托，接住两类可点目标。
+ * 预览正文的点击委托，接住三类可点目标。
  *
  * 用容器委托而不是给渲染结果挂 `@click` —— `v-html` 出来的是死 HTML，挂不上 Vue 事件；
  * 也正因为如此，卡片上「可点」的语义只能靠 `data-note-id` + `role` + `tabindex` 承载。
+ *
+ * 🔴 **桌面端本机地址必须单独拦一道**：预览渲染出的 `<a>` 没有 `target` 兜底（`marked`
+ * 不加、下面也没有后处理），这类地址 `resolveNoteIdFromHref` 又认不出 → 一旦不拦，点击会在
+ * **当前标签页**跳到 `xinyue-note.local` 这个不存在的域名，读者这篇笔记就丢了。
  *
  * :param event: 预览容器的点击事件。
  * :return: 无返回值。
@@ -119,6 +129,12 @@ function handlePreviewClick(event: MouseEvent): void {
   }
   const anchor = target.closest<HTMLAnchorElement>('a[href]')
   if (!anchor) return
+  // 取原始属性：`anchor.href` 会被浏览器归一，自定义协议下不可靠。
+  if (isLocalNoteHref(anchor.getAttribute('href') ?? '')) {
+    event.preventDefault()
+    ElMessage({ message: LOCAL_NOTE_HREF_HINT, type: 'info', plain: true })
+    return
+  }
   const noteId = resolveNoteIdFromHref(anchor.href, window.location.href)
   if (!noteId) return
   event.preventDefault()
@@ -266,6 +282,23 @@ function handlePreviewKeydown(event: KeyboardEvent): void {
 
     &:hover {
       text-decoration: underline;
+    }
+  }
+
+  /*
+    桌面端本机地址（`xinyue-note.local`）：网页端没有本机 uuid 的映射，**点开也打不开**。
+    别让它看起来像正常外链 —— 弱化成引用色 + 虚线下划线，并且不给 hover 反馈。
+    点击侧还有一道 `isLocalNoteHref` 兜底（`handlePreviewClick`），这里只管观感、不改 HTML。
+  */
+  :deep(a[href^='https://xinyue-note.local/']),
+  :deep(a[href^='http://xinyue-note.local/']),
+  :deep(a[href^='xinyue-notes://note/']) {
+    color: var(--note-preview-quote);
+    text-decoration: underline dotted;
+    cursor: default;
+
+    &:hover {
+      text-decoration: underline dotted;
     }
   }
 

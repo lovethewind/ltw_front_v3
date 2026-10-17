@@ -50,4 +50,26 @@ describe('网页版「打开笔记」接线（对齐桌面端口径）', () => {
     expect(mdEditor).toMatch(/if \(!dispatchOpenNote\(noteId, true\)\) \{/)
     expect(mdEditor).toMatch(/void router\.push\(\{ name: 'notes', params: \{ noteId \} \}\)/)
   })
+
+  it('两处点击都先拦桌面端本机地址 —— 不拦就是当前标签页跳到不存在的域名', () => {
+    for (const source of [preview, mdEditor]) {
+      // 必须用原始属性判断（anchor.href 会被浏览器归一，自定义协议下不可靠）。
+      expect(source).toMatch(/isLocalNoteHref\(anchor\.getAttribute\('href'\) \?\? ''\)/)
+      expect(source).toMatch(/event\.preventDefault\(\)/)
+      expect(source).toMatch(/LOCAL_NOTE_HREF_HINT/)
+    }
+    // 顺序：先判本机地址，再判站内链接。反过来的话本机地址会先落到「不是站内 → 放手」那条路。
+    expect(preview).toMatch(
+      /isLocalNoteHref\(anchor\.getAttribute\('href'\) \?\? ''\)[\s\S]*?resolveNoteIdFromHref\(anchor\.href, window\.location\.href\)/
+    )
+    expect(mdEditor).toMatch(
+      /isLocalNoteHref\(anchor\.getAttribute\('href'\) \?\? ''\)[\s\S]*?resolveNoteIdFromHref\(anchor\.href, window\.location\.href\)/
+    )
+  })
+
+  it('预览档不导航还不够：这类链接在观感上也不能像正常外链', () => {
+    // 正文是 v-html 的死 HTML，不改 HTML，用属性选择器弱化。
+    expect(preview).toMatch(/a\[href\^='https:\/\/xinyue-note\.local\/'\]/)
+    expect(preview).toMatch(/cursor: default/)
+  })
 })
